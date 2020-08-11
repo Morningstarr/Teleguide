@@ -19,7 +19,7 @@ android {
     }
 
     buildTypes {
-        def appId = "channel-test-jjqyh"
+        def appId = "prosumer-dwoso"
         debug {
             debuggable true
             buildConfigField "String", "MONGODB_REALM_APP_ID", "\"${appId}\""

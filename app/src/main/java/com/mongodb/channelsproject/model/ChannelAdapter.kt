@@ -14,7 +14,7 @@ import io.realm.kotlin.where
 import org.bson.types.ObjectId
 
 
-internal class ChannelAdapter(data: OrderedRealmCollection<Channel>) : RealmRecyclerViewAdapter<Channel, ChannelAdapter.ChannelViewHolder?>(data, true) {
+internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : RealmRecyclerViewAdapter<ChannelRealm, ChannelAdapter.ChannelViewHolder?>(data, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channel_view, parent, false)
@@ -22,7 +22,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<Channel>) : RealmRecy
     }
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
-        val obj: Channel? = getItem(position)
+        val obj: ChannelRealm? = getItem(position)
         holder.data = obj
         holder.name.text = obj?.name
         holder.type.text = obj?.typeEnum?.displayName
@@ -79,7 +79,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<Channel>) : RealmRecy
         val bgRealm = Realm.getDefaultInstance()
 
         bgRealm!!.executeTransaction {
-            val item = it.where<Channel>().equalTo("_id", _id).findFirst()
+            val item = it.where<ChannelRealm>().equalTo("_id", _id).findFirst()
             item?.typeEnum = type
         }
 
@@ -91,7 +91,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<Channel>) : RealmRecy
 
         bgRealm!!.executeTransaction {
 
-            val item = it.where<Channel>().equalTo("_id", id).findFirst()
+            val item = it.where<ChannelRealm>().equalTo("_id", id).findFirst()
             item?.deleteFromRealm()
         }
 
@@ -101,7 +101,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<Channel>) : RealmRecy
     internal inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.name)
         var type: TextView = view.findViewById(R.id.type)
-        var data: Channel? = null
+        var data: ChannelRealm? = null
         var menu: TextView = view.findViewById(R.id.menu)
 
     }

@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mongodb.channelsproject.model.Channel
+import com.mongodb.channelsproject.model.ChannelRealm
 import com.mongodb.channelsproject.model.ChannelAdapter
 import io.realm.Realm
 import io.realm.RealmResults
@@ -45,7 +45,7 @@ class ChannelsActivity : AppCompatActivity() {
                 .setPositiveButton("Add") { dialog, _ -> run {
                     dialog.dismiss()
                     try {
-                        val channel = Channel(input.text.toString())
+                        val channel = ChannelRealm(input.text.toString())
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)
                         }
@@ -78,7 +78,7 @@ class ChannelsActivity : AppCompatActivity() {
         }
         else {
 
-            val config = SyncConfiguration.Builder(user!!, "new folder")
+            val config = SyncConfiguration.Builder(user!!, "New Folder")
                 .waitForInitialRemoteData()
                 .build()
 
@@ -100,7 +100,7 @@ class ChannelsActivity : AppCompatActivity() {
     }
 
     private fun setUpRecyclerView(realm: Realm) {
-        adapter = ChannelAdapter(realm.where<Channel>().sort("_id").findAll())
+        adapter = ChannelAdapter(realm.where<ChannelRealm>().sort("_id").findAll())
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
