@@ -27,8 +27,8 @@ class TdLibTestActivity : AppCompatActivity() {
 
     private val quiting = false
 
-    private val defaultHandler: Client.ResultHandler =
-        DefaultHandler()
+    /*private val defaultHandler: Client.ResultHandler =
+        DefaultHandler()*/
 
     private val authorizationLock: Lock = ReentrantLock()
     private val gotAuthorization: Condition = authorizationLock.newCondition()
@@ -76,12 +76,12 @@ class TdLibTestActivity : AppCompatActivity() {
         // create client
 
         // create client
-        client = Client.create(UpdatesHandler(), null, null)
+        //client = Client.create(UpdatesHandler(), null, null)
 
         // test Client.execute
 
         // test Client.execute
-        defaultHandler.onResult(Client.execute(GetTextEntities("@telegram /test_command https://telegram.org telegram.me @gif @test")))
+        //defaultHandler.onResult(Client.execute(GetTextEntities("@telegram /test_command https://telegram.org telegram.me @gif @test")))
 
         // main loop
         while (!quiting) {
@@ -102,8 +102,8 @@ class TdLibTestActivity : AppCompatActivity() {
 
     }
 
-    private fun onAuthorizationStateUpdated(authorizationState: AuthorizationState?) {
-        if (authorizationState != null) {
+    public fun onAuthorizationStateUpdated(authorizationState: AuthorizationState?) {
+        /*if (authorizationState != null) {
             Example.authorizationState = authorizationState
         }
         when (Example.authorizationState.getConstructor()) {
@@ -177,7 +177,7 @@ class TdLibTestActivity : AppCompatActivity() {
                 }
             }
             else -> System.err.println("Unsupported authorization state:" + newLine + Example.authorizationState)
-        }
+        }*/
     }
 
     private fun getMainChatList(limit: Int) {
@@ -228,212 +228,213 @@ class TdLibTestActivity : AppCompatActivity() {
         }
     }
 
-    private class UpdatesHandler :
-        Client.ResultHandler {
-        override fun onResult(`object`: Object) {
-            when (`object`.constructor) {
-                UpdateAuthorizationState.CONSTRUCTOR -> onAuthorizationStateUpdated((`object` as UpdateAuthorizationState).authorizationState)
-                UpdateUser.CONSTRUCTOR -> {
-                    val updateUser = `object` as UpdateUser
-                    users.put(updateUser.user.id, updateUser.user)
+/*public class UpdatesHandler :
+    Client.ResultHandler {
+    override fun onResult(`object`: Object) {
+        when (`object`.constructor) {
+            UpdateAuthorizationState.CONSTRUCTOR -> onAuthorizationStateUpdated((`object` as UpdateAuthorizationState).authorizationState)
+            UpdateUser.CONSTRUCTOR -> {
+                val updateUser = `object` as UpdateUser
+                users.put(updateUser.user.id, updateUser.user)
+            }
+            UpdateUserStatus.CONSTRUCTOR -> {
+                val updateUserStatus = `object` as UpdateUserStatus
+                val user: User = users.get(updateUserStatus.userId)
+                synchronized(user) { user.status = updateUserStatus.status }
+            }
+            UpdateBasicGroup.CONSTRUCTOR -> {
+                val updateBasicGroup = `object` as UpdateBasicGroup
+                basicGroups.put(updateBasicGroup.basicGroup.id, updateBasicGroup.basicGroup)
+            }
+            UpdateSupergroup.CONSTRUCTOR -> {
+                val updateSupergroup = `object` as UpdateSupergroup
+                supergroups.put(updateSupergroup.supergroup.id, updateSupergroup.supergroup)
+            }
+            UpdateSecretChat.CONSTRUCTOR -> {
+                val updateSecretChat = `object` as UpdateSecretChat
+                secretChats.put(updateSecretChat.secretChat.id, updateSecretChat.secretChat)
+            }
+            UpdateNewChat.CONSTRUCTOR -> {
+                val updateNewChat = `object` as UpdateNewChat
+                val chat = updateNewChat.chat
+                synchronized(chat) {
+                    chats.put(chat.id, chat)
+                    val positions: Array<TdApi.ChatPosition> = chat.positions
+                    chat.positions = arrayOfNulls<TdApi.ChatPosition>(0)
+                    setChatPositions(chat, positions)
                 }
-                UpdateUserStatus.CONSTRUCTOR -> {
-                    val updateUserStatus = `object` as UpdateUserStatus
-                    val user: User = users.get(updateUserStatus.userId)
-                    synchronized(user) { user.status = updateUserStatus.status }
+            }
+            UpdateChatTitle.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatTitle
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) { chat.title = updateChat.title }
+            }
+            UpdateChatPhoto.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatPhoto
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) { chat.photo = updateChat.photo }
+            }
+            UpdateChatLastMessage.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatLastMessage
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) {
+                    chat.lastMessage = updateChat.lastMessage
+                    setChatPositions(chat, updateChat.positions)
                 }
-                UpdateBasicGroup.CONSTRUCTOR -> {
-                    val updateBasicGroup = `object` as UpdateBasicGroup
-                    basicGroups.put(updateBasicGroup.basicGroup.id, updateBasicGroup.basicGroup)
+            }
+            TdApi.UpdateChatPosition.CONSTRUCTOR -> {
+                val updateChat: TdApi.UpdateChatPosition = `object` as TdApi.UpdateChatPosition
+                if (updateChat.position.list.getConstructor() !== ChatListMain.CONSTRUCTOR) {
+                    break
                 }
-                UpdateSupergroup.CONSTRUCTOR -> {
-                    val updateSupergroup = `object` as UpdateSupergroup
-                    supergroups.put(updateSupergroup.supergroup.id, updateSupergroup.supergroup)
-                }
-                UpdateSecretChat.CONSTRUCTOR -> {
-                    val updateSecretChat = `object` as UpdateSecretChat
-                    secretChats.put(updateSecretChat.secretChat.id, updateSecretChat.secretChat)
-                }
-                UpdateNewChat.CONSTRUCTOR -> {
-                    val updateNewChat = `object` as UpdateNewChat
-                    val chat = updateNewChat.chat
-                    synchronized(chat) {
-                        chats.put(chat.id, chat)
-                        val positions: Array<TdApi.ChatPosition> = chat.positions
-                        chat.positions = arrayOfNulls<TdApi.ChatPosition>(0)
-                        setChatPositions(chat, positions)
-                    }
-                }
-                UpdateChatTitle.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatTitle
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) { chat.title = updateChat.title }
-                }
-                UpdateChatPhoto.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatPhoto
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) { chat.photo = updateChat.photo }
-                }
-                UpdateChatLastMessage.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatLastMessage
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) {
-                        chat.lastMessage = updateChat.lastMessage
-                        setChatPositions(chat, updateChat.positions)
-                    }
-                }
-                TdApi.UpdateChatPosition.CONSTRUCTOR -> {
-                    val updateChat: TdApi.UpdateChatPosition = `object` as TdApi.UpdateChatPosition
-                    if (updateChat.position.list.getConstructor() !== ChatListMain.CONSTRUCTOR) {
-                        break
-                    }
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) {
-                        var i: Int
-                        i = 0
-                        while (i < chat.positions.length) {
-                            if (chat.positions.get(i).list.getConstructor() === ChatListMain.CONSTRUCTOR) {
-                                break
-                            }
-                            i++
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) {
+                    var i: Int
+                    i = 0
+                    while (i < chat.positions.length) {
+                        if (chat.positions.get(i).list.getConstructor() === ChatListMain.CONSTRUCTOR) {
+                            break
                         }
-                        val new_positions: Array<TdApi.ChatPosition?> =
-                            arrayOfNulls<TdApi.ChatPosition>(chat.positions.length + (if (updateChat.position.order === 0) 0 else 1) - if (i < chat.positions.length) 1 else 0)
-                        var pos = 0
-                        if (updateChat.position.order !== 0) {
-                            new_positions[pos++] = updateChat.position
+                        i++
+                    }
+                    val new_positions: Array<TdApi.ChatPosition?> =
+                        arrayOfNulls<TdApi.ChatPosition>(chat.positions.length + (if (updateChat.position.order === 0) 0 else 1) - if (i < chat.positions.length) 1 else 0)
+                    var pos = 0
+                    if (updateChat.position.order !== 0) {
+                        new_positions[pos++] = updateChat.position
+                    }
+                    var j = 0
+                    while (j < chat.positions.length) {
+                        if (j != i) {
+                            new_positions[pos++] = chat.positions.get(j)
                         }
-                        var j = 0
-                        while (j < chat.positions.length) {
-                            if (j != i) {
-                                new_positions[pos++] = chat.positions.get(j)
-                            }
-                            j++
-                        }
-                        assert(pos == new_positions.size)
-                        setChatPositions(chat, new_positions)
+                        j++
                     }
+                    assert(pos == new_positions.size)
+                    setChatPositions(chat, new_positions)
                 }
-                UpdateChatReadInbox.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatReadInbox
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) {
-                        chat.lastReadInboxMessageId = updateChat.lastReadInboxMessageId
-                        chat.unreadCount = updateChat.unreadCount
-                    }
+            }
+            UpdateChatReadInbox.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatReadInbox
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) {
+                    chat.lastReadInboxMessageId = updateChat.lastReadInboxMessageId
+                    chat.unreadCount = updateChat.unreadCount
                 }
-                UpdateChatReadOutbox.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatReadOutbox
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(
-                        chat
-                    ) { chat.lastReadOutboxMessageId = updateChat.lastReadOutboxMessageId }
+            }
+            UpdateChatReadOutbox.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatReadOutbox
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(
+                    chat
+                ) { chat.lastReadOutboxMessageId = updateChat.lastReadOutboxMessageId }
+            }
+            UpdateChatUnreadMentionCount.CONSTRUCTOR -> {
+                val updateChat =
+                    `object` as UpdateChatUnreadMentionCount
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) { chat.unreadMentionCount = updateChat.unreadMentionCount }
+            }
+            UpdateMessageMentionRead.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateMessageMentionRead
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) { chat.unreadMentionCount = updateChat.unreadMentionCount }
+            }
+            UpdateChatReplyMarkup.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatReplyMarkup
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(
+                    chat
+                ) { chat.replyMarkupMessageId = updateChat.replyMarkupMessageId }
+            }
+            UpdateChatDraftMessage.CONSTRUCTOR -> {
+                val updateChat = `object` as UpdateChatDraftMessage
+                val chat: Chat = chats.get(updateChat.chatId)
+                synchronized(chat) {
+                    chat.draftMessage = updateChat.draftMessage
+                    setChatPositions(chat, updateChat.positions)
                 }
-                UpdateChatUnreadMentionCount.CONSTRUCTOR -> {
-                    val updateChat =
-                        `object` as UpdateChatUnreadMentionCount
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) { chat.unreadMentionCount = updateChat.unreadMentionCount }
-                }
-                UpdateMessageMentionRead.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateMessageMentionRead
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) { chat.unreadMentionCount = updateChat.unreadMentionCount }
-                }
-                UpdateChatReplyMarkup.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatReplyMarkup
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(
-                        chat
-                    ) { chat.replyMarkupMessageId = updateChat.replyMarkupMessageId }
-                }
-                UpdateChatDraftMessage.CONSTRUCTOR -> {
-                    val updateChat = `object` as UpdateChatDraftMessage
-                    val chat: Chat = chats.get(updateChat.chatId)
-                    synchronized(chat) {
-                        chat.draftMessage = updateChat.draftMessage
-                        setChatPositions(chat, updateChat.positions)
-                    }
-                }
-                UpdateChatPermissions.CONSTRUCTOR -> {
-                    val update = `object` as UpdateChatPermissions
-                    val chat: Chat = chats.get(update.chatId)
-                    synchronized(chat) { chat.permissions = update.permissions }
-                }
-                UpdateChatNotificationSettings.CONSTRUCTOR -> {
-                    val update =
-                        `object` as UpdateChatNotificationSettings
-                    val chat: Chat = chats.get(update.chatId)
-                    synchronized(chat) { chat.notificationSettings = update.notificationSettings }
-                }
-                UpdateChatDefaultDisableNotification.CONSTRUCTOR -> {
-                    val update =
-                        `object` as UpdateChatDefaultDisableNotification
-                    val chat: Chat = chats.get(update.chatId)
-                    synchronized(
-                        chat
-                    ) { chat.defaultDisableNotification = update.defaultDisableNotification }
-                }
-                UpdateChatIsMarkedAsUnread.CONSTRUCTOR -> {
-                    val update = `object` as UpdateChatIsMarkedAsUnread
-                    val chat: Chat = chats.get(update.chatId)
-                    synchronized(chat) { chat.isMarkedAsUnread = update.isMarkedAsUnread }
-                }
-                UpdateChatHasScheduledMessages.CONSTRUCTOR -> {
-                    val update =
-                        `object` as UpdateChatHasScheduledMessages
-                    val chat: Chat = chats.get(update.chatId)
-                    synchronized(chat) { chat.hasScheduledMessages = update.hasScheduledMessages }
-                }
-                UpdateUserFullInfo.CONSTRUCTOR -> {
-                    val updateUserFullInfo = `object` as UpdateUserFullInfo
-                    usersFullInfo.put(updateUserFullInfo.userId, updateUserFullInfo.userFullInfo)
-                }
-                UpdateBasicGroupFullInfo.CONSTRUCTOR -> {
-                    val updateBasicGroupFullInfo =
-                        `object` as UpdateBasicGroupFullInfo
-                    basicGroupsFullInfo.put(
-                        updateBasicGroupFullInfo.basicGroupId,
-                        updateBasicGroupFullInfo.basicGroupFullInfo
-                    )
-                }
-                UpdateSupergroupFullInfo.CONSTRUCTOR -> {
-                    val updateSupergroupFullInfo =
-                        `object` as UpdateSupergroupFullInfo
-                    supergroupsFullInfo.put(
-                        updateSupergroupFullInfo.supergroupId,
-                        updateSupergroupFullInfo.supergroupFullInfo
-                    )
-                }
-                else -> {
-                }
+            }
+            UpdateChatPermissions.CONSTRUCTOR -> {
+                val update = `object` as UpdateChatPermissions
+                val chat: Chat = chats.get(update.chatId)
+                synchronized(chat) { chat.permissions = update.permissions }
+            }
+            UpdateChatNotificationSettings.CONSTRUCTOR -> {
+                val update =
+                    `object` as UpdateChatNotificationSettings
+                val chat: Chat = chats.get(update.chatId)
+                synchronized(chat) { chat.notificationSettings = update.notificationSettings }
+            }
+            UpdateChatDefaultDisableNotification.CONSTRUCTOR -> {
+                val update =
+                    `object` as UpdateChatDefaultDisableNotification
+                val chat: Chat = chats.get(update.chatId)
+                synchronized(
+                    chat
+                ) { chat.defaultDisableNotification = update.defaultDisableNotification }
+            }
+            UpdateChatIsMarkedAsUnread.CONSTRUCTOR -> {
+                val update = `object` as UpdateChatIsMarkedAsUnread
+                val chat: Chat = chats.get(update.chatId)
+                synchronized(chat) { chat.isMarkedAsUnread = update.isMarkedAsUnread }
+            }
+            UpdateChatHasScheduledMessages.CONSTRUCTOR -> {
+                val update =
+                    `object` as UpdateChatHasScheduledMessages
+                val chat: Chat = chats.get(update.chatId)
+                synchronized(chat) { chat.hasScheduledMessages = update.hasScheduledMessages }
+            }
+            UpdateUserFullInfo.CONSTRUCTOR -> {
+                val updateUserFullInfo = `object` as UpdateUserFullInfo
+                usersFullInfo.put(updateUserFullInfo.userId, updateUserFullInfo.userFullInfo)
+            }
+            UpdateBasicGroupFullInfo.CONSTRUCTOR -> {
+                val updateBasicGroupFullInfo =
+                    `object` as UpdateBasicGroupFullInfo
+                basicGroupsFullInfo.put(
+                    updateBasicGroupFullInfo.basicGroupId,
+                    updateBasicGroupFullInfo.basicGroupFullInfo
+                )
+            }
+            UpdateSupergroupFullInfo.CONSTRUCTOR -> {
+                val updateSupergroupFullInfo =
+                    `object` as UpdateSupergroupFullInfo
+                supergroupsFullInfo.put(
+                    updateSupergroupFullInfo.supergroupId,
+                    updateSupergroupFullInfo.supergroupFullInfo
+                )
+            }
+            else -> {
             }
         }
     }
+}*/
 
-    class DefaultHandler :
-        Client.ResultHandler {
-        override fun onResult(`object`: Object) {
-            Log.v(TAG(), `object`.toString())
-        }
+class DefaultHandler :
+    Client.ResultHandler {
+    override fun onResult(`object`: Object) {
+        Log.v(TAG(), `object`.toString())
     }
+}
 
-    class AuthorizationRequestHandler :
-        Client.ResultHandler {
-        override fun onResult(`object`: Object) {
-            val newLine = System.getProperty("line.separator")
-            when (`object`.constructor) {
-                Error.CONSTRUCTOR -> {
-                    Log.v(TAG(), "Receive an error:$newLine$`object`")
-                    onAuthorizationStateUpdated(null) // repeat last action
-                }
-                Ok.CONSTRUCTOR -> {
-                }
-                else -> System.err.println("Receive wrong response from TDLib:$newLine$`object`")
+class AuthorizationRequestHandler :
+    Client.ResultHandler {
+    override fun onResult(`object`: Object) {
+        val newLine = System.getProperty("line.separator")
+        when (`object`.constructor) {
+            Error.CONSTRUCTOR -> {
+                //Log.v(TAG(), "Receive an error:$newLine$`object`")
+                //onAuthorizationStateUpdated(null) // repeat last action
             }
+            Ok.CONSTRUCTOR -> {
+            }
+            //else -> Log.v(TAG(), "Receive wrong response from TDLib:$newLine$`object`")
         }
     }
 }
+}
+
 
 
 
