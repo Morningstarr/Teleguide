@@ -1,4 +1,4 @@
-package com.mongodb.channelsproject.model
+package com.mongodb.alliance.model
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey

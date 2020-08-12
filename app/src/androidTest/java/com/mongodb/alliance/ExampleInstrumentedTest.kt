@@ -1,4 +1,4 @@
-package com.mongodb.channelsproject
+package com.mongodb.alliance
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

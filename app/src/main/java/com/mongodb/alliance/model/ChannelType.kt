@@ -1,4 +1,4 @@
-package com.mongodb.channelsproject.model
+package com.mongodb.alliance.model
 
 enum class ChannelType(val displayName: String) {
     groupChat("Group Chat"),
