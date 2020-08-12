@@ -1,2 +1,3 @@
+include ':libtd'
 include ':app'
 rootProject.name = "ChannelsProject"
