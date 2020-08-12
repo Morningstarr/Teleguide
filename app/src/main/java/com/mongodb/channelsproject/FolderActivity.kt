@@ -47,8 +47,9 @@ class FolderActivity : AppCompatActivity() {
                 .setPositiveButton("Add") { dialog, _ -> run {
                     dialog.dismiss()
                     try {
-                        val folder = FolderRealm(input.text.toString())
-                        //folder._partition = "5f2c2c3971a978b3003f1036"
+                        val name = input.text.toString()
+                        val partition = user?.id ?: "" // FIXME: show error if nil
+                        val folder = FolderRealm(name, partition)
                         realm.executeTransactionAsync { realm ->
                             realm.insert(folder)
                         }
