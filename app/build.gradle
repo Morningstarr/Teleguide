@@ -35,10 +35,20 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+
+    packagingOptions {
+        exclude 'META-INF/kotlinx-coroutines-core.kotlin_module'
+    }
 }
 
 realm {
     syncEnabled = true
+}
+
+repositories {
+    maven {
+        url "https://dl.bintray.com/whyoleg/ktd"
+    }
 }
 
 dependencies {
@@ -51,6 +61,7 @@ dependencies {
     implementation "io.realm:android-adapters:4.0.0"
     implementation "androidx.recyclerview:recyclerview:1.1.0"
     implementation 'com.google.android.material:material:1.1.0'
+    implementation "dev.whyoleg.ktd:ktd-api-coroutines-android:0.5.0-1.5.4"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
