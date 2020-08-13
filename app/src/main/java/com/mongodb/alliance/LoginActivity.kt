@@ -1,4 +1,4 @@
-package com.mongodb.channelsproject
+package com.mongodb.alliance
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

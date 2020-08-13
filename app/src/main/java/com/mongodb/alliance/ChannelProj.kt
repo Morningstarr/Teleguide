@@ -1,8 +1,8 @@
-package com.mongodb.channelsproject
+package com.mongodb.alliance
 
 import android.app.Application
 import android.util.Log
-import com.mongodb.channelsproject.BuildConfig.MONGODB_REALM_APP_ID
+import com.mongodb.alliance.BuildConfig.MONGODB_REALM_APP_ID
 import io.realm.BuildConfig
 
 import io.realm.Realm

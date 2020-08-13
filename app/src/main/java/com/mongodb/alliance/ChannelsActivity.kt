@@ -1,4 +1,4 @@
-package com.mongodb.channelsproject
+package com.mongodb.alliance
 
 import android.app.AlertDialog
 import android.content.Intent
@@ -13,44 +13,41 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mongodb.channelsproject.model.ChannelRealm
-import com.mongodb.channelsproject.model.ChannelAdapter
-import com.mongodb.channelsproject.model.FolderAdapter
-import com.mongodb.channelsproject.model.FolderRealm
+import com.mongodb.alliance.model.ChannelRealm
+import com.mongodb.alliance.model.ChannelAdapter
 import io.realm.Realm
-import io.realm.RealmResults
 import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 
 
-class FolderActivity : AppCompatActivity() {
+class ChannelsActivity : AppCompatActivity() {
     private lateinit var realm: Realm
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: FolderAdapter
+    private lateinit var adapter: ChannelAdapter
     private lateinit var fab: FloatingActionButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_folder)
+        setContentView(R.layout.activity_main)
 
         realm = Realm.getDefaultInstance()
-        recyclerView = findViewById(R.id.folders_list)
-        fab = findViewById(R.id.floating_action_button2)
+        recyclerView = findViewById(R.id.channels_list)
+        fab = findViewById(R.id.floating_action_button)
 
         fab.setOnClickListener {
             val input = EditText(this)
             val dialogBuilder = AlertDialog.Builder(this)
-            dialogBuilder.setMessage("Enter folder name:")
+            dialogBuilder.setMessage("Enter channel name:")
                 .setCancelable(true)
                 .setPositiveButton("Add") { dialog, _ -> run {
                     dialog.dismiss()
                     try {
-                        val folder = FolderRealm(input.text.toString())
-                        //folder._partition = "5f2c2c3971a978b3003f1036"
+                        val channel =
+                            ChannelRealm(input.text.toString())
                         realm.executeTransactionAsync { realm ->
-                            realm.insert(folder)
+                            realm.insert(channel)
                         }
                     }
                     catch(exception: Exception){
@@ -63,14 +60,14 @@ class FolderActivity : AppCompatActivity() {
 
             val dialog = dialogBuilder.create()
             dialog.setView(input)
-            dialog.setTitle("Add New Folder")
+            dialog.setTitle("Add New Channel")
             dialog.show()
         }
     }
 
     override fun onStart() {
         super.onStart()
-        try {
+        /*try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
             Log.w(TAG(), e)
@@ -80,8 +77,8 @@ class FolderActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-
-            val config = SyncConfiguration.Builder(user!!, user!!.id)
+*/
+            val config = SyncConfiguration.Builder(user!!, "New Folder")
                 .waitForInitialRemoteData()
                 .build()
 
@@ -91,7 +88,7 @@ class FolderActivity : AppCompatActivity() {
                 Realm.getInstanceAsync(config, object: Realm.Callback() {
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
-                        this@FolderActivity.realm = realm
+                        this@ChannelsActivity.realm = realm
                         setUpRecyclerView(realm)
                     }
                 })
@@ -99,11 +96,14 @@ class FolderActivity : AppCompatActivity() {
             catch(e: Exception){
                 Log.v(TAG(), "здесь")
             }
-        }
+        //}
     }
 
     private fun setUpRecyclerView(realm: Realm) {
-        adapter = FolderAdapter(realm.where<FolderRealm>().sort("_id").findAll())
+        adapter = ChannelAdapter(
+            realm.where<ChannelRealm>().sort("_id")
+                .findAll()
+        )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
