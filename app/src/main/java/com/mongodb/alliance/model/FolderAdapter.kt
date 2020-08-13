@@ -1,12 +1,10 @@
-package com.mongodb.channelsproject.model
+package com.mongodb.alliance.model
 
-import android.util.Log
 import android.view.*
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.mongodb.channelsproject.R
-import com.mongodb.channelsproject.TAG
+import com.mongodb.alliance.R
 import io.realm.OrderedRealmCollection
 import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
