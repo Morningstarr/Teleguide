@@ -1,6 +1,9 @@
 package com.mongodb.alliance.ui.telegram
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.EditText
+import android.widget.Toast
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +30,8 @@ import kotlin.time.seconds
 @ExperimentalTime
 class ConnectTelegramActivity : AppCompatActivity(), CoroutineScope {
 
+    inline fun <reified T> T.TAG(): String = T::class.java.simpleName
+    private lateinit var code: EditText
     private var job: Job = Job()
     private val telegram = Telegram(
         configuration = TelegramClientConfiguration(
@@ -47,17 +52,23 @@ class ConnectTelegramActivity : AppCompatActivity(), CoroutineScope {
     }
 
     suspend fun callGetApi(): TelegramObject {
-        return client.exec(TdApi.SetAuthenticationPhoneNumber("+79177777210",null))
+        return client.exec(TdApi.SetAuthenticationPhoneNumber("+380713312170",null))
+    }
+
+    suspend fun callCode(): TelegramObject {
+        return client.exec(TdApi.CheckAuthenticationCode(code.text.toString()))
     }
 
     fun onResult(result: TelegramObject) {
-        print(result)
+        //print(result)
+        Toast.makeText(baseContext, result.toString(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connect_telegram)
         setSupportActionBar(findViewById(R.id.toolbar))
+        code = findViewById(R.id.input_code)
 
         launch {
             client.updates.onEach { value ->
@@ -87,21 +98,29 @@ class ConnectTelegramActivity : AppCompatActivity(), CoroutineScope {
                                 onResult(result)
                             }
                             is TdApi.AuthorizationStateWaitCode -> {
-                                println("Waiting for code")
+                                Log.v(TAG(), "Waiting for code")
+                                Toast.makeText(baseContext, "Waiting for code", Toast.LENGTH_SHORT).show()
+                                //val result = callConfirmCode()
+                                //onResult(result)
                             }
                         }
                     }
                 }
             }.catch { e ->
-                println(e)
+                Log.v(TAG(), e.message)
+                Toast.makeText(baseContext,  e.message, Toast.LENGTH_SHORT).show()
             }.collect()
 
 
         }
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show()*/
+            launch {
+                val result = callCode()
+                onResult(result)
+            }
         }
     }
 }
