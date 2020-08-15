@@ -68,7 +68,7 @@ class BottomSheetFragment (_type : Int) : BottomSheetDialogFragment(), Coroutine
                     }
 
                     //mBehavior?.setState(STATE_HIDDEN)
-                    delay(1000)
+                    //delay(1000)
 
                     onResult(result)
                 }

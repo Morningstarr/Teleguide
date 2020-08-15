@@ -135,8 +135,13 @@ class ConnectTelegramActivity : AppCompatActivity(), CoroutineScope {
                                         Toast.makeText(baseContext, "Waiting for password", Toast.LENGTH_SHORT)
                                             .show()
                                     })
-                                    bottomSheetFragment = BottomSheetFragment(3)
-                                    bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
+                                    if(bottomSheetFragment.isHidden) {
+                                        bottomSheetFragment = BottomSheetFragment(3)
+                                        bottomSheetFragment.show(
+                                            supportFragmentManager,
+                                            bottomSheetFragment.tag
+                                        )
+                                    }
                                 }
                             }
                         }
