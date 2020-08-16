@@ -10,7 +10,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".CoroutinesTest">
+        <activity android:name=".CoroutinesTest"
+            android:configChanges="orientation"
+            android:launchMode="singleTop">
 <!--            <intent-filter>-->
 <!--                <action android:name="android.intent.action.MAIN" />-->
 
@@ -20,16 +22,23 @@
         <activity
             android:name=".ui.telegram.ConnectTelegramActivity"
             android:label="@string/title_activity_connect_telegram"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:configChanges="orientation" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FolderActivity" />
-        <activity android:name=".LoginActivity" />
-        <activity android:name=".ChannelsActivity" />
+        <activity android:name=".FolderActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"/>
+        <activity android:name=".LoginActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"/>
+        <activity android:name=".ChannelsActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"/>
     </application>
 
 </manifest>

@@ -10,6 +10,7 @@ import io.realm.log.LogLevel
 import io.realm.log.RealmLog
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
+import timber.log.Timber
 
 lateinit var channelApp: App
 
@@ -25,6 +26,7 @@ class ChannelProj : Application() {
         // Enable more logging in debug mode
         if (BuildConfig.DEBUG) {
             RealmLog.setLevel(LogLevel.ALL)
+            Timber.plant(Timber.DebugTree())
         }
 
         Log.v(TAG(), "Initialized the Realm App configuration for: ${channelApp.configuration.appId}")
