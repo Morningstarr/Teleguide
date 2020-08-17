@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,18 +18,28 @@ import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.ChannelAdapter
+import dev.whyoleg.ktd.api.TdApi
+import dev.whyoleg.ktd.api.TelegramObject
 import io.realm.Realm
+import io.realm.internal.common.Dispatcher
 import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
 
-
+@ExperimentalTime
 class ChannelsActivity : AppCompatActivity() {
     private lateinit var realm: Realm
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ChannelAdapter
     private lateinit var fab: FloatingActionButton
+    private lateinit var chatList : TdApi.ChatList
 
     private lateinit var binding: ActivityMainBinding
 
@@ -85,20 +96,33 @@ class ChannelsActivity : AppCompatActivity() {
         }
         else {
 
-            val config = SyncConfiguration.Builder(user!!, "New Folder")
+            /*val config = SyncConfiguration.Builder(user!!, "New Folder")
                 .waitForInitialRemoteData()
                 .build()
 
-            Realm.setDefaultConfiguration(config)
+            Realm.setDefaultConfiguration(config)*/
+
+            lifecycleScope.launch{
+                withContext(Dispatchers.IO){
+                    //getChats()
+                    //deferredOne.await()
+                }
+
+                /*for(TdApi.Chat in chatList){
+                    var newChannel = ChannelRealm(TdApi.Chat)
+                }*/
+                Toast.makeText(baseContext, "11", Toast.LENGTH_SHORT).show()
+            }
+
             try {
                 //исключение вылетает здесь
-                Realm.getInstanceAsync(config, object: Realm.Callback() {
+                /*Realm.getInstanceAsync(config, object: Realm.Callback() {
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
                         this@ChannelsActivity.realm = realm
                         setUpRecyclerView(realm)
                     }
-                })
+                })*/
             }
             catch(e: Exception){
                 Log.v(TAG(), "здесь")
@@ -148,4 +172,9 @@ class ChannelsActivity : AppCompatActivity() {
             }
         }
     }
+
+
+    /*suspend fun getChats(): TelegramObject {
+        return client.exec(TdApi.GetChats(chatList, 0, 0, 0))
+    }*/
 }

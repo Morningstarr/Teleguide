@@ -1,18 +1,22 @@
-package com.mongodb.alliance.ui.telegram
+package com.mongodb.alliance.services.telegram
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.ChannelsActivity
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
-import com.mongodb.alliance.services.telegram.IService
+import com.mongodb.alliance.ui.telegram.CodeFragment
+import com.mongodb.alliance.ui.telegram.PasswordFragment
+import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
@@ -31,60 +35,52 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
-@InternalCoroutinesApi
 @ExperimentalTime
-class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
+@InternalCoroutinesApi
+class TelegramService : IService {
 
-    private lateinit var code: EditText
-    //private var job: Job = Job()
-    private val telegram = Telegram(
-        configuration = TelegramClientConfiguration(
-            maxEventsCount = 100,
-            receiveTimeout = 100.seconds
+    //lateinit var bottomSheetFragment : BottomSheetDialogFragment;
+    private lateinit var telegram : Telegram
+    private lateinit var client : TelegramClient
+
+    override fun initSevrvice() {
+        telegram = Telegram(
+            configuration = TelegramClientConfiguration(
+                maxEventsCount = 100,
+                receiveTimeout = 100.seconds
+            )
         )
-    )
 
-    val client = telegram.client()
-
-
-    lateinit var bottomSheetFragment : BottomSheetDialogFragment;
-
-    /*override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + job*/
-
-    override fun onDestroy() {
-
-        super.onDestroy()
-        //coroutineContext.cancelChildren()
-        //client.cancel()
+        client = telegram.client()
     }
 
-    fun onResult(result: TelegramObject) {
-        this@ConnectTelegramActivity.runOnUiThread(Runnable {
-            Toast.makeText(baseContext, result.toString(), Toast.LENGTH_SHORT)
-                .show()
-        })
+    override fun returnServiceObj(): TelegramClient {
+        return client
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_connect_telegram)
-        setSupportActionBar(findViewById(R.id.toolbar))
-
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
+    fun isInit() : Boolean {
+        if (client == null){
+            return false
+        }
+        else{
+            return true
+        }
+    }
+    /*suspend fun initializeClient(context : Activity){
+        //lifecycleScope.launch {
+            //withContext(Dispatchers.IO) {
                 client.updates.onEach { value ->
                     when (value) {
                         is TdApi.UpdateAuthorizationState -> {
                             val state = (value as TdApi.UpdateAuthorizationState).authorizationState
                             when (state) {
-                                is AuthorizationStateWaitTdlibParameters -> {
+                                is TdApi.AuthorizationStateWaitTdlibParameters -> {
                                     client.setTdlibParameters(
                                         TdApi.TdlibParameters(
                                             apiId = 1682238,
                                             apiHash = "c82da36c7e0b4b4b0bf9a22a6ac5cad0",
-                                            databaseDirectory = applicationContext.filesDir.absolutePath,
-                                            filesDirectory = applicationContext.filesDir.absolutePath,
+                                            databaseDirectory = context.applicationContext.filesDir.absolutePath,
+                                            filesDirectory = context.applicationContext.filesDir.absolutePath,
                                             applicationVersion = "1.0",
                                             systemLanguageCode = "en",
                                             deviceModel = "Android",
@@ -95,18 +91,18 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                                 is TdApi.AuthorizationStateWaitEncryptionKey -> {
                                     client.exec(TdApi.CheckDatabaseEncryptionKey())
                                 }
-                                is AuthorizationStateWaitPhoneNumber -> {
+                                is TdApi.AuthorizationStateWaitPhoneNumber -> {
                                     Timber.d("Waiting for number");
                                     bottomSheetFragment =
                                         PhoneNumberFragment()
-                                    bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
+                                    bottomSheetFragment.show(context.supportFragmentManager, bottomSheetFragment.tag)
                                 }
                                 is TdApi.AuthorizationStateWaitCode -> {
                                     Timber.d("Waiting for code");
                                     bottomSheetFragment =
                                         CodeFragment()
                                     bottomSheetFragment.show(
-                                        supportFragmentManager,
+                                        context.supportFragmentManager,
                                         bottomSheetFragment.tag
                                     )
                                 }
@@ -115,12 +111,12 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                                     bottomSheetFragment =
                                         PasswordFragment()
                                     bottomSheetFragment.show(
-                                        supportFragmentManager,
+                                        context.supportFragmentManager,
                                         bottomSheetFragment.tag
                                     )
                                 }
                                 is TdApi.AuthorizationStateReady -> {
-                                    val intent = Intent(baseContext, ChannelsActivity::class.java)
+                                    val intent = Intent(context.baseContext, ChannelsActivity::class.java)
                                     startActivity(intent)
                                 }
                             }
@@ -128,21 +124,12 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                     }
                 }.catch { e ->
                     Timber.e(e.message)
-                    Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
-                        .show()
+                    /*Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
+                        .show()*/
 
                 }.collect()
 
-            }
-        }
-
-        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            /*val bottomSheetFragment = BottomSheetFragment(1)
-            bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
-            launch {
-                val result = callCode()
-                onResult(result)
-            }*/
-        }
-    }
+            //}
+        //}
+    }*/
 }

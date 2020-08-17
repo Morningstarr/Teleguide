@@ -3,6 +3,8 @@ package com.mongodb.alliance
 import android.app.Application
 import android.util.Log
 import com.mongodb.alliance.BuildConfig.MONGODB_REALM_APP_ID
+import com.mongodb.alliance.services.telegram.IService
+import com.mongodb.alliance.services.telegram.TelegramService
 import io.realm.BuildConfig
 
 import io.realm.Realm
@@ -10,13 +12,19 @@ import io.realm.log.LogLevel
 import io.realm.log.RealmLog
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
+import kotlinx.coroutines.InternalCoroutinesApi
 import timber.log.Timber
+import kotlin.time.ExperimentalTime
 
 lateinit var channelApp: App
 
 inline fun <reified T> T.TAG(): String = T::class.java.simpleName
 
+@InternalCoroutinesApi
+@ExperimentalTime
 class ChannelProj : Application() {
+
+
 
     override fun onCreate() {
         super.onCreate()
