@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.mongodb.alliance.databinding.ActivityMainBinding
+import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.ChannelAdapter
 import io.realm.Realm
@@ -28,13 +30,18 @@ class ChannelsActivity : AppCompatActivity() {
     private lateinit var adapter: ChannelAdapter
     private lateinit var fab: FloatingActionButton
 
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         realm = Realm.getDefaultInstance()
-        recyclerView = findViewById(R.id.channels_list)
-        fab = findViewById(R.id.floating_action_button)
+        recyclerView = binding.channelsList
+        fab = binding.floatingActionButton
 
         fab.setOnClickListener {
             val input = EditText(this)
@@ -67,7 +74,7 @@ class ChannelsActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        /*try {
+        try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
             Log.w(TAG(), e)
@@ -77,7 +84,7 @@ class ChannelsActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-*/
+
             val config = SyncConfiguration.Builder(user!!, "New Folder")
                 .waitForInitialRemoteData()
                 .build()
@@ -96,7 +103,7 @@ class ChannelsActivity : AppCompatActivity() {
             catch(e: Exception){
                 Log.v(TAG(), "здесь")
             }
-        //}
+        }
     }
 
     private fun setUpRecyclerView(realm: Realm) {

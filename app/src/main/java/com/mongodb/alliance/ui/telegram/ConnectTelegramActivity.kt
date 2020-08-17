@@ -1,12 +1,15 @@
 package com.mongodb.alliance.ui.telegram
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.mongodb.alliance.ChannelsActivity
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
 import dev.whyoleg.ktd.Telegram
@@ -30,9 +33,6 @@ import kotlin.time.seconds
 @ExperimentalTime
 class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
 
-
-
-    inline fun <reified T> T.TAG(): String = T::class.java.simpleName
     private lateinit var code: EditText
     //private var job: Job = Job()
     private val telegram = Telegram(
@@ -43,7 +43,7 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
     )
 
     val client = telegram.client()
-    lateinit var bottomSheetFragment : BaseBottomSheetFragment;
+    lateinit var bottomSheetFragment : BottomSheetDialogFragment;
 
     /*override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job*/
@@ -52,18 +52,6 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
         super.onDestroy()
         //coroutineContext.cancelChildren()
         client.cancel()
-    }
-
-    suspend fun callGetApi(): TelegramObject {
-        return client.exec(TdApi.SetAuthenticationPhoneNumber("+380713312170",null))
-    }
-
-    suspend fun callGetApi(number : String): TelegramObject {
-        return client.exec(TdApi.SetAuthenticationPhoneNumber(number,null))
-    }
-
-    suspend fun callCode(): TelegramObject {
-        return client.exec(TdApi.CheckAuthenticationCode(code.text.toString()))
     }
 
     fun onResult(result: TelegramObject) {
@@ -99,19 +87,16 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                                         )
                                     )
                                 }
-                                is TdApi.AuthorizationStateWaitEncryptionKey ->
-                                {
+                                is TdApi.AuthorizationStateWaitEncryptionKey -> {
                                     client.exec(TdApi.CheckDatabaseEncryptionKey())
                                 }
-                                is AuthorizationStateWaitPhoneNumber ->
-                                {
+                                is AuthorizationStateWaitPhoneNumber -> {
                                     Timber.d("Waiting for number");
                                     bottomSheetFragment =
                                         PhoneNumberFragment()
                                     bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
                                 }
-                                is TdApi.AuthorizationStateWaitCode ->
-                                {
+                                is TdApi.AuthorizationStateWaitCode -> {
                                     Timber.d("Waiting for code");
                                     bottomSheetFragment =
                                         CodeFragment()
@@ -120,8 +105,7 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                                         bottomSheetFragment.tag
                                     )
                                 }
-                                is TdApi.AuthorizationStateWaitPassword ->
-                                {
+                                is TdApi.AuthorizationStateWaitPassword -> {
                                     Timber.d("Waiting for password");
                                     bottomSheetFragment =
                                         PasswordFragment()
@@ -130,11 +114,15 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                                         bottomSheetFragment.tag
                                     )
                                 }
+                                is TdApi.AuthorizationStateReady -> {
+                                    val intent = Intent(baseContext, ChannelsActivity::class.java)
+                                    startActivity(intent)
+                                }
                             }
                         }
                     }
                 }.catch { e ->
-                    Timber.e(e.message);
+                    Timber.e(e.message)
                     Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
                         .show()
 

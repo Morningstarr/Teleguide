@@ -11,6 +11,9 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.R
+import com.mongodb.alliance.databinding.FragmentCodeBinding
+import com.mongodb.alliance.databinding.FragmentPasswordBinding
+import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.Dispatchers
@@ -21,26 +24,39 @@ import kotlin.time.ExperimentalTime
 
 @InternalCoroutinesApi
 @ExperimentalTime
-class CodeFragment : BaseBottomSheetFragment() {
+class CodeFragment : BottomSheetDialogFragment() {
+
+    private var _binding: FragmentCodeBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var input : EditText
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
-        return inflater.inflate(R.layout.fragment_code, container, false)
+        inflater.inflate(R.layout.fragment_code, container, false)
+        _binding = FragmentCodeBinding.inflate(inflater, container, false)
+        val view = binding.root
+        return view
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        input = view.findViewById<EditText>(R.id.fr_cd_input)
+        input = binding.frCdInput
         lateinit var result : TelegramObject;
-        view.findViewById<Button>(R.id.fr_cd_confirm).setOnClickListener {
+        binding.frCdConfirm.setOnClickListener {
             lifecycleScope.launch {
-                withContext(Dispatchers.IO) {
-                    var result = callCodeConfirm()
-                    if(result.toString().contains("Ok")) {
+                try {
+                    withContext(Dispatchers.IO) {
+                        var result = callCodeConfirm()
+                    }
+                    if (result.toString().contains("Ok")) {
                         dismiss()
                     }
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e.message)
+                    Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
