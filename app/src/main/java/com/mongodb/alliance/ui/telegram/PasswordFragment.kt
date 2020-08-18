@@ -14,18 +14,27 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
+import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.services.telegram.Service
+import dagger.hilt.android.AndroidEntryPoint
+import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
 @InternalCoroutinesApi
 @ExperimentalTime
+@AndroidEntryPoint
 class PasswordFragment : BottomSheetDialogFragment() {
 
+    @TelegramServ
+    @Inject
+    lateinit var t_service : Service
     private var _binding: FragmentPasswordBinding? = null
     private val binding get() = _binding!!
 
@@ -64,7 +73,7 @@ class PasswordFragment : BottomSheetDialogFragment() {
     }
 
     private suspend fun callPasswordConfirm(): TelegramObject {
-        return (activity as ConnectTelegramActivity).client.exec(TdApi.CheckAuthenticationPassword(input.text.toString()))
+        return (t_service.returnServiceObj() as TelegramClient).exec(TdApi.CheckAuthenticationPassword(input.text.toString()))
     }
 
 }

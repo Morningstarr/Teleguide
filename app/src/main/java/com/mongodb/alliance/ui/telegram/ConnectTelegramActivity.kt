@@ -12,7 +12,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.ChannelsActivity
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
-import com.mongodb.alliance.services.telegram.IService
+import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.services.telegram.Service
+import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
@@ -27,14 +29,18 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 import java.lang.Runnable
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
 @InternalCoroutinesApi
 @ExperimentalTime
+@AndroidEntryPoint
 class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
 
+    @TelegramServ
+    @Inject lateinit var t_service: Service
     private lateinit var code: EditText
     //private var job: Job = Job()
     private val telegram = Telegram(
@@ -44,7 +50,8 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
         )
     )
 
-    val client = telegram.client()
+
+    //val client = t_service.returnServiceObj() as TelegramClient
 
 
     lateinit var bottomSheetFragment : BottomSheetDialogFragment;
@@ -53,7 +60,6 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
         get() = Dispatchers.Main + job*/
 
     override fun onDestroy() {
-
         super.onDestroy()
         //coroutineContext.cancelChildren()
         //client.cancel()
@@ -70,8 +76,8 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connect_telegram)
         setSupportActionBar(findViewById(R.id.toolbar))
-
-        lifecycleScope.launch {
+        t_service.initService()
+        /*lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 client.updates.onEach { value ->
                     when (value) {
@@ -134,15 +140,12 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/ {
                 }.collect()
 
             }
-        }
+        }*/
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            /*val bottomSheetFragment = BottomSheetFragment(1)
-            bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
-            launch {
-                val result = callCode()
-                onResult(result)
-            }*/
+            bottomSheetFragment =
+                    PhoneNumberFragment()
+                bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
         }
     }
 }
