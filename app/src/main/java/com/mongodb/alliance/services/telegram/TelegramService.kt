@@ -3,9 +3,12 @@ package com.mongodb.alliance.services.telegram
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.startActivity
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.ChannelProj
 import com.mongodb.alliance.ChannelsActivity
+import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.ui.telegram.CodeFragment
 import com.mongodb.alliance.ui.telegram.PasswordFragment
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
@@ -29,7 +32,7 @@ import kotlin.time.seconds
 @ExperimentalTime
 @InternalCoroutinesApi
 @Singleton
-class TelegramService : Service {
+class TelegramService : Service, GlobalBroker.Publisher {
 
     private var telegram : Telegram
     private var client : TelegramClient
@@ -46,8 +49,8 @@ class TelegramService : Service {
 
     lateinit var bottomSheetFragment : BottomSheetDialogFragment;
 
-    override suspend fun initService(context : AppCompatActivity) {
-        //lateinit var clientState : ClientState
+    override suspend fun initService() {
+        lateinit var clientState : ClientState
         client.updates.onEach { value ->
             when (value) {
                 is TdApi.UpdateAuthorizationState -> {
@@ -72,40 +75,23 @@ class TelegramService : Service {
                         }
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
-                            //clientState = ClientState.waitNumber
-                            bottomSheetFragment =
-                                PhoneNumberFragment()
-                            bottomSheetFragment.show(
-                                context.supportFragmentManager,
-                                bottomSheetFragment.tag
-                            )
+                            clientState = ClientState.waitNumber
+                            publish(StateChangedEvent(clientState))
                         }
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
-                            //clientState = ClientState.waitCode
-                            bottomSheetFragment =
-                                CodeFragment()
-                            bottomSheetFragment.show(
-                                context.supportFragmentManager,
-                                bottomSheetFragment.tag
-                            )
+                            clientState = ClientState.waitCode
+                            publish(StateChangedEvent(clientState))
                         }
                         is TdApi.AuthorizationStateWaitPassword -> {
                             Timber.d("Waiting for password");
-                            //clientState = ClientState.waitPassword
-                            bottomSheetFragment =
-                                PasswordFragment()
-                            bottomSheetFragment.show(
-                                context.supportFragmentManager,
-                                bottomSheetFragment.tag
-                            )
+                            clientState = ClientState.waitPassword
+                            publish(StateChangedEvent(clientState))
                         }
                         is TdApi.AuthorizationStateReady -> {
                             Timber.d("State ready");
-                            //clientState = ClientState.ready
-                            val intent = Intent(context.baseContext, ChannelsActivity::class.java)
-                            startActivity(context.baseContext, intent, null)
-                            //startActivity(Intent(context, LoginActivity::class.java))
+                            clientState = ClientState.ready
+                            publish(StateChangedEvent(clientState))
                         }
                     }
                 }
