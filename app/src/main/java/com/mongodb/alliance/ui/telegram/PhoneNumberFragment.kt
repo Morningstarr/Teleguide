@@ -59,9 +59,10 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
                 withContext(Dispatchers.IO) {
                     var result = callNumberConfirm()
                 }
-                if (result.toString().contains("Ok")) {
+                dismiss()
+                /*if (result.toString().contains("Ok")) {
                     dismiss()
-                }
+                }*/
             } catch (e: Exception) {
                 timber.log.Timber.e(e.message)
                 Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)

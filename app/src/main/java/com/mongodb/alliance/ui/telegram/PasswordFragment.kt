@@ -60,9 +60,10 @@ class PasswordFragment : BottomSheetDialogFragment() {
                     withContext(Dispatchers.IO) {
                         var result = callPasswordConfirm()
                     }
-                    if (result.toString().contains("Ok")) {
+                    dismiss()
+                    /*if (result.toString().contains("Ok")) {
                         dismiss()
-                    }
+                    }*/
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)

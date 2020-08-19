@@ -12,6 +12,7 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
@@ -53,11 +54,10 @@ class CodeFragment : BottomSheetDialogFragment() {
             lifecycleScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
-                        var result = callCodeConfirm()
+                        //var result = callCodeConfirm()
+                        (t_service as TelegramService).callCodeConfirm(input.text.toString())
                     }
-                    if (result.toString().contains("Ok")) {
-                        dismiss()
-                    }
+                    dismiss()
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
@@ -68,7 +68,6 @@ class CodeFragment : BottomSheetDialogFragment() {
     }
 
     private suspend fun callCodeConfirm(): TelegramObject {
-
         return (t_service.returnServiceObj() as TelegramClient).exec(TdApi.CheckAuthenticationCode(input.text.toString()))
     }
 
