@@ -5,4 +5,5 @@ enum class ClientState(val displayName: String) {
     waitCode("Wait Code"),
     waitPassword("Wait Password"),
     ready("State Ready"),
+    setParameters("Set Parameters")
 }

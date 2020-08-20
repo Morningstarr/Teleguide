@@ -17,7 +17,9 @@ import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
+import dev.whyoleg.ktd.api.authorization.getAuthorizationState
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
+import dev.whyoleg.ktd.api.tdlib.tdlib
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -49,8 +51,31 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
     lateinit var bottomSheetFragment : BottomSheetDialogFragment;
 
-    override suspend fun initService() {
-        lateinit var clientState : ClientState
+    suspend fun returnClientState(): TdApi.AuthorizationState {
+        return client.getAuthorizationState()
+    }
+
+    suspend fun setUpClient(){
+        val clientState = ClientState.setParameters
+        if(client.getAuthorizationState().toString() == TdApi.AuthorizationStateWaitTdlibParameters().toString()) {
+            client.setTdlibParameters(
+                TdApi.TdlibParameters(
+                    apiId = 1682238,
+                    apiHash = "c82da36c7e0b4b4b0bf9a22a6ac5cad0",
+                    databaseDirectory = ChannelProj.getContxt().filesDir.absolutePath,
+                    filesDirectory = ChannelProj.getContxt().filesDir.absolutePath,
+                    applicationVersion = "1.0",
+                    systemLanguageCode = "en",
+                    deviceModel = "Android",
+                    systemVersion = "gtfo"
+                )
+            )
+            client.exec(TdApi.CheckDatabaseEncryptionKey())
+        }
+        publish(StateChangedEvent(clientState))
+    }
+
+    suspend fun initClient(){
         client.updates.onEach { value ->
             when (value) {
                 is TdApi.UpdateAuthorizationState -> {
@@ -73,6 +98,22 @@ class TelegramService : Service, GlobalBroker.Publisher {
                         is TdApi.AuthorizationStateWaitEncryptionKey -> {
                             client.exec(TdApi.CheckDatabaseEncryptionKey())
                         }
+                    }
+                }
+            }
+        }.catch { e ->
+            Timber.e(e.message)
+        }.collect()
+    }
+
+
+    override suspend fun initService() {
+        lateinit var clientState : ClientState
+        client.updates.onEach { value ->
+            when (value) {
+                is TdApi.UpdateAuthorizationState -> {
+                    val state = value.authorizationState
+                    when (state) {
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
                             clientState = ClientState.waitNumber
@@ -100,9 +141,6 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
         }.catch { e ->
             Timber.e(e.message)
-            /*Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
-                .show()*/
-
         }.collect()
     }
 
@@ -122,70 +160,5 @@ class TelegramService : Service, GlobalBroker.Publisher {
             return true
         }
     }
-    /*suspend fun initializeClient(context : Activity){
-        //lifecycleScope.launch {
-            //withContext(Dispatchers.IO) {
-                client.updates.onEach { value ->
-                    when (value) {
-                        is TdApi.UpdateAuthorizationState -> {
-                            val state = (value as TdApi.UpdateAuthorizationState).authorizationState
-                            when (state) {
-                                is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                                    client.setTdlibParameters(
-                                        TdApi.TdlibParameters(
-                                            apiId = 1682238,
-                                            apiHash = "c82da36c7e0b4b4b0bf9a22a6ac5cad0",
-                                            databaseDirectory = context.applicationContext.filesDir.absolutePath,
-                                            filesDirectory = context.applicationContext.filesDir.absolutePath,
-                                            applicationVersion = "1.0",
-                                            systemLanguageCode = "en",
-                                            deviceModel = "Android",
-                                            systemVersion = "gtfo"
-                                        )
-                                    )
-                                }
-                                is TdApi.AuthorizationStateWaitEncryptionKey -> {
-                                    client.exec(TdApi.CheckDatabaseEncryptionKey())
-                                }
-                                is TdApi.AuthorizationStateWaitPhoneNumber -> {
-                                    Timber.d("Waiting for number");
-                                    bottomSheetFragment =
-                                        PhoneNumberFragment()
-                                    bottomSheetFragment.show(context.supportFragmentManager, bottomSheetFragment.tag)
-                                }
-                                is TdApi.AuthorizationStateWaitCode -> {
-                                    Timber.d("Waiting for code");
-                                    bottomSheetFragment =
-                                        CodeFragment()
-                                    bottomSheetFragment.show(
-                                        context.supportFragmentManager,
-                                        bottomSheetFragment.tag
-                                    )
-                                }
-                                is TdApi.AuthorizationStateWaitPassword -> {
-                                    Timber.d("Waiting for password");
-                                    bottomSheetFragment =
-                                        PasswordFragment()
-                                    bottomSheetFragment.show(
-                                        context.supportFragmentManager,
-                                        bottomSheetFragment.tag
-                                    )
-                                }
-                                is TdApi.AuthorizationStateReady -> {
-                                    val intent = Intent(context.baseContext, ChannelsActivity::class.java)
-                                    startActivity(intent)
-                                }
-                            }
-                        }
-                    }
-                }.catch { e ->
-                    Timber.e(e.message)
-                    /*Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
-                        .show()*/
 
-                }.collect()
-
-            //}
-        //}
-    }*/
 }

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
+import cafe.adriel.broker.unsubscribe
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.ChannelsActivity
@@ -30,24 +31,13 @@ import kotlin.time.seconds
 @InternalCoroutinesApi
 @ExperimentalTime
 @AndroidEntryPoint
-class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/, GlobalBroker.Subscriber {
+class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     @TelegramServ
     @Inject lateinit var t_service: Service
     private lateinit var code: EditText
-
-    //private var job: Job = Job()
-    //val client = t_service.returnServiceObj() as TelegramClient
-    /*override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + job*/
-
     lateinit var bottomSheetFragment : BottomSheetDialogFragment;
 
-    override fun onDestroy() {
-        super.onDestroy()
-        //coroutineContext.cancelChildren()
-        //client.cancel()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +58,7 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/, GlobalB
                 ClientState.waitCode -> {
                     bottomSheetFragment =
                         CodeFragment()
+
                     bottomSheetFragment.show(
                         this.supportFragmentManager,
                         bottomSheetFragment.tag
@@ -82,8 +73,7 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/, GlobalB
                     )
                 }
                 ClientState.ready -> {
-                    val intent = Intent(baseContext, ChannelsActivity::class.java)
-                    startActivity(intent)
+                    finish()
                 }
             }
         }
@@ -99,5 +89,10 @@ class ConnectTelegramActivity : AppCompatActivity()/*, CoroutineScope*/, GlobalB
                     PhoneNumberFragment()
                 bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unsubscribe()
     }
 }

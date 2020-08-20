@@ -1,12 +1,22 @@
 package com.mongodb.alliance
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.subscribe
+import com.mongodb.alliance.model.StateChangedEvent
+import com.mongodb.alliance.services.telegram.ClientState
+import com.mongodb.alliance.ui.telegram.CodeFragment
+import com.mongodb.alliance.ui.telegram.PasswordFragment
+import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import io.realm.mongodb.Credentials
+import timber.log.Timber
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var username: EditText
@@ -24,6 +34,7 @@ class LoginActivity : AppCompatActivity() {
 
         loginButton.setOnClickListener { login(false) }
         createUserButton.setOnClickListener { login(true) }
+
     }
 
     override fun onBackPressed() {
