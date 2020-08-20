@@ -16,6 +16,7 @@ import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
@@ -58,7 +59,7 @@ class PasswordFragment : BottomSheetDialogFragment() {
             lifecycleScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
-                        var result = callPasswordConfirm()
+                        var result = (t_service as TelegramService).callPasswordConfirm(input.text.toString())
                     }
                     dismiss()
                     /*if (result.toString().contains("Ok")) {
@@ -71,10 +72,6 @@ class PasswordFragment : BottomSheetDialogFragment() {
                 }
             }
         }
-    }
-
-    private suspend fun callPasswordConfirm(): TelegramObject {
-        return (t_service.returnServiceObj() as TelegramClient).exec(TdApi.CheckAuthenticationPassword(input.text.toString()))
     }
 
 }

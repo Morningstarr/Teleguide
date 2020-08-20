@@ -18,26 +18,20 @@ import cafe.adriel.broker.subscribe
 import cafe.adriel.broker.unsubscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.databinding.ActivityMainBinding
-import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.ChannelAdapter
+import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
 import dagger.hilt.android.AndroidEntryPoint
-import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
-import dev.whyoleg.ktd.api.TelegramObject
 import io.realm.Realm
-import io.realm.internal.common.Dispatcher
 import io.realm.kotlin.where
 import io.realm.mongodb.User
-import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.IO
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -75,9 +69,10 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                 }
                 ClientState.ready -> {
                     //TODO load_chats
+                    unsubscribe()
                     loadChats()
                     Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
-                    unsubscribe()
+
                 }
                 else -> {
                     //unsubscribe()
@@ -141,11 +136,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         else {
             launch {
                 withContext(Dispatchers.IO) {
-                    //val state = async { (t_service as TelegramService).returnClientState() }
-                    //if( state.await().contains("AuthorizationStateWaitTdlibParameters")) {
                     (t_service as TelegramService).setUpClient()
-
-                    //}
                     t_service.initService()
                 }
             }
@@ -158,17 +149,6 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
 
             Realm.setDefaultConfiguration(config)*/
 
-            lifecycleScope.launch{
-                withContext(Dispatchers.IO){
-                    //getChats()
-                    //deferredOne.await()
-                }
-
-                /*for(TdApi.Chat in chatList){
-                    var newChannel = ChannelRealm(TdApi.Chat)
-                }*/
-                Toast.makeText(baseContext, "11", Toast.LENGTH_SHORT).show()
-            }
 
             try {
                 //исключение вылетает здесь
@@ -230,8 +210,32 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         }
     }
 
-
     suspend fun loadChats() {
+        val chats = withContext(lifecycleScope.coroutineContext) {
+            (t_service as TelegramService).getChats()
+        }
 
+        val nm = chats as ArrayList<TdApi.Chat>
+        //val names = returnChatNames(nm)
+        for (i in 0 until nm.size){
+            if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                val channel =
+                    ChannelRealm(nm[i].title, "Folder")
+
+                realm.executeTransactionAsync { realm ->
+                    realm.insert(channel)
+                }
+            }
+        }
+        setUpRecyclerView(realm)
+    }
+
+    fun returnChatNames(chats: ArrayList<TdApi.Chat>) : ArrayList<String> {
+        lateinit var chatNames : ArrayList<String>
+        for(i in 0 until chats.size) {
+            chatNames.add((chats[i]).title)
+        }
+
+        return chatNames
     }
 }

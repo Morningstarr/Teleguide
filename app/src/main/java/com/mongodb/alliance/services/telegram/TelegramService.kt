@@ -1,33 +1,24 @@
 package com.mongodb.alliance.services.telegram
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat.startActivity
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.ChannelProj
-import com.mongodb.alliance.ChannelsActivity
 import com.mongodb.alliance.model.StateChangedEvent
-import com.mongodb.alliance.ui.telegram.CodeFragment
-import com.mongodb.alliance.ui.telegram.PasswordFragment
-import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import dev.whyoleg.ktd.api.authorization.getAuthorizationState
+import dev.whyoleg.ktd.api.chat.getChats
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
-import dev.whyoleg.ktd.api.tdlib.tdlib
-import kotlinx.coroutines.*
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -49,7 +40,6 @@ class TelegramService : Service, GlobalBroker.Publisher {
         client = telegram.client()
     }
 
-    lateinit var bottomSheetFragment : BottomSheetDialogFragment;
 
     suspend fun returnClientState(): TdApi.AuthorizationState {
         return client.getAuthorizationState()
@@ -148,17 +138,33 @@ class TelegramService : Service, GlobalBroker.Publisher {
         return client.exec(TdApi.CheckAuthenticationCode(input))
     }
 
+    suspend fun callPasswordConfirm(input : String): TelegramObject {
+        return client.exec(TdApi.CheckAuthenticationPassword(input))
+    }
+
+    suspend fun callNumberConfirm(input : String): TelegramObject {
+        return client.exec(TdApi.SetAuthenticationPhoneNumber(input,null))
+    }
+
+    suspend fun getChatIds() : LongArray {
+        val getChats = TdApi.GetChats(TdApi.ChatListMain(), Long.MAX_VALUE, 0, Int.MAX_VALUE)   //TODO возмножно стоить изменить max_value на что-то другое
+        val chats : TdApi.Chats = client.exec(getChats) as TdApi.Chats
+        return chats.chatIds
+    }
+
+    suspend fun getChats(): List<TdApi.Chat> = getChatIds()
+        .map { ids -> getChat(ids) }
+
+    suspend fun getChat(chatId: Long): TdApi.Chat {
+        return client.exec(TdApi.GetChat(chatId)) as TdApi.Chat
+    }
+
+
     override fun returnServiceObj(): TelegramClient {
         return client
     }
 
-    fun isInit() : Boolean {
-        if (client == null){
-            return false
-        }
-        else{
-            return true
-        }
-    }
+
+
 
 }

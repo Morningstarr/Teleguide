@@ -14,6 +14,7 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
@@ -57,7 +58,7 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
             lifecycleScope.launch {
                 try {
                 withContext(Dispatchers.IO) {
-                    var result = callNumberConfirm()
+                    var result = (t_service as TelegramService).callNumberConfirm(input.text.toString())
                 }
                 dismiss()
                 /*if (result.toString().contains("Ok")) {
@@ -75,10 +76,6 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private suspend fun callNumberConfirm(): TelegramObject {
-        return (t_service.returnServiceObj() as TelegramClient).exec(TdApi.SetAuthenticationPhoneNumber(input.text.toString(),null))
     }
 
 }
