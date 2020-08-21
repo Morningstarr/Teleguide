@@ -52,6 +52,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 ClientState.waitNumber -> {
                     bottomSheetFragment =
                         PhoneNumberFragment()
+
                     bottomSheetFragment.show(
                         this.supportFragmentManager,
                         bottomSheetFragment.tag

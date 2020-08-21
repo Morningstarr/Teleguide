@@ -1,5 +1,6 @@
 package com.mongodb.alliance.services.telegram
 
+import android.os.Build
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.ChannelProj
@@ -11,8 +12,11 @@ import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import dev.whyoleg.ktd.api.authorization.getAuthorizationState
 import dev.whyoleg.ktd.api.chat.getChats
+import dev.whyoleg.ktd.api.log.logOut
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
+import dev.whyoleg.ktd.api.util.close
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
@@ -58,30 +62,45 @@ class TelegramService : Service, GlobalBroker.Publisher {
             is TdApi.AuthorizationStateReady ->{
                 return ClientState.ready
             }
+            is TdApi.AuthorizationStateClosed -> {
+                var newClient  = telegram.client()
+                client = newClient
+                setUpClient()
+                publish(ClientState.waitNumber)
+                return ClientState.waitNumber
+            }
             else -> {
-                return ClientState.ready
+                return ClientState.undefined
             }
         }
     }
 
     override suspend fun setUpClient(){
-        val clientState = ClientState.setParameters
-        if(client.getAuthorizationState().toString() == TdApi.AuthorizationStateWaitTdlibParameters().toString()) {
-            client.setTdlibParameters(
-                TdApi.TdlibParameters(
-                    apiId = 1682238,
-                    apiHash = "c82da36c7e0b4b4b0bf9a22a6ac5cad0",
-                    databaseDirectory = ChannelProj.getContxt().filesDir.absolutePath,
-                    filesDirectory = ChannelProj.getContxt().filesDir.absolutePath,
-                    applicationVersion = "1.0",
-                    systemLanguageCode = "en",
-                    deviceModel = "Android",
-                    systemVersion = "gtfo"
+        try {
+            val clientState = ClientState.setParameters
+            if (client.getAuthorizationState()
+                    .toString() == TdApi.AuthorizationStateWaitTdlibParameters().toString()
+            ) {
+
+                client.setTdlibParameters(
+                    TdApi.TdlibParameters(
+                        apiId = 1682238,
+                        apiHash = "c82da36c7e0b4b4b0bf9a22a6ac5cad0",
+                        databaseDirectory = ChannelProj.getContxt().filesDir.absolutePath,
+                        filesDirectory = ChannelProj.getContxt().filesDir.absolutePath,
+                        applicationVersion = "1.0",
+                        systemLanguageCode = "en",
+                        deviceModel = Build.MODEL,
+                        systemVersion = Build.VERSION.SDK_INT.toString()
+                    )
                 )
-            )
-            client.exec(TdApi.CheckDatabaseEncryptionKey())
+                client.exec(TdApi.CheckDatabaseEncryptionKey())
+            }
+            publish(StateChangedEvent(clientState))
         }
-        publish(StateChangedEvent(clientState))
+        catch(e: Exception){
+            Timber.e(e.message)
+        }
     }
 
     override suspend fun initService() {
@@ -151,7 +170,14 @@ class TelegramService : Service, GlobalBroker.Publisher {
         return client
     }
 
+    suspend fun  logOut(){
+        try{
+            client.logOut()
 
-
+        }
+        catch(e: Exception){
+            Timber.e(e.message)
+        }
+    }
 
 }

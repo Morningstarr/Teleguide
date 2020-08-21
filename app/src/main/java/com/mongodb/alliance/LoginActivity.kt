@@ -57,7 +57,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun onLoginFailed(errorMsg: String) {
-        Log.e(TAG(), errorMsg)
+        Timber.e(errorMsg)
         Toast.makeText(baseContext, errorMsg, Toast.LENGTH_LONG).show()
     }
 
@@ -83,11 +83,11 @@ class LoginActivity : AppCompatActivity() {
                 if (!it.isSuccess)
                 {
                     onLoginFailed("Could not register user.")
-                    Log.e(TAG(), "Error: ${it.error}")
+                    Timber.e("Error: ${it.error}")
                 }
                 else
                 {
-                    Log.i(TAG(), "Successfully registered user.")
+                    Timber.d("Successfully registered user.")
                     login(false)
                 }
             }

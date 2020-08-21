@@ -64,9 +64,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         subscribe<StateChangedEvent>(lifecycleScope){ event ->
             when(event.clientState){
                 ClientState.setParameters -> {
-                    //loadChats()
                     Toast.makeText(baseContext, "parameters set", Toast.LENGTH_SHORT).show()
-                    //unsubscribe()
                 }
                 ClientState.ready -> {
                     //TODO load_chats
@@ -76,14 +74,8 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
 
                 }
                 else -> {
-                    //unsubscribe()
-                    //job.cancelAndJoin()
-                    //startActivity(Intent(this, ConnectTelegramActivity::class.java))
 
                 }
-                /*ClientState.waitNumber -> {
-                    startActivity(Intent(this, ConnectTelegramActivity::class.java))
-                }*/
             }
         }
 
@@ -129,21 +121,26 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
-            Log.w(TAG(), e)
+            Timber.e(e.message)
         }
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
             launch {
-                withContext(Dispatchers.IO) {
-                    (t_service as TelegramService).setUpClient()
-                    //t_service.initService()
+                val task = async {
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).returnClientState()
+                    }
+                }
+                val state = task.await()
+                if(state == ClientState.waitParameters) {
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).setUpClient()
+                    }
                 }
             }
             setUpRecyclerView(realm)
-
-            //startActivity(Intent(this, ConnectTelegramActivity::class.java))
 
             /*val config = SyncConfiguration.Builder(user!!, "New Folder")
                 .waitForInitialRemoteData()
@@ -163,7 +160,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                 })*/
             }
             catch(e: Exception){
-                Log.v(TAG(), "здесь")
+                Timber.e(e.message)
             }
         }
     }
@@ -196,20 +193,24 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
             R.id.action_logout -> {
                 user?.logOutAsync {
                     if (it.isSuccess) {
+                        realm = Realm.getDefaultInstance()
                         realm.close()
                         user = null
                         Timber.d("user logged out")
+                        launch{
+                            (t_service as TelegramService).logOut()
+                        }
                         startActivity(Intent(this, LoginActivity::class.java))
                     } else {
-                        Timber.d("log out failed! Error: ${it.error}")
+                        Timber.e("log out failed! Error: ${it.error}")
                     }
                 }
                 true
             }
             R.id.action_connect_telegram -> {
                 lateinit var state : ClientState
-                lifecycleScope.launch {
-                    val task = lifecycleScope.async {
+                launch {
+                    val task = async {
                         withContext(Dispatchers.IO) {
                             (t_service as TelegramService).returnClientState()
                         }
@@ -233,12 +234,10 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
 
 
     suspend fun loadChats() {
-        val chats = withContext(lifecycleScope.coroutineContext) {
+        val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
         }
-
         val nm = chats as ArrayList<TdApi.Chat>
-        //val names = returnChatNames(nm)
         for (i in 0 until nm.size){
             if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
                 val channel =
@@ -249,7 +248,6 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                 }
             }
         }
-        setUpRecyclerView(realm)
     }
 
 }
