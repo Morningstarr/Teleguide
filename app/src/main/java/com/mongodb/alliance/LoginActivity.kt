@@ -9,25 +9,31 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import cafe.adriel.broker.subscribe
 import com.mongodb.alliance.databinding.ActivityLoginBinding
 import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.ui.telegram.CodeFragment
+import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
 import com.mongodb.alliance.ui.telegram.PasswordFragment
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import io.realm.mongodb.Credentials
+import kotlinx.coroutines.InternalCoroutinesApi
 import timber.log.Timber
+import kotlin.time.ExperimentalTime
 
-class LoginActivity : AppCompatActivity() {
+@ExperimentalTime
+@InternalCoroutinesApi
+class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
     private lateinit var username: EditText
     private lateinit var password: EditText
     private lateinit var loginButton: Button
     private lateinit var createUserButton: Button
     private lateinit var binding: ActivityLoginBinding
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    public override fun onCreate(savedInstanceState: Bundle?)  {
         super.onCreate(savedInstanceState)
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
@@ -39,8 +45,8 @@ class LoginActivity : AppCompatActivity() {
         loginButton = binding.buttonLogin
         createUserButton = binding.buttonCreate
 
-        loginButton.setOnClickListener { login(false) }
-        createUserButton.setOnClickListener { login(true) }
+        loginButton.setOnClickListener { login(false, false) }
+        createUserButton.setOnClickListener { login(true, false) }
 
     }
 
@@ -48,7 +54,10 @@ class LoginActivity : AppCompatActivity() {
         moveTaskToBack(true)
     }
 
+
     private fun onLoginAfterSignUpSuccess(){
+        startActivity(Intent(this, ConnectTelegramActivity::class.java))
+        //publish(ClientState.waitNumber)
         finish()
     }
 
@@ -61,7 +70,7 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(baseContext, errorMsg, Toast.LENGTH_LONG).show()
     }
 
-    private fun login(createUser: Boolean) {
+    private fun login(createUser: Boolean, firstLogin: Boolean) {
         if (!validateCredentials())
         {
             onLoginFailed("Invalid username or password")
@@ -88,7 +97,7 @@ class LoginActivity : AppCompatActivity() {
                 else
                 {
                     Timber.d("Successfully registered user.")
-                    login(false)
+                    login(false, true)
                 }
             }
         }
@@ -104,7 +113,12 @@ class LoginActivity : AppCompatActivity() {
                 }
                 else
                 {
-                    onLoginSuccess()
+                    if(firstLogin){
+                        onLoginAfterSignUpSuccess()
+                    }
+                    else {
+                        onLoginSuccess()
+                    }
                 }
             }
         }

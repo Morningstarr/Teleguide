@@ -19,6 +19,8 @@ import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlin.time.ExperimentalTime
 
 
 class FolderActivity : AppCompatActivity() {
@@ -69,6 +71,8 @@ class FolderActivity : AppCompatActivity() {
         }
     }
 
+    @InternalCoroutinesApi
+    @ExperimentalTime
     override fun onStart() {
         super.onStart()
         try {
@@ -125,6 +129,8 @@ class FolderActivity : AppCompatActivity() {
         return true
     }
 
+    @InternalCoroutinesApi
+    @ExperimentalTime
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
