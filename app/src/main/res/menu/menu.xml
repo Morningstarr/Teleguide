@@ -7,5 +7,11 @@
         android:orderInCategory="100"
         android:title="@string/logout"
         android:text="@string/logout"
-        app:showAsAction="always"/>
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_connect_telegram"
+        android:orderInCategory="100"
+        android:title="@string/connect_telegram"
+        android:text="@string/connect_telegram"
+        app:showAsAction="ifRoom"/>
 </menu>

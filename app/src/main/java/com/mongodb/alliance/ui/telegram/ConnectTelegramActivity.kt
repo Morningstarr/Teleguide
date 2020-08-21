@@ -2,6 +2,8 @@ package com.mongodb.alliance.ui.telegram
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -80,6 +82,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         lifecycleScope.launch{
             withContext(Dispatchers.IO) {
+                t_service.setUpClient()
                 t_service.initService()
             }
         }
@@ -88,6 +91,24 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             bottomSheetFragment =
                     PhoneNumberFragment()
                 bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.skip, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_skip -> {
+                //todo окно подтверждения пропуска привязки
+                finish()
+                true
+            }
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
         }
     }
 

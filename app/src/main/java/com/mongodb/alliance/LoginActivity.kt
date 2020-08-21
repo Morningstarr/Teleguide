@@ -10,6 +10,8 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
+import com.mongodb.alliance.databinding.ActivityLoginBinding
+import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.ui.telegram.CodeFragment
@@ -23,14 +25,19 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var password: EditText
     private lateinit var loginButton: Button
     private lateinit var createUserButton: Button
+    private lateinit var binding: ActivityLoginBinding
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
-        username = findViewById(R.id.input_username)
-        password = findViewById(R.id.input_password)
-        loginButton = findViewById(R.id.button_login)
-        createUserButton = findViewById(R.id.button_create)
+
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+
+        username = binding.inputUsername
+        password = binding.inputPassword
+        loginButton = binding.buttonLogin
+        createUserButton = binding.buttonCreate
 
         loginButton.setOnClickListener { login(false) }
         createUserButton.setOnClickListener { login(true) }
@@ -39,6 +46,10 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         moveTaskToBack(true)
+    }
+
+    private fun onLoginAfterSignUpSuccess(){
+        finish()
     }
 
     private fun onLoginSuccess() {

@@ -4,5 +4,6 @@ import androidx.appcompat.app.AppCompatActivity
 
 interface Service {
     suspend fun initService()
+    suspend fun setUpClient()
     fun returnServiceObj() : Any
 }

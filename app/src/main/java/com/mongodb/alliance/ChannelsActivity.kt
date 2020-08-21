@@ -32,6 +32,7 @@ import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
 import kotlinx.coroutines.*
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -76,8 +77,8 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                 }
                 else -> {
                     //unsubscribe()
-                    job.cancelAndJoin()
-                    startActivity(Intent(this, ConnectTelegramActivity::class.java))
+                    //job.cancelAndJoin()
+                    //startActivity(Intent(this, ConnectTelegramActivity::class.java))
 
                 }
                 /*ClientState.waitNumber -> {
@@ -137,9 +138,10 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
             launch {
                 withContext(Dispatchers.IO) {
                     (t_service as TelegramService).setUpClient()
-                    t_service.initService()
+                    //t_service.initService()
                 }
             }
+            setUpRecyclerView(realm)
 
             //startActivity(Intent(this, ConnectTelegramActivity::class.java))
 
@@ -196,10 +198,29 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                     if (it.isSuccess) {
                         realm.close()
                         user = null
-                        Log.v(TAG(), "user logged out")
+                        Timber.d("user logged out")
                         startActivity(Intent(this, LoginActivity::class.java))
                     } else {
-                        Log.e(TAG(), "log out failed! Error: ${it.error}")
+                        Timber.d("log out failed! Error: ${it.error}")
+                    }
+                }
+                true
+            }
+            R.id.action_connect_telegram -> {
+                lateinit var state : ClientState
+                lifecycleScope.launch {
+                    val task = lifecycleScope.async {
+                        withContext(Dispatchers.IO) {
+                            (t_service as TelegramService).returnClientState()
+                        }
+                    }
+                    state = task.await()
+
+                    if(state != ClientState.ready) {
+                        startActivity(Intent(baseContext, ConnectTelegramActivity::class.java))
+                    }
+                    else{
+                        Toast.makeText(baseContext, "Account already connected", Toast.LENGTH_SHORT).show()
                     }
                 }
                 true
@@ -209,6 +230,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
             }
         }
     }
+
 
     suspend fun loadChats() {
         val chats = withContext(lifecycleScope.coroutineContext) {
@@ -230,12 +252,4 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         setUpRecyclerView(realm)
     }
 
-    fun returnChatNames(chats: ArrayList<TdApi.Chat>) : ArrayList<String> {
-        lateinit var chatNames : ArrayList<String>
-        for(i in 0 until chats.size) {
-            chatNames.add((chats[i]).title)
-        }
-
-        return chatNames
-    }
 }

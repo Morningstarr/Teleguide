@@ -41,11 +41,30 @@ class TelegramService : Service, GlobalBroker.Publisher {
     }
 
 
-    suspend fun returnClientState(): TdApi.AuthorizationState {
-        return client.getAuthorizationState()
+    suspend fun returnClientState(): ClientState{
+        when(client.getAuthorizationState()){
+            is TdApi.AuthorizationStateWaitTdlibParameters ->{
+                return ClientState.waitParameters
+            }
+            is TdApi.AuthorizationStateWaitPhoneNumber ->{
+                return ClientState.waitNumber
+            }
+            is TdApi.AuthorizationStateWaitCode ->{
+                return ClientState.waitCode
+            }
+            is TdApi.AuthorizationStateWaitPassword ->{
+                return ClientState.waitPassword
+            }
+            is TdApi.AuthorizationStateReady ->{
+                return ClientState.ready
+            }
+            else -> {
+                return ClientState.ready
+            }
+        }
     }
 
-    suspend fun setUpClient(){
+    override suspend fun setUpClient(){
         val clientState = ClientState.setParameters
         if(client.getAuthorizationState().toString() == TdApi.AuthorizationStateWaitTdlibParameters().toString()) {
             client.setTdlibParameters(
@@ -64,38 +83,6 @@ class TelegramService : Service, GlobalBroker.Publisher {
         }
         publish(StateChangedEvent(clientState))
     }
-
-    suspend fun initClient(){
-        client.updates.onEach { value ->
-            when (value) {
-                is TdApi.UpdateAuthorizationState -> {
-                    val state = value.authorizationState
-                    when (state) {
-                        is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                            client.setTdlibParameters(
-                                TdApi.TdlibParameters(
-                                    apiId = 1682238,
-                                    apiHash = "c82da36c7e0b4b4b0bf9a22a6ac5cad0",
-                                    databaseDirectory = ChannelProj.getContxt().filesDir.absolutePath,
-                                    filesDirectory = ChannelProj.getContxt().filesDir.absolutePath,
-                                    applicationVersion = "1.0",
-                                    systemLanguageCode = "en",
-                                    deviceModel = "Android",
-                                    systemVersion = "gtfo"
-                                )
-                            )
-                        }
-                        is TdApi.AuthorizationStateWaitEncryptionKey -> {
-                            client.exec(TdApi.CheckDatabaseEncryptionKey())
-                        }
-                    }
-                }
-            }
-        }.catch { e ->
-            Timber.e(e.message)
-        }.collect()
-    }
-
 
     override suspend fun initService() {
         lateinit var clientState : ClientState
