@@ -15,10 +15,12 @@ import dev.whyoleg.ktd.api.chat.getChats
 import dev.whyoleg.ktd.api.log.logOut
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
 import dev.whyoleg.ktd.api.util.close
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 import javax.inject.Inject
@@ -33,6 +35,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
     private var telegram : Telegram
     private var client : TelegramClient
+    private lateinit var clientState : ClientState
 
     @Inject constructor() {
         telegram = Telegram(
@@ -103,8 +106,9 @@ class TelegramService : Service, GlobalBroker.Publisher {
         }
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun initService() {
-        lateinit var clientState : ClientState
+        //lateinit var clientState : ClientState
         client.updates.onEach { value ->
             when (value) {
                 is TdApi.UpdateAuthorizationState -> {
@@ -113,32 +117,42 @@ class TelegramService : Service, GlobalBroker.Publisher {
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
                             clientState = ClientState.waitNumber
-                            publish(StateChangedEvent(clientState))
+                            publish(StateChangedEvent(clientState), retain = true)
                         }
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
                             clientState = ClientState.waitCode
-                            publish(StateChangedEvent(clientState))
+                            publish(StateChangedEvent(clientState), retain = true)
                         }
                         is TdApi.AuthorizationStateWaitPassword -> {
                             Timber.d("Waiting for password");
                             clientState = ClientState.waitPassword
-                            publish(StateChangedEvent(clientState))
+                            publish(StateChangedEvent(clientState), retain = true)
                         }
                         is TdApi.AuthorizationStateReady -> {
                             Timber.d("State ready");
                             clientState = ClientState.ready
-                            publish(StateChangedEvent(clientState))
+                            publish(StateChangedEvent(clientState), retain = true)
                         }
                     }
-                }
 
+                }
             }
 
-        }.catch { e ->
-            Timber.e(e.message)
-        }.collect()
+        }.catch {
+            Timber.e(it.message)
+        }
+            //onCompletion { publishState() }
+        .collect()
+
+
     }
+
+    suspend fun publishState(){
+        publish(StateChangedEvent(clientState))
+        //clientState = ClientState.undefined
+    }
+
 
     suspend fun callCodeConfirm(input : String): TelegramObject {
         return client.exec(TdApi.CheckAuthenticationCode(input))

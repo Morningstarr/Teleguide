@@ -67,11 +67,9 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                     Toast.makeText(baseContext, "parameters set", Toast.LENGTH_SHORT).show()
                 }
                 ClientState.ready -> {
-                    //TODO load_chats
                     unsubscribe()
                     loadChats()
                     Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
-
                 }
                 else -> {
 

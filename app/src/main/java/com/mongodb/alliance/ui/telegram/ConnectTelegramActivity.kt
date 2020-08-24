@@ -8,9 +8,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import cafe.adriel.broker.GlobalBroker
-import cafe.adriel.broker.subscribe
-import cafe.adriel.broker.unsubscribe
+import cafe.adriel.broker.*
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.ChannelsActivity
@@ -19,6 +17,7 @@ import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClientConfiguration
@@ -46,28 +45,40 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         setContentView(R.layout.activity_connect_telegram)
         setSupportActionBar(findViewById(R.id.toolbar))
 
-        subscribe<StateChangedEvent>(lifecycleScope){ event ->
+        subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
             Timber.d("State changed")
             when(event.clientState){
                 ClientState.waitNumber -> {
-                    bottomSheetFragment =
-                        PhoneNumberFragment()
+                    //removeRetained<StateChangedEvent>()
+                    //val lastEvent = getRetained<StateChangedEvent>()
+                    //if(lastEvent?.clientState != ClientState.waitPassword && lastEvent?.clientState != ClientState.waitCode) {
+                        bottomSheetFragment =
+                            PhoneNumberFragment()
 
-                    bottomSheetFragment.show(
-                        this.supportFragmentManager,
-                        bottomSheetFragment.tag
-                    )
+                        bottomSheetFragment.show(
+                            this.supportFragmentManager,
+                            bottomSheetFragment.tag
+                        )
+                    //}
                 }
                 ClientState.waitCode -> {
-                    bottomSheetFragment =
-                        CodeFragment()
+                    //removeRetained<StateChangedEvent>()
+                    //val lastEvent = getRetained<StateChangedEvent>()
+                    //if(lastEvent?.clientState != ClientState.waitPassword) {
+                        bottomSheetFragment =
+                            CodeFragment()
 
-                    bottomSheetFragment.show(
-                        this.supportFragmentManager,
-                        bottomSheetFragment.tag
-                    )
+                        bottomSheetFragment.show(
+                            this.supportFragmentManager,
+                            bottomSheetFragment.tag
+                        )
+                    //}
                 }
                 ClientState.waitPassword -> {
+                    //val lastEvent = getRetained<StateChangedEvent>()
+                    /*if(bottomSheetFragment.isVisible){
+                        bottomSheetFragment.dismiss()
+                    }*/
                     bottomSheetFragment =
                         PasswordFragment()
                     bottomSheetFragment.show(
@@ -87,6 +98,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 t_service.initService()
             }
         }
+
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
             bottomSheetFragment =
