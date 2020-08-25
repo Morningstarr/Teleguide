@@ -49,36 +49,24 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             Timber.d("State changed")
             when(event.clientState){
                 ClientState.waitNumber -> {
-                    //removeRetained<StateChangedEvent>()
-                    //val lastEvent = getRetained<StateChangedEvent>()
-                    //if(lastEvent?.clientState != ClientState.waitPassword && lastEvent?.clientState != ClientState.waitCode) {
-                        bottomSheetFragment =
-                            PhoneNumberFragment()
+                    bottomSheetFragment =
+                        PhoneNumberFragment()
 
-                        bottomSheetFragment.show(
-                            this.supportFragmentManager,
-                            bottomSheetFragment.tag
-                        )
-                    //}
+                    bottomSheetFragment.show(
+                        this.supportFragmentManager,
+                        bottomSheetFragment.tag
+                    )
                 }
                 ClientState.waitCode -> {
-                    //removeRetained<StateChangedEvent>()
-                    //val lastEvent = getRetained<StateChangedEvent>()
-                    //if(lastEvent?.clientState != ClientState.waitPassword) {
-                        bottomSheetFragment =
-                            CodeFragment()
+                    bottomSheetFragment =
+                        CodeFragment()
 
-                        bottomSheetFragment.show(
-                            this.supportFragmentManager,
-                            bottomSheetFragment.tag
-                        )
-                    //}
+                    bottomSheetFragment.show(
+                        this.supportFragmentManager,
+                        bottomSheetFragment.tag
+                    )
                 }
                 ClientState.waitPassword -> {
-                    //val lastEvent = getRetained<StateChangedEvent>()
-                    /*if(bottomSheetFragment.isVisible){
-                        bottomSheetFragment.dismiss()
-                    }*/
                     bottomSheetFragment =
                         PasswordFragment()
                     bottomSheetFragment.show(

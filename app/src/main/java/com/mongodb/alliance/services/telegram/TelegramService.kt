@@ -108,7 +108,6 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
     @ExperimentalCoroutinesApi
     override suspend fun initService() {
-        //lateinit var clientState : ClientState
         client.updates.onEach { value ->
             when (value) {
                 is TdApi.UpdateAuthorizationState -> {
@@ -142,17 +141,8 @@ class TelegramService : Service, GlobalBroker.Publisher {
         }.catch {
             Timber.e(it.message)
         }
-            //onCompletion { publishState() }
         .collect()
-
-
     }
-
-    suspend fun publishState(){
-        publish(StateChangedEvent(clientState))
-        //clientState = ClientState.undefined
-    }
-
 
     suspend fun callCodeConfirm(input : String): TelegramObject {
         return client.exec(TdApi.CheckAuthenticationCode(input))
