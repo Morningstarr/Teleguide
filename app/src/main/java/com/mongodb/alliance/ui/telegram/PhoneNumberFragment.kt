@@ -9,12 +9,14 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
+import com.mongodb.alliance.ui.telegram.PhoneNumberFragment.PhoneEditConverter.toNumber
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
@@ -38,7 +40,27 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
     private var _binding: FragmentPhoneNumberBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var input : EditText
+    private lateinit var input : PhoneNumberEditText
+
+    object PhoneEditConverter {
+
+        @JvmStatic
+        fun toString( //read number
+            view: PhoneNumberEditText,
+            value: String? //input number
+        ): String? {
+            return PhoneNumberEditText.fromTextNumber(view, value ?: "")
+        }
+
+        @JvmStatic
+        fun toNumber( //write number
+            view: PhoneNumberEditText,
+            value: String? //can be ignored
+        ): String? {
+            return PhoneNumberEditText.toTextNumber(view)
+        }
+    }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
@@ -58,7 +80,11 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
             lifecycleScope.launch {
                 try {
                 withContext(Dispatchers.IO) {
-                    var result = (t_service as TelegramService).callNumberConfirm(input.text.toString())
+                    var result = toNumber(input, "")?.let { it1 ->
+                        (t_service as TelegramService).callNumberConfirm(
+                            it1
+                        )
+                    }
                 }
                 dismiss()
                 /*if (result.toString().contains("Ok")) {

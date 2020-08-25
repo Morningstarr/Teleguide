@@ -9,12 +9,77 @@
     app:behavior_peekHeight="56dp"
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-    <EditText
-        android:id="@+id/fr_cd_input"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:inputType="number" />
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/fr_cd_n1"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:gravity="center_horizontal"
+            android:inputType="number"
+            android:maxLength="1"
+            android:nextFocusRight="@+id/fr_cd_n2"
+            android:nextFocusLeft="@+id/fr_cd_n1"
+            android:textSize="24sp"
+            android:imeOptions="actionNext"/>
+
+        <EditText
+            android:id="@+id/fr_cd_n2"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:gravity="center_horizontal"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="24sp"
+            android:nextFocusRight="@+id/fr_cd_n3"
+            android:nextFocusLeft="@+id/fr_cd_n1"
+            android:imeOptions="actionNext"/>
+
+        <EditText
+            android:id="@+id/fr_cd_n3"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:gravity="center_horizontal"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="24sp"
+            android:nextFocusRight="@+id/fr_cd_n4"
+            android:nextFocusLeft="@+id/fr_cd_n2"
+            android:imeOptions="actionNext"/>
+
+        <EditText
+            android:id="@+id/fr_cd_n4"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:gravity="center_horizontal"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="24sp"
+            android:nextFocusRight="@+id/fr_cd_n5"
+            android:nextFocusLeft="@+id/fr_cd_n3"
+            android:imeOptions="actionNext"/>
+
+        <EditText
+            android:id="@+id/fr_cd_n5"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:gravity="center_horizontal"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="24sp"
+            android:imeOptions="actionDone"
+            android:nextFocusLeft="@+id/fr_cd_n4"/>
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/fr_cd_confirm"

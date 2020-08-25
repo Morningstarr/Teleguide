@@ -1,6 +1,8 @@
 package com.mongodb.alliance.ui.telegram
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +10,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.mongodb.alliance.CodeTextWatcher
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
@@ -27,7 +30,7 @@ import kotlin.time.ExperimentalTime
 @InternalCoroutinesApi
 @ExperimentalTime
 @AndroidEntryPoint
-class CodeFragment : BottomSheetDialogFragment() {
+class CodeFragment() : BottomSheetDialogFragment() {
 
     @TelegramServ
     @Inject lateinit var t_service : Service
@@ -35,7 +38,12 @@ class CodeFragment : BottomSheetDialogFragment() {
     private var _binding: FragmentCodeBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var input : EditText
+    private lateinit var n1 : EditText
+    private lateinit var n2 : EditText
+    private lateinit var n3 : EditText
+    private lateinit var n4 : EditText
+    private lateinit var n5 : EditText
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
@@ -47,15 +55,28 @@ class CodeFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        n1 = binding.frCdN1
+        n2 = binding.frCdN2
+        n3 = binding.frCdN3
+        n4 = binding.frCdN4
+        n5 = binding.frCdN5
 
-        input = binding.frCdInput
+        n1.addTextChangedListener(object : CodeTextWatcher(n1, n2, true) { })
+        n2.addTextChangedListener(object : CodeTextWatcher(n1, n3, true) { })
+        n3.addTextChangedListener(object : CodeTextWatcher(n2, n4,true) { })
+        n4.addTextChangedListener(object : CodeTextWatcher(n3, n5,true) { })
+        n5.addTextChangedListener(object : CodeTextWatcher(n4, binding.frCdConfirm, false) { })
+
+
         lateinit var result : TelegramObject;
         binding.frCdConfirm.setOnClickListener {
+            var input : String = n1.text.toString() + n2.text.toString() +
+                    n3.text.toString() + n4.text.toString() + n5.text.toString()
             lifecycleScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
                         //var result = callCodeConfirm()
-                        (t_service as TelegramService).callCodeConfirm(input.text.toString())
+                        (t_service as TelegramService).callCodeConfirm(input)
                     }
                     dismiss()
                 } catch (e: Exception) {
@@ -67,8 +88,8 @@ class CodeFragment : BottomSheetDialogFragment() {
         }
     }
 
-    private suspend fun callCodeConfirm(): TelegramObject {
+    /*private suspend fun callCodeConfirm(): TelegramObject {
         return (t_service.returnServiceObj() as TelegramClient).exec(TdApi.CheckAuthenticationCode(input.text.toString()))
-    }
+    }*/
 
 }

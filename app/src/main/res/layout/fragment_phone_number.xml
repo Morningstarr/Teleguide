@@ -15,13 +15,35 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".ui.telegram.PhoneNumberFragment">-->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_marginTop="50dp">
 
-        <EditText
+        <com.github.vardemin.materialcountrypicker.PhoneNumberEditText
             android:id="@+id/fr_p_n_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:inputType="number|phone" />
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="58dp"
+            android:layout_marginEnd="8dp"
+            android:singleLine="false"
+            app:cp_autoDetectCountry="false"
+            app:cp_fastScrollerBubbleColor="@color/colorPrimary"
+            app:cp_fastScrollerBubbleTextAppearance="@style/TextAppearance.AppCompat.Medium"
+            app:cp_fastScrollerHandleColor="@color/colorAccent"
+            app:cp_fullScreenToolbarColor="@color/colorAccent"
+            app:cp_listItemTextColor="@color/design_default_color_on_secondary"
+            app:cp_preferredCountries="us,ru,am"
+            app:cp_rememberLastSelection="false"
+            app:cp_setCountryCodeBorder="false"
+            app:cp_showCountryCodeInView="true"
+            app:cp_showCountryDialCodeInView="true"
+            app:cp_showFastScroll="true"
+            app:cp_showFullScreeDialog="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
 
         <Button
             android:id="@+id/fr_p_n_confirm"

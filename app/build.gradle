@@ -96,4 +96,6 @@ dependencies {
     implementation "com.github.adrielcafe.broker:broker-core:1.1.1"
     implementation "com.github.adrielcafe.broker:broker-lifecycle:1.1.1"
 
+    implementation 'com.github.vardemin.MaterialCountryPicker:materialcountrypicker:0.2.3'
+
 }
