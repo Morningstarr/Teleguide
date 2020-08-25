@@ -22,6 +22,7 @@ import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.ChannelAdapter
 import com.mongodb.alliance.model.ChannelRealm
+import com.mongodb.alliance.model.ChannelType
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -251,8 +252,19 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         for (i in 0 until nm.size){
             if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
                 val channel =
-                    ChannelRealm(nm[i].title, "Folder")
-
+                    ChannelRealm(nm[i].title, "Folder", nm[i].clientData)
+                when(nm[i].type){
+                    is TdApi.ChatTypePrivate ->{
+                        channel.typeEnum = ChannelType.chat
+                    }
+                    is TdApi.ChatTypeBasicGroup ->{
+                        channel.typeEnum = ChannelType.groupChat
+                    }
+                    is TdApi.ChatTypeSupergroup ->{
+                        //(nm[i].type as TdApi.ChatTypeSupergroup).supergroupId
+                        channel.typeEnum = ChannelType.channel
+                    }
+                }
                 realm.executeTransactionAsync { realm ->
                     realm.insert(channel)
                 }
