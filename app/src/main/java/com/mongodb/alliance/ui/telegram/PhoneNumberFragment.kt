@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui.telegram
 
+import android.opengl.Visibility
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -21,11 +23,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -79,6 +78,7 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
         binding.frPNConfirm.setOnClickListener {
             lifecycleScope.launch {
                 try {
+                    showLoading(false)
                 withContext(Dispatchers.IO) {
                     var result = toNumber(input, "")?.let { it1 ->
                         (t_service as TelegramService).callNumberConfirm(
@@ -86,6 +86,7 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
                         )
                     }
                 }
+                    showLoading(true)
                 dismiss()
                 /*if (result.toString().contains("Ok")) {
                     dismiss()
@@ -94,8 +95,19 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
                 timber.log.Timber.e(e.message)
                 Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
                     .show()
+                    showLoading(true)
             }
             }
+        }
+    }
+
+    fun showLoading(show : Boolean){
+        binding.frPNConfirm.isEnabled = show
+        if(show) {
+            binding.frPNProgress.visibility = View.GONE
+        }
+        else{
+            binding.frPNProgress.visibility = View.VISIBLE
         }
     }
 

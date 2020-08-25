@@ -22,4 +22,11 @@
         android:contentDescription="@string/new_task"
         app:srcCompat="@mipmap/ic_plus"/>
 
+    <ProgressBar
+        android:id="@+id/main_progress"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:visibility="gone"></ProgressBar>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

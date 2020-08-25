@@ -58,10 +58,13 @@ class PasswordFragment : BottomSheetDialogFragment() {
         binding.frPassConfirm.setOnClickListener {
             lifecycleScope.launch {
                 try {
+                    showLoading(false)
                     withContext(Dispatchers.IO) {
                         var result = (t_service as TelegramService).callPasswordConfirm(input.text.toString())
                     }
+                    showLoading(true)
                     dismiss()
+
                     /*if (result.toString().contains("Ok")) {
                         dismiss()
                     }*/
@@ -69,8 +72,19 @@ class PasswordFragment : BottomSheetDialogFragment() {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
                         .show()
+                    showLoading(true)
                 }
             }
+        }
+    }
+
+    fun showLoading(show : Boolean){
+        binding.frPassConfirm.isEnabled = show
+        if(show) {
+            binding.frPassProgress.visibility = View.GONE
+        }
+        else{
+            binding.frPassProgress.visibility = View.VISIBLE
         }
     }
 

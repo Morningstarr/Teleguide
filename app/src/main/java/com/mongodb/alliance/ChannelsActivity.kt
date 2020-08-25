@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -189,19 +190,30 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                user?.logOutAsync {
-                    if (it.isSuccess) {
-                        realm = Realm.getDefaultInstance()
-                        realm.close()
-                        user = null
-                        Timber.d("user logged out")
-                        launch{
-                            (t_service as TelegramService).logOut()
+                launch{
+                    binding.mainProgress.visibility = View.VISIBLE
+                    binding.activityMain.isEnabled = false
+
+                    user?.logOutAsync {
+                        if (it.isSuccess) {
+                            realm = Realm.getDefaultInstance()
+                            realm.close()
+                            user = null
+                        } else {
+                            Timber.e("log out failed! Error: ${it.error}")
+                            return@logOutAsync
                         }
-                        startActivity(Intent(this, LoginActivity::class.java))
-                    } else {
-                        Timber.e("log out failed! Error: ${it.error}")
                     }
+
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).logOut()
+                        delay(5000)
+                    }
+
+                    Timber.d("user logged out")
+                    binding.mainProgress.visibility = View.GONE
+                    binding.activityMain.isEnabled = true
+                    startActivity(Intent(baseContext, LoginActivity::class.java))
                 }
                 true
             }

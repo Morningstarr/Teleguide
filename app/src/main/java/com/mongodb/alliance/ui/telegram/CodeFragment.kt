@@ -56,6 +56,7 @@ class CodeFragment() : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         n1 = binding.frCdN1
+        n1.requestFocus()
         n2 = binding.frCdN2
         n3 = binding.frCdN3
         n4 = binding.frCdN4
@@ -73,18 +74,31 @@ class CodeFragment() : BottomSheetDialogFragment() {
             var input : String = n1.text.toString() + n2.text.toString() +
                     n3.text.toString() + n4.text.toString() + n5.text.toString()
             lifecycleScope.launch {
+                showLoading(false)
                 try {
                     withContext(Dispatchers.IO) {
                         //var result = callCodeConfirm()
                         (t_service as TelegramService).callCodeConfirm(input)
                     }
+                    showLoading(true)
                     dismiss()
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
                         .show()
+                    showLoading(true)
                 }
             }
+        }
+    }
+
+    fun showLoading(show : Boolean){
+        binding.frCdConfirm.isEnabled = show
+        if(show) {
+            binding.frCdProgress.visibility = View.GONE
+        }
+        else{
+            binding.frCdProgress.visibility = View.VISIBLE
         }
     }
 

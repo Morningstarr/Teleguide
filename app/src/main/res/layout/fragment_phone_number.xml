@@ -10,11 +10,6 @@
     app:behavior_peekHeight="56dp"
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-    <!--<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".ui.telegram.PhoneNumberFragment">-->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="72dp"
@@ -44,8 +39,14 @@
     </com.google.android.material.textfield.TextInputLayout>
 
 
+    <ProgressBar
+        android:id="@+id/fr_p_n_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"></ProgressBar>
 
-        <Button
+    <Button
             android:id="@+id/fr_p_n_confirm"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
@@ -55,7 +56,6 @@
             android:background="@android:color/holo_blue_light"
             android:text="Enter phone number"
             android:textColor="@android:color/white" />
-    <!--</FrameLayout>-->
 
 
 </LinearLayout>

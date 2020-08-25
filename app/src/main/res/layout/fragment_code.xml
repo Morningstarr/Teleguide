@@ -26,7 +26,7 @@
             android:nextFocusRight="@+id/fr_cd_n2"
             android:nextFocusLeft="@+id/fr_cd_n1"
             android:textSize="24sp"
-            android:imeOptions="actionNext"/>
+            android:imeOptions="actionNext" />
 
         <EditText
             android:id="@+id/fr_cd_n2"
@@ -81,6 +81,13 @@
 
     </LinearLayout>
 
+    <ProgressBar
+        android:id="@+id/fr_cd_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"></ProgressBar>
+
     <Button
         android:id="@+id/fr_cd_confirm"
         android:layout_width="210dp"
@@ -90,5 +97,6 @@
         android:layout_marginBottom="250dp"
         android:background="@android:color/holo_blue_light"
         android:text="Confirm code"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        />
 </LinearLayout>
