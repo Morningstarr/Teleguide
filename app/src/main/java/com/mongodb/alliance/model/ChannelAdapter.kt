@@ -1,10 +1,14 @@
 package com.mongodb.alliance.model
 
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.view.*
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.mongodb.alliance.ChannelProj
 import com.mongodb.alliance.R
 import com.mongodb.alliance.TAG
 import io.realm.OrderedRealmCollection
@@ -27,6 +31,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Real
         holder.name.text = obj?.name
         holder.type.text = obj?.typeEnum?.displayName
 
+        val openCode : Int = 22
         holder.itemView.setOnClickListener {
             run {
                 val popup = PopupMenu(holder.itemView.context, holder.menu)
@@ -47,6 +52,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Real
 
                 val deleteCode = -1
                 menu.add(0, deleteCode, Menu.NONE, "Delete Channel")
+                menu.add(0, openCode, Menu.NONE, "Open Channel")
 
                 popup.setOnMenuItemClickListener { item: MenuItem? ->
                     var type: ChannelType? = null
@@ -63,6 +69,9 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Real
                         }
                         deleteCode -> {
                             removeAt(holder.data?._id!!)
+                        }
+                        openCode ->{
+                            openChannel(holder.data?.username!!)
                         }
                     }
 
@@ -85,6 +94,13 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Real
         }
 
         bgRealm.close()
+    }
+
+    private fun openChannel(username: String) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse("t.me/$username")
+        startActivity(ChannelProj.getContxt(), intent, null)
+        //startActivity(baseContext, intent)
     }
 
     private fun removeAt(id: ObjectId) {

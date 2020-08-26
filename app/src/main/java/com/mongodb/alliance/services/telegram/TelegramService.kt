@@ -49,32 +49,41 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
 
     suspend fun returnClientState(): ClientState{
-        when(client.getAuthorizationState()){
-            is TdApi.AuthorizationStateWaitTdlibParameters ->{
-                return ClientState.waitParameters
+        try {
+            when (client.getAuthorizationState()) {
+                is TdApi.AuthorizationStateWaitTdlibParameters -> {
+                    return ClientState.waitParameters
+                }
+                is TdApi.AuthorizationStateWaitPhoneNumber -> {
+                    return ClientState.waitNumber
+                }
+                is TdApi.AuthorizationStateWaitCode -> {
+                    return ClientState.waitCode
+                }
+                is TdApi.AuthorizationStateWaitPassword -> {
+                    return ClientState.waitPassword
+                }
+                is TdApi.AuthorizationStateReady -> {
+                    return ClientState.ready
+                }
+                is TdApi.AuthorizationStateLoggingOut -> {
+                    return ClientState.loggingOut
+                }
+                is TdApi.AuthorizationStateClosed -> {
+                    var newClient = telegram.client()
+                    client = newClient
+                    setUpClient()
+                    publish(ClientState.waitNumber)
+                    return ClientState.waitNumber
+                }
+                else -> {
+                    return ClientState.undefined
+                }
             }
-            is TdApi.AuthorizationStateWaitPhoneNumber ->{
-                return ClientState.waitNumber
-            }
-            is TdApi.AuthorizationStateWaitCode ->{
-                return ClientState.waitCode
-            }
-            is TdApi.AuthorizationStateWaitPassword ->{
-                return ClientState.waitPassword
-            }
-            is TdApi.AuthorizationStateReady ->{
-                return ClientState.ready
-            }
-            is TdApi.AuthorizationStateClosed -> {
-                var newClient  = telegram.client()
-                client = newClient
-                setUpClient()
-                publish(ClientState.waitNumber)
-                return ClientState.waitNumber
-            }
-            else -> {
-                return ClientState.undefined
-            }
+        }
+        catch(e:Exception){
+            Timber.e(e.message)
+            return ClientState.undefined
         }
     }
 
@@ -176,8 +185,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
     suspend fun  logOut(){
         try{
-            client.logOut()
-
+            client.exec(TdApi.LogOut())
         }
         catch(e: Exception){
             Timber.e(e.message)

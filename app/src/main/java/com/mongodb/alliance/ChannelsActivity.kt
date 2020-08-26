@@ -191,7 +191,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                launch{
+                lifecycleScope.launch{
                     binding.mainProgress.visibility = View.VISIBLE
                     binding.activityMain.isEnabled = false
 
@@ -208,7 +208,6 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
 
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).logOut()
-                        delay(5000)
                     }
 
                     Timber.d("user logged out")
@@ -261,9 +260,11 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                         channel.typeEnum = ChannelType.groupChat
                     }
                     is TdApi.ChatTypeSupergroup ->{
-                        //(nm[i].type as TdApi.ChatTypeSupergroup).supergroupId
-                        channel.typeEnum = ChannelType.channel
-                    }
+                            val superg = (t_service as TelegramService).returnServiceObj()
+                                .exec(TdApi.GetSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId))
+                            channel.username = (superg as TdApi.Supergroup).username
+                            channel.typeEnum = ChannelType.channel
+                        }
                 }
                 realm.executeTransactionAsync { realm ->
                     realm.insert(channel)
