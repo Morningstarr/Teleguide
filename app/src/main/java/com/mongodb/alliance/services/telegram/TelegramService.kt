@@ -176,7 +176,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
 
     suspend fun  logOut(){
         try{
-            client.logOut()
+            client.exec(TdApi.LogOut())
 
         }
         catch(e: Exception){

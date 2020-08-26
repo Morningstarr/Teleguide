@@ -191,7 +191,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                launch{
+                lifecycleScope.launch{
                     binding.mainProgress.visibility = View.VISIBLE
                     binding.activityMain.isEnabled = false
 
