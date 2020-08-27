@@ -35,6 +35,11 @@ class FolderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_folder)
 
+        val actionbar = supportActionBar
+        actionbar!!.title = "My folders"
+        actionbar.setDisplayHomeAsUpEnabled(true)
+        actionbar.setDisplayHomeAsUpEnabled(true)
+
         realm = Realm.getDefaultInstance()
         recyclerView = findViewById(R.id.folders_list)
         fab = findViewById(R.id.floating_action_button2)
@@ -74,13 +79,15 @@ class FolderActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        try{
+            user = channelApp.currentUser()
 
-        val config = SyncConfiguration.Builder(user!!, user!!.id)
-            .waitForInitialRemoteData()
-            .build()
+            val config = SyncConfiguration.Builder(user!!, user!!.id)
+                .waitForInitialRemoteData()
+                .build()
 
-        Realm.setDefaultConfiguration(config)
-        try {
+            Realm.setDefaultConfiguration(config)
+
             //исключение вылетает здесь
             Realm.getInstanceAsync(config, object: Realm.Callback() {
                 override fun onSuccess(realm: Realm) {
@@ -117,26 +124,9 @@ class FolderActivity : AppCompatActivity() {
         return true
     }
 
-    @InternalCoroutinesApi
-    @ExperimentalTime
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_logout -> {
-                user?.logOutAsync {
-                    if (it.isSuccess) {
-                        realm.close()
-                        user = null
-                        Log.v(TAG(), "user logged out")
-                        startActivity(Intent(this, LoginActivity::class.java))
-                    } else {
-                        Log.e(TAG(), "log out failed! Error: ${it.error}")
-                    }
-                }
-                true
-            }
-            else -> {
-                super.onOptionsItemSelected(item)
-            }
-        }
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
+
 }

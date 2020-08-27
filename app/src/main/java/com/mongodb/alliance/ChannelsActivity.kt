@@ -155,7 +155,6 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
 
 
             try {
-                //исключение вылетает здесь
                 Realm.getInstanceAsync(config, object: Realm.Callback() {
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
@@ -224,8 +223,6 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
 
                     Timber.d("user logged out")
 
-
-
                     binding.mainProgress.visibility = View.GONE
                     binding.activityMain.isEnabled = true
                     startActivity(Intent(baseContext, LoginActivity::class.java))
@@ -286,27 +283,37 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
         }
         val nm = chats as ArrayList<TdApi.Chat>
         for (i in 0 until nm.size){
-            if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
-                val channel =
-                    ChannelRealm(nm[i].title, "Folder", nm[i].clientData)
-                when(nm[i].type){
-                    is TdApi.ChatTypePrivate ->{
-                        channel.typeEnum = ChannelType.chat
-                    }
-                    is TdApi.ChatTypeBasicGroup ->{
-                        channel.typeEnum = ChannelType.groupChat
-                    }
-                    is TdApi.ChatTypeSupergroup ->{
-                            val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
-                            channel.name = superg.username
-                            //channel.username = superg.username
-                            channel.typeEnum = ChannelType.channel
-                        }
-                }
 
-                channel._partition = user!!.id.toString()
-                realm.executeTransactionAsync { realm ->
-                    realm.insert(channel)
+            val channel =
+                ChannelRealm(nm[i].title, "Folder")
+            channel._partition = user!!.id.toString()
+
+            when(nm[i].type){
+                is TdApi.ChatTypePrivate ->{
+                    channel.typeEnum = ChannelType.chat
+                    if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                        realm.executeTransactionAsync { realm ->
+                            realm.insert(channel)
+                        }
+                    }
+                }
+                is TdApi.ChatTypeBasicGroup ->{
+                    channel.typeEnum = ChannelType.groupChat
+                    if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                        realm.executeTransactionAsync { realm ->
+                            realm.insert(channel)
+                        }
+                    }
+                }
+                is TdApi.ChatTypeSupergroup ->{
+                    val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
+                    channel.name = superg
+                    channel.typeEnum = ChannelType.channel
+                    if(realm.where<ChannelRealm>().equalTo("name", superg).findAll().size == 0) {
+                        realm.executeTransactionAsync { realm ->
+                            realm.insert(channel)
+                        }
+                    }
                 }
             }
         }
