@@ -14,4 +14,10 @@
         android:title="@string/connect_telegram"
         android:text="@string/connect_telegram"
         app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_refresh"
+        android:orderInCategory="100"
+        android:title="Refresh Chats"
+        android:text="Refresh Chats"
+        app:showAsAction="ifRoom"/>
 </menu>

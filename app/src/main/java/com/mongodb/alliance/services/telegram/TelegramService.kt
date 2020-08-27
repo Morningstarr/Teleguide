@@ -183,13 +183,17 @@ class TelegramService : Service, GlobalBroker.Publisher {
         return client
     }
 
-    suspend fun  logOut(){
+    suspend fun logOut(){
         try{
             client.exec(TdApi.LogOut())
         }
         catch(e: Exception){
             Timber.e(e.message)
         }
+    }
+
+    suspend fun returnSupergroup(id : Int) : TdApi.Supergroup{
+        return client.exec(TdApi.GetSupergroup(id)) as TdApi.Supergroup
     }
 
 }

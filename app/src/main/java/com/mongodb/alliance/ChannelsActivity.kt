@@ -20,10 +20,8 @@ import cafe.adriel.broker.unsubscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.model.*
 import com.mongodb.alliance.model.ChannelAdapter
-import com.mongodb.alliance.model.ChannelRealm
-import com.mongodb.alliance.model.ChannelType
-import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -69,14 +67,20 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                     Toast.makeText(baseContext, "parameters set", Toast.LENGTH_SHORT).show()
                 }
                 ClientState.ready -> {
-                    unsubscribe()
-                    loadChats()
+                    //unsubscribe()
+                    lifecycleScope.launch {
+                        loadChats()
+                    }
                     Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
 
                 }
             }
+        }
+
+        subscribe<OpenChannelEvent>(lifecycleScope){ event ->
+            startActivity(event.intent)
         }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -236,6 +240,13 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                 }
                 true
             }
+            R.id.action_refresh ->{
+                lifecycleScope.launch {
+                    loadChats()
+                }
+                setUpRecyclerView(realm)
+                true
+            }
             else -> {
                 super.onOptionsItemSelected(item)
             }
@@ -260,9 +271,8 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                         channel.typeEnum = ChannelType.groupChat
                     }
                     is TdApi.ChatTypeSupergroup ->{
-                            val superg = (t_service as TelegramService).returnServiceObj()
-                                .exec(TdApi.GetSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId))
-                            channel.username = (superg as TdApi.Supergroup).username
+                            val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
+                            channel.username = superg.username
                             channel.typeEnum = ChannelType.channel
                         }
                 }

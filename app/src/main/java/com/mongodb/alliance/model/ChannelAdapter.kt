@@ -8,6 +8,8 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.mongodb.alliance.ChannelProj
 import com.mongodb.alliance.R
 import com.mongodb.alliance.TAG
@@ -18,7 +20,7 @@ import io.realm.kotlin.where
 import org.bson.types.ObjectId
 
 
-internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : RealmRecyclerViewAdapter<ChannelRealm, ChannelAdapter.ChannelViewHolder?>(data, true) {
+internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<ChannelRealm, ChannelAdapter.ChannelViewHolder?>(data, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channel_view, parent, false)
@@ -98,8 +100,9 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Real
 
     private fun openChannel(username: String) {
         val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse("t.me/$username")
-        startActivity(ChannelProj.getContxt(), intent, null)
+        intent.data = Uri.parse("http://www.t.me/$username")
+        publish(OpenChannelEvent(intent))
+        //startActivity(ChannelProj.getContxt().applicationContext, intent, null)
         //startActivity(baseContext, intent)
     }
 
