@@ -9,10 +9,10 @@ open class ChannelRealm (_name: String = "Channel", folder: String = "New Folder
     @PrimaryKey var _id: ObjectId = ObjectId()
     var _partition: String = folder
     var name: String = _name
-    var username : String = _username
+    //var username : String = _username
 
     @Required
-    private var type: String = ChannelType.channel.name
+    private var type: String = ChannelType.channel.displayName
     var typeEnum: ChannelType
         get() {
             return try {
@@ -21,5 +21,5 @@ open class ChannelRealm (_name: String = "Channel", folder: String = "New Folder
                 ChannelType.channel
             }
         }
-        set(value) { type = value.name }
+        set(value) { type = value.displayName }
 }

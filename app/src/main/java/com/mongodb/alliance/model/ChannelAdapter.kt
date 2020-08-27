@@ -73,7 +73,7 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Glob
                             removeAt(holder.data?._id!!)
                         }
                         openCode ->{
-                            openChannel(holder.data?.username!!)
+                            openChannel(holder.data?.name!!)
                         }
                     }
 

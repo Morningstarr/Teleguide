@@ -20,4 +20,10 @@
         android:title="Refresh Chats"
         android:text="Refresh Chats"
         app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_folders"
+        android:orderInCategory="100"
+        android:title="Open folders"
+        android:text="Open folders"
+        app:showAsAction="ifRoom"/>
 </menu>

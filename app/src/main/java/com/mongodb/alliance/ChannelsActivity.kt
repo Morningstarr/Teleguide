@@ -31,6 +31,7 @@ import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
+import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import timber.log.Timber
 import javax.inject.Inject
@@ -146,22 +147,22 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
             }
             setUpRecyclerView(realm)
 
-            /*val config = SyncConfiguration.Builder(user!!, "New Folder")
+            val config = SyncConfiguration.Builder(user!!, user!!.id)
                 .waitForInitialRemoteData()
                 .build()
 
-            Realm.setDefaultConfiguration(config)*/
+            Realm.setDefaultConfiguration(config)
 
 
             try {
                 //исключение вылетает здесь
-                /*Realm.getInstanceAsync(config, object: Realm.Callback() {
+                Realm.getInstanceAsync(config, object: Realm.Callback() {
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
                         this@ChannelsActivity.realm = realm
                         setUpRecyclerView(realm)
                     }
-                })*/
+                })
             }
             catch(e: Exception){
                 Timber.e(e.message)
@@ -268,6 +269,10 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                 setUpRecyclerView(realm)
                 true
             }
+            R.id.action_folders ->{
+                startActivity(Intent(baseContext, FolderActivity::class.java))
+                true
+            }
             else -> {
                 super.onOptionsItemSelected(item)
             }
@@ -293,10 +298,13 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                     }
                     is TdApi.ChatTypeSupergroup ->{
                             val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
-                            channel.username = superg.username
+                            channel.name = superg.username
+                            //channel.username = superg.username
                             channel.typeEnum = ChannelType.channel
                         }
                 }
+
+                channel._partition = user!!.id.toString()
                 realm.executeTransactionAsync { realm ->
                     realm.insert(channel)
                 }

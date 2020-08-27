@@ -20,6 +20,7 @@ import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.InternalCoroutinesApi
+import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 
@@ -71,39 +72,26 @@ class FolderActivity : AppCompatActivity() {
         }
     }
 
-    @InternalCoroutinesApi
-    @ExperimentalTime
     override fun onStart() {
         super.onStart()
+
+        val config = SyncConfiguration.Builder(user!!, user!!.id)
+            .waitForInitialRemoteData()
+            .build()
+
+        Realm.setDefaultConfiguration(config)
         try {
-            user = channelApp.currentUser()
-        } catch (e: IllegalStateException) {
-            Log.w(TAG(), e)
+            //исключение вылетает здесь
+            Realm.getInstanceAsync(config, object: Realm.Callback() {
+                override fun onSuccess(realm: Realm) {
+                    // since this realm should live exactly as long as this activity, assign the realm to a member variable
+                    this@FolderActivity.realm = realm
+                    setUpRecyclerView(realm)
+                }
+            })
         }
-        if (user == null) {
-
-            startActivity(Intent(this, LoginActivity::class.java))
-        }
-        else {
-
-            val config = SyncConfiguration.Builder(user!!, user!!.id)
-                .waitForInitialRemoteData()
-                .build()
-
-            Realm.setDefaultConfiguration(config)
-            try {
-                //исключение вылетает здесь
-                Realm.getInstanceAsync(config, object: Realm.Callback() {
-                    override fun onSuccess(realm: Realm) {
-                        // since this realm should live exactly as long as this activity, assign the realm to a member variable
-                        this@FolderActivity.realm = realm
-                        setUpRecyclerView(realm)
-                    }
-                })
-            }
-            catch(e: Exception){
-                Log.v(TAG(), "здесь")
-            }
+        catch(e: Exception){
+            Timber.e(e.message)
         }
     }
 
