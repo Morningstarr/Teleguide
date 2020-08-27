@@ -202,7 +202,14 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                     user?.logOutAsync {
                         if (it.isSuccess) {
                             realm = Realm.getDefaultInstance()
+
+                            //clear local data
+                            realm.beginTransaction();
+                            realm.deleteAll();
+                            realm.commitTransaction();
+
                             realm.close()
+
                             user = null
                         } else {
                             Timber.e("log out failed! Error: ${it.error}")
@@ -215,6 +222,9 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
                     }
 
                     Timber.d("user logged out")
+
+
+
                     binding.mainProgress.visibility = View.GONE
                     binding.activityMain.isEnabled = true
                     startActivity(Intent(baseContext, LoginActivity::class.java))
@@ -242,7 +252,18 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber, Coroutine
             }
             R.id.action_refresh ->{
                 lifecycleScope.launch {
-                    loadChats()
+                    val task = async {
+                        withContext(Dispatchers.IO) {
+                            (t_service as TelegramService).returnClientState()
+                        }
+                    }
+                    val state = task.await()
+                    if(state == ClientState.ready) {
+                        loadChats()
+                    }
+                    else{
+                        Toast.makeText(baseContext, "Telegram account is not connected", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 setUpRecyclerView(realm)
                 true

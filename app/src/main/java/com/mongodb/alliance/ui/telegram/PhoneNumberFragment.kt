@@ -1,15 +1,10 @@
 package com.mongodb.alliance.ui.telegram
 
-import android.opengl.Visibility
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
-import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -20,11 +15,8 @@ import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment.PhoneEditConverter.toNumber
 import dagger.hilt.android.AndroidEntryPoint
-import dev.whyoleg.ktd.TelegramClient
-import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
