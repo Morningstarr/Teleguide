@@ -11,18 +11,21 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".ChannelsActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"></activity>
+        <activity
+            android:name=".ChannelsListActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"></activity>
+        <activity
             android:name=".ui.telegram.ConnectTelegramActivity"
+            android:configChanges="orientation"
             android:label="@string/title_activity_connect_telegram"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:configChanges="orientation" android:launchMode="singleTop">
-        </activity>
-        <activity android:name=".FolderActivity"
-            android:configChanges="orientation"
-            android:launchMode="singleTop"/>
-        <activity android:name=".LoginActivity"
-            android:configChanges="orientation"
-            android:launchMode="singleTop"/>
-        <activity android:name=".ChannelsActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".FolderActivity"
             android:configChanges="orientation"
             android:launchMode="singleTop">
             <intent-filter>
@@ -31,6 +34,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".LoginActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop" />
     </application>
 
 </manifest>

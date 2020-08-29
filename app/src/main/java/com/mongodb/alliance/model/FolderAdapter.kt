@@ -4,6 +4,8 @@ import android.view.*
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
 import io.realm.OrderedRealmCollection
 import io.realm.Realm
@@ -12,10 +14,10 @@ import io.realm.kotlin.where
 import org.bson.types.ObjectId
 
 
-internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : RealmRecyclerViewAdapter<FolderRealm, FolderAdapter.FolderViewHolder?>(data, true) {
+internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<FolderRealm, FolderAdapter.FolderViewHolder?>(data, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
-        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channel_view, parent, false)
+        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.folder_view, parent, false)
         return FolderViewHolder(itemView)
     }
 
@@ -30,12 +32,17 @@ internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : RealmR
                 val menu = popup.menu
 
                 val deleteCode = -1
+                val openCode = 1
+                menu.add(0, openCode, Menu.NONE, "Open Folder")
                 menu.add(0, deleteCode, Menu.NONE, "Delete Folder")
 
                 popup.setOnMenuItemClickListener { item: MenuItem? ->
                     when (item!!.itemId) {
                         deleteCode -> {
                             removeAt(holder.data?._id!!)
+                        }
+                        openCode -> {
+                            publish(OpenFolderEvent(holder.data?.name!!))
                         }
                     }
                     true

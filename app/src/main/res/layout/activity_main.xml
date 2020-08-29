@@ -13,15 +13,6 @@
         android:layout_height="match_parent"
         android:background="@null" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floating_action_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="@string/new_task"
-        app:srcCompat="@mipmap/ic_plus"/>
-
     <ProgressBar
         android:id="@+id/main_progress"
         android:layout_width="80dp"

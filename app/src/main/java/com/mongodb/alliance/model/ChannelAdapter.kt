@@ -39,36 +39,13 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Glob
                 val popup = PopupMenu(holder.itemView.context, holder.menu)
                 val menu = popup.menu
 
-                if (holder.data?.typeEnum != ChannelType.chat)
-                {
-                    menu.add(0, ChannelType.chat.ordinal, Menu.NONE, ChannelType.chat.displayName)
-                }
-                if (holder.data?.typeEnum != ChannelType.groupChat)
-                {
-                    menu.add(0, ChannelType.groupChat.ordinal, Menu.NONE, ChannelType.groupChat.displayName)
-                }
-                if (holder.data?.typeEnum != ChannelType.channel)
-                {
-                    menu.add(0, ChannelType.channel.ordinal, Menu.NONE, ChannelType.channel.displayName)
-                }
-
                 val deleteCode = -1
-                menu.add(0, deleteCode, Menu.NONE, "Delete Channel")
                 menu.add(0, openCode, Menu.NONE, "Open Channel")
+                menu.add(0, deleteCode, Menu.NONE, "Delete Channel")
 
                 popup.setOnMenuItemClickListener { item: MenuItem? ->
                     var type: ChannelType? = null
                     when (item!!.itemId) {
-                        ChannelType.chat.ordinal -> {
-                            type = ChannelType.chat
-                        }
-                        ChannelType.groupChat.ordinal -> {
-                            type =
-                                ChannelType.groupChat
-                        }
-                        ChannelType.channel.ordinal -> {
-                            type = ChannelType.channel
-                        }
                         deleteCode -> {
                             removeAt(holder.data?._id!!)
                         }
@@ -77,25 +54,10 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Glob
                         }
                     }
 
-                    if (type != null) {
-                        Log.v(TAG(), "Changing type of ${holder.data?.name} (${holder.data?._id}) to $type")
-                        changeType(type, holder.data?._id)
-                    }
                     true
                 }
                 popup.show()
             }}
-    }
-
-    private fun changeType(type: ChannelType, _id: ObjectId?) {
-        val bgRealm = Realm.getDefaultInstance()
-
-        bgRealm!!.executeTransaction {
-            val item = it.where<ChannelRealm>().equalTo("_id", _id).findFirst()
-            item?.typeEnum = type
-        }
-
-        bgRealm.close()
     }
 
     private fun openChannel(username: String) {
