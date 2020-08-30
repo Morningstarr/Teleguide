@@ -42,7 +42,7 @@ internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : Global
                             removeAt(holder.data?._id!!)
                         }
                         openCode -> {
-                            publish(OpenFolderEvent(holder.data?.name!!))
+                            publish(OpenFolderEvent(holder.data?._id.toString()))
                         }
                     }
                     true

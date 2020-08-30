@@ -64,7 +64,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         subscribe<OpenFolderEvent>(lifecycleScope){ event ->
             val intent = Intent(baseContext, ChannelsActivity::class.java)
-            intent.putExtra("folderName", event.folderName)
+            intent.putExtra("folderId", event.folderId)
             startActivity(intent)
         }
 
@@ -182,12 +182,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     user?.logOutAsync {
                         if (it.isSuccess) {
                             realm = Realm.getDefaultInstance()
-
-                            //clear local data
-                            realm.beginTransaction();
-                            realm.deleteAll();
-                            realm.commitTransaction();
-
                             realm.close()
 
                             user = null

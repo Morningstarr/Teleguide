@@ -33,6 +33,7 @@ import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
+import org.bson.types.ObjectId
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -42,11 +43,12 @@ import kotlin.time.ExperimentalTime
 @InternalCoroutinesApi
 @AndroidEntryPoint
 class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineScope {
-    private lateinit var realm: Realm
+    private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ChannelFindAdapter
     private lateinit var chatList : TdApi.ChatList
+    private var folder: FolderRealm? = null
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -60,6 +62,9 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val folderId = intent.getStringExtra("folderId")
+        folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
 
         val actionbar = supportActionBar
         actionbar?.setDisplayHomeAsUpEnabled(true)
@@ -172,11 +177,6 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
                         if (it.isSuccess) {
                             realm = Realm.getDefaultInstance()
 
-                            //clear local data
-                            realm.beginTransaction();
-                            realm.deleteAll();
-                            realm.commitTransaction();
-
                             realm.close()
 
                             user = null
@@ -247,6 +247,7 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
     }
 
 
+    // FIXME: you must save chat to Realm only on selection, not on display
     suspend fun loadChats() {
         val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
@@ -254,13 +255,15 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
         val nm = chats as ArrayList<TdApi.Chat>
         for (i in 0 until nm.size){
 
+            // FIXME: show error if user is null
+            val partition = user?.id.toString() ?: ""
             val channel =
-                ChannelRealm(nm[i].title, "Folder")
-            channel._partition = user!!.id.toString()
+                ChannelRealm(nm[i].title, partition)
 
             when(nm[i].type){
                 is TdApi.ChatTypePrivate ->{
                     channel.typeEnum = ChannelType.chat
+                    channel.folder = folder
                     if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)
@@ -269,6 +272,7 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
                 }
                 is TdApi.ChatTypeBasicGroup ->{
                     channel.typeEnum = ChannelType.groupChat
+                    channel.folder = folder
                     if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)
@@ -279,6 +283,7 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
                     val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
                     channel.name = superg
                     channel.typeEnum = ChannelType.channel
+                    channel.folder = folder
                     if(realm.where<ChannelRealm>().equalTo("name", superg).findAll().size == 0) {
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)

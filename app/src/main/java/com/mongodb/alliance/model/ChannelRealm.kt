@@ -5,11 +5,11 @@ import io.realm.annotations.PrimaryKey
 import io.realm.annotations.Required
 import org.bson.types.ObjectId
 
-open class ChannelRealm (_name: String = "Channel", fldr: String = "New Folder") : RealmObject() {
+open class ChannelRealm (_name: String = "Channel", partition: String = "") : RealmObject() {
     @PrimaryKey var _id: ObjectId = ObjectId()
-    var _partition: String = fldr
+    var _partition: String = partition
     var name: String = _name
-    lateinit var folder : ObjectId
+    var folder: FolderRealm? = null
     //var username : String = _username
 
     @Required

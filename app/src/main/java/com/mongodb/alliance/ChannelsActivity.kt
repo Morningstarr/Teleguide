@@ -17,14 +17,17 @@ import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.ChannelAdapter
 import com.mongodb.alliance.model.FolderAdapter
+import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.model.OpenChannelEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
+import io.realm.kotlin.where
 import io.realm.mongodb.User
 import kotlinx.coroutines.*
+import org.bson.types.ObjectId
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -32,7 +35,7 @@ import kotlin.time.ExperimentalTime
 @InternalCoroutinesApi
 @AndroidEntryPoint
 class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
-    private lateinit var realm: Realm
+    private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ChannelAdapter
@@ -47,10 +50,10 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val folderName = intent.getStringExtra("folderName")
-
+        val folderId = intent.getStringExtra("folderId")
+        val folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
         val actionbar = supportActionBar
-        actionbar?.title = folderName
+        actionbar?.title = folder?.name
         actionbar?.setDisplayHomeAsUpEnabled(true)
         actionbar?.setDisplayHomeAsUpEnabled(true)
 
@@ -72,7 +75,9 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 val state = task.await()
                 showLoading(false)
                 if(state == ClientState.ready) {
-                    startActivity(Intent(baseContext, ChannelsListActivity::class.java))
+                    val intent = Intent(baseContext, ChannelsListActivity::class.java)
+                    intent.putExtra("folderId", folderId)
+                    startActivity(intent)
                 }
                 else{
                     Toast.makeText(baseContext, "Telegram account is not connected!", Toast.LENGTH_SHORT).show()
