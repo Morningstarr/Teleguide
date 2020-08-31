@@ -3,11 +3,9 @@ package com.mongodb.alliance
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -15,13 +13,14 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import cafe.adriel.broker.subscribe
 import cafe.adriel.broker.unsubscribe
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.mongodb.alliance.adapters.ChannelArrayAdapter
+import com.mongodb.alliance.adapters.ChannelFindAdapter
 import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
-import com.mongodb.alliance.model.ChannelAdapter
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -42,13 +41,15 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 @InternalCoroutinesApi
 @AndroidEntryPoint
-class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineScope {
+class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, GlobalBroker.Publisher, CoroutineScope {
     private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: ChannelFindAdapter
+    //private lateinit var adapter: ChannelFindAdapter
+    private lateinit var adapter: ChannelArrayAdapter
     private lateinit var chatList : TdApi.ChatList
     private var folder: FolderRealm? = null
+    private var ChannelsArray : ArrayList<ChannelRealm> = ArrayList()
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -70,15 +71,9 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
         actionbar?.setDisplayHomeAsUpEnabled(true)
         actionbar?.setDisplayHomeAsUpEnabled(true)
 
-        subscribe<StateChangedEvent>(lifecycleScope){ event ->
-            when(event.clientState){
-                ClientState.ready -> {
-                    lifecycleScope.launch {
-                        loadChats()
-                    }
-                    Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
-                }
-                else -> {}
+        subscribe<ChannelSaveEvent>(lifecycleScope){ event ->
+            if(event.parameter == 1){
+                Toast.makeText(baseContext, "channel saved", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -102,8 +97,9 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-            launch {
-                val task = async {
+            lifecycleScope.launch {
+                //binding.mainProgress.visibility = View.VISIBLE
+                /*val task = async {
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).returnClientState()
                     }
@@ -114,10 +110,11 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
                         (t_service as TelegramService).setUpClient()
                     }
                 }
-                if(state == ClientState.ready){
+                if(state == ClientState.ready){*/
                     loadChats()
                     setUpRecyclerView(realm)
-                }
+                    //binding.mainProgress.visibility = View.GONE
+                //}
             }
 
             setUpRecyclerView(realm)
@@ -144,9 +141,8 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
     }
 
     private fun setUpRecyclerView(realm: Realm) {
-        adapter = ChannelFindAdapter(
-            realm.where<ChannelRealm>().sort("_id")
-                .findAll(), actionBar?.title.toString()
+        adapter = ChannelArrayAdapter(
+            ChannelsArray, folder?.name!!
         )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
@@ -252,7 +248,9 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
         val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
         }
+
         val nm = chats as ArrayList<TdApi.Chat>
+        ChannelsArray = ArrayList(nm.size)
         for (i in 0 until nm.size){
 
             // FIXME: show error if user is null
@@ -263,34 +261,37 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Corou
             when(nm[i].type){
                 is TdApi.ChatTypePrivate ->{
                     channel.typeEnum = ChannelType.chat
-                    channel.folder = folder
-                    if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                    //channel.folder = folder
+                    /*if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)
                         }
-                    }
+                    }*/
                 }
                 is TdApi.ChatTypeBasicGroup ->{
                     channel.typeEnum = ChannelType.groupChat
-                    channel.folder = folder
-                    if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                    //channel.folder = folder
+                    /*if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)
                         }
-                    }
+                    }*/
                 }
                 is TdApi.ChatTypeSupergroup ->{
                     val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
                     channel.name = superg
                     channel.typeEnum = ChannelType.channel
-                    channel.folder = folder
-                    if(realm.where<ChannelRealm>().equalTo("name", superg).findAll().size == 0) {
+                    //channel.folder = folder
+
+                    /*if(realm.where<ChannelRealm>().equalTo("name", superg).findAll().size == 0) {
                         realm.executeTransactionAsync { realm ->
                             realm.insert(channel)
                         }
-                    }
+                    }*/
                 }
             }
+
+            ChannelsArray.add(channel)
         }
     }
 }

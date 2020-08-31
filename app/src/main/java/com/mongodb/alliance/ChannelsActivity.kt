@@ -1,7 +1,6 @@
 package com.mongodb.alliance
 
 import android.content.Intent
-import android.opengl.Visibility
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -12,23 +11,21 @@ import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.databinding.ActivityChannelsBinding
-import com.mongodb.alliance.databinding.ActivityFolderBinding
-import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.model.ChannelAdapter
-import com.mongodb.alliance.model.FolderAdapter
-import com.mongodb.alliance.model.FolderRealm
-import com.mongodb.alliance.model.OpenChannelEvent
+import com.mongodb.alliance.model.*
+import com.mongodb.alliance.adapters.ChannelAdapter
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
+import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
 import javax.inject.Inject
+import kotlin.coroutines.coroutineContext
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -40,7 +37,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ChannelAdapter
     private lateinit var fab: FloatingActionButton
-
+    private var folder: FolderRealm? = null
     private lateinit var binding: ActivityChannelsBinding
 
     @TelegramServ
@@ -98,8 +95,55 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             binding.channelsInFolderProgress.visibility = View.GONE
         }
     }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    suspend fun loadChats() {
+        val chats = withContext(coroutineContext) {
+            (t_service as TelegramService).getChats()
+        }
+        val nm = chats as ArrayList<TdApi.Chat>
+        for (i in 0 until nm.size){
+
+            // FIXME: show error if user is null
+            val partition = user?.id.toString() ?: ""
+            val channel =
+                ChannelRealm(nm[i].title, partition)
+
+            when(nm[i].type){
+                is TdApi.ChatTypePrivate ->{
+                    channel.typeEnum = ChannelType.chat
+                    channel.folder = folder
+                    if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                        realm.executeTransactionAsync { realm ->
+                            realm.insert(channel)
+                        }
+                    }
+                }
+                is TdApi.ChatTypeBasicGroup ->{
+                    channel.typeEnum = ChannelType.groupChat
+                    channel.folder = folder
+                    if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
+                        realm.executeTransactionAsync { realm ->
+                            realm.insert(channel)
+                        }
+                    }
+                }
+                is TdApi.ChatTypeSupergroup ->{
+                    val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
+                    channel.name = superg
+                    channel.typeEnum = ChannelType.channel
+                    channel.folder = folder
+                    if(realm.where<ChannelRealm>().equalTo("name", superg).findAll().size == 0) {
+                        realm.executeTransactionAsync { realm ->
+                            realm.insert(channel)
+                        }
+                    }
+                }
+            }
+        }
     }
 }

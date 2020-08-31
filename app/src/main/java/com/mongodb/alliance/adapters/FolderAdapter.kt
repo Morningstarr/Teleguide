@@ -1,4 +1,4 @@
-package com.mongodb.alliance.model
+package com.mongodb.alliance.adapters
 
 import android.view.*
 import android.widget.PopupMenu
@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
+import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.model.OpenFolderEvent
 import io.realm.OrderedRealmCollection
 import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
@@ -42,7 +44,11 @@ internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : Global
                             removeAt(holder.data?._id!!)
                         }
                         openCode -> {
-                            publish(OpenFolderEvent(holder.data?._id.toString()))
+                            publish(
+                                OpenFolderEvent(
+                                    holder.data?._id.toString()
+                                )
+                            )
                         }
                     }
                     true

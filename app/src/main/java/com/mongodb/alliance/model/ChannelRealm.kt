@@ -10,7 +10,6 @@ open class ChannelRealm (_name: String = "Channel", partition: String = "") : Re
     var _partition: String = partition
     var name: String = _name
     var folder: FolderRealm? = null
-    //var username : String = _username
 
     @Required
     private var type: String = ChannelType.channel.displayName

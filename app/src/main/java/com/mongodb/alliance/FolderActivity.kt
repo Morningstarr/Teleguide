@@ -3,7 +3,6 @@ package com.mongodb.alliance
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -16,12 +15,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
-import cafe.adriel.broker.unsubscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.databinding.ActivityFolderBinding
-import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.model.FolderAdapter
+import com.mongodb.alliance.adapters.FolderAdapter
 import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.model.OpenFolderEvent
 import com.mongodb.alliance.services.telegram.ClientState
