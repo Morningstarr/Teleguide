@@ -112,39 +112,34 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     override fun onStart() {
         super.onStart()
         try {
-            try {
-                user = channelApp.currentUser()
-            } catch (e: IllegalStateException) {
-                Timber.e(e.message)
-            }
-            if (user == null) {
-                startActivity(Intent(this, LoginActivity::class.java))
-            } else {
-
-                val config = SyncConfiguration.Builder(user!!, user!!.id)
-                    .waitForInitialRemoteData()
-                    .build()
-
-                Realm.setDefaultConfiguration(config)
-
-                try {
-                    Realm.getInstanceAsync(config, object : Realm.Callback() {
-                        override fun onSuccess(realm: Realm) {
-                            // since this realm should live exactly as long as this activity, assign the realm to a member variable
-                            this@FolderActivity.realm = realm
-                            setUpRecyclerView(realm)
-                        }
-                    })
-                } catch (e: Exception) {
-                    Timber.e(e.message)
-                }
-            }
-        }
-        catch(e:Exception){
+            user = channelApp.currentUser()
+        } catch (e: IllegalStateException) {
             Timber.e(e.message)
         }
+        if (user == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+        } else {
 
+            val config = SyncConfiguration.Builder(user!!, user!!.id)
+                .waitForInitialRemoteData()
+                .build()
+
+            Realm.setDefaultConfiguration(config)
+
+            try {
+                Realm.getInstanceAsync(config, object : Realm.Callback() {
+                    override fun onSuccess(realm: Realm) {
+                        // since this realm should live exactly as long as this activity, assign the realm to a member variable
+                        this@FolderActivity.realm = realm
+                        setUpRecyclerView(realm)
+                    }
+                })
+            } catch (e: Exception) {
+                Timber.e(e.message)
+            }
+        }
     }
+
 
     private fun setUpRecyclerView(realm: Realm) {
         adapter = FolderAdapter(

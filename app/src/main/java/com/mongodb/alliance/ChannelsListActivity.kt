@@ -45,7 +45,6 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
     private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
-    //private lateinit var adapter: ChannelFindAdapter
     private lateinit var adapter: ChannelArrayAdapter
     private lateinit var chatList : TdApi.ChatList
     private var folder: FolderRealm? = null
@@ -74,6 +73,7 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
         subscribe<ChannelSaveEvent>(lifecycleScope){ event ->
             if(event.parameter == 1){
                 Toast.makeText(baseContext, "channel saved", Toast.LENGTH_SHORT).show()
+                finish()
             }
         }
 
@@ -81,9 +81,7 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
         val view = binding.root
         setContentView(view)
 
-        realm = Realm.getDefaultInstance()
         recyclerView = binding.channelsList
-
     }
 
     override fun onStart() {
@@ -98,8 +96,8 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
         }
         else {
             lifecycleScope.launch {
-                //binding.mainProgress.visibility = View.VISIBLE
-                /*val task = async {
+                binding.mainProgress.visibility = View.VISIBLE
+                val task = async {
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).returnClientState()
                     }
@@ -110,37 +108,19 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
                         (t_service as TelegramService).setUpClient()
                     }
                 }
-                if(state == ClientState.ready){*/
+                if(state == ClientState.ready){
                     loadChats()
-                    setUpRecyclerView(realm)
-                    //binding.mainProgress.visibility = View.GONE
-                //}
+                    setUpRecyclerView()
+                    binding.mainProgress.visibility = View.GONE
+                }
             }
 
-            setUpRecyclerView(realm)
+            setUpRecyclerView()
 
-            val config = SyncConfiguration.Builder(user!!, user!!.id)
-                .waitForInitialRemoteData()
-                .build()
-
-            Realm.setDefaultConfiguration(config)
-
-            try {
-                Realm.getInstanceAsync(config, object: Realm.Callback() {
-                    override fun onSuccess(realm: Realm) {
-                        // since this realm should live exactly as long as this activity, assign the realm to a member variable
-                        this@ChannelsListActivity.realm = realm
-                        setUpRecyclerView(realm)
-                    }
-                })
-            }
-            catch(e: Exception){
-                Timber.e(e.message)
-            }
         }
     }
 
-    private fun setUpRecyclerView(realm: Realm) {
+    private fun setUpRecyclerView() {
         adapter = ChannelArrayAdapter(
             ChannelsArray, folder?.name!!
         )
@@ -228,7 +208,7 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
                         Toast.makeText(baseContext, "Telegram account is not connected", Toast.LENGTH_SHORT).show()
                     }
                 }
-                setUpRecyclerView(realm)
+                setUpRecyclerView()
                 true
             }
             else -> {
@@ -243,7 +223,6 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
     }
 
 
-    // FIXME: you must save chat to Realm only on selection, not on display
     suspend fun loadChats() {
         val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
@@ -261,33 +240,14 @@ class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, Globa
             when(nm[i].type){
                 is TdApi.ChatTypePrivate ->{
                     channel.typeEnum = ChannelType.chat
-                    //channel.folder = folder
-                    /*if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
-                        realm.executeTransactionAsync { realm ->
-                            realm.insert(channel)
-                        }
-                    }*/
                 }
                 is TdApi.ChatTypeBasicGroup ->{
                     channel.typeEnum = ChannelType.groupChat
-                    //channel.folder = folder
-                    /*if(realm.where<ChannelRealm>().equalTo("name", nm[i].title).findAll().size == 0) {
-                        realm.executeTransactionAsync { realm ->
-                            realm.insert(channel)
-                        }
-                    }*/
                 }
                 is TdApi.ChatTypeSupergroup ->{
                     val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
                     channel.name = superg
                     channel.typeEnum = ChannelType.channel
-                    //channel.folder = folder
-
-                    /*if(realm.where<ChannelRealm>().equalTo("name", superg).findAll().size == 0) {
-                        realm.executeTransactionAsync { realm ->
-                            realm.insert(channel)
-                        }
-                    }*/
                 }
             }
 

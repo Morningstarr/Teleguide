@@ -166,7 +166,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
     }
 
     suspend fun getChatIds() : LongArray {
-        val getChats = TdApi.GetChats(TdApi.ChatListMain(), Long.MAX_VALUE, 0, /*Int.MAX_VALUE*/ 5)   //TODO возмножно стоить изменить max_value на что-то другое
+        val getChats = TdApi.GetChats(TdApi.ChatListMain(), Long.MAX_VALUE, 0, Int.MAX_VALUE)   //TODO возмножно стоить изменить max_value на что-то другое
         val chats : TdApi.Chats = client.exec(getChats) as TdApi.Chats
         return chats.chatIds
     }

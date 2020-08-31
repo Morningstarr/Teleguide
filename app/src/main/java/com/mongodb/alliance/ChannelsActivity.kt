@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
@@ -14,6 +16,7 @@ import com.mongodb.alliance.databinding.ActivityChannelsBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.adapters.ChannelAdapter
+import com.mongodb.alliance.adapters.FolderAdapter
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -22,8 +25,11 @@ import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
+import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
+import timber.log.Timber
+import java.nio.channels.Channel
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 import kotlin.time.ExperimentalTime
@@ -39,6 +45,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private lateinit var fab: FloatingActionButton
     private var folder: FolderRealm? = null
     private lateinit var binding: ActivityChannelsBinding
+    private var folderId : String? = null
 
     @TelegramServ
     @Inject
@@ -47,7 +54,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val folderId = intent.getStringExtra("folderId")
+        folderId = intent.getStringExtra("folderId")
         val folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
         val actionbar = supportActionBar
         actionbar?.title = folder?.name
@@ -59,9 +66,9 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         setContentView(view)
 
         fab = binding.channelsFab
+        recyclerView = binding.channelsInFolderList
 
         fab.setOnClickListener {
-            var flag = false
             lifecycleScope.launch {
                 showLoading(true)
                 val task = async {
@@ -85,13 +92,55 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         subscribe<OpenChannelEvent>(lifecycleScope){ event ->
             startActivity(event.intent)
         }
+    }
 
+    override fun onStart() {
+        super.onStart()
+        try {
+            user = channelApp.currentUser()
+        } catch (e: IllegalStateException) {
+            Timber.e(e.message)
+        }
+        if (user == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+        }
+        else {
+            val config = SyncConfiguration.Builder(user!!, user!!.id)
+                .waitForInitialRemoteData()
+                .build()
+
+            Realm.setDefaultConfiguration(config)
+
+            try {
+                Realm.getInstanceAsync(config, object: Realm.Callback() {
+                    override fun onSuccess(realm: Realm) {
+                        // since this realm should live exactly as long as this activity, assign the realm to a member variable
+                        this@ChannelsActivity.realm = realm
+                        setUpRecyclerView(realm)
+                    }
+                })
+            }
+            catch(e: Exception){
+                Timber.e(e.message)
+            }
+        }
+    }
+
+    private fun setUpRecyclerView(realm: Realm) {
+        adapter = ChannelAdapter(
+            realm.where<ChannelRealm>().sort("_id").findAll()
+        )
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+        recyclerView.setHasFixedSize(true)
+        recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
     }
 
     private fun showLoading(show : Boolean){
         if (show) {
-            binding.channelsInFolderProgress.visibility = View.VISIBLE }
-        else{
+            binding.channelsInFolderProgress.visibility = View.VISIBLE
+        }
+        else {
             binding.channelsInFolderProgress.visibility = View.GONE
         }
     }
@@ -101,7 +150,7 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         return true
     }
 
-    suspend fun loadChats() {
+    /*suspend fun loadChats() {
         val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
         }
@@ -145,5 +194,5 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 }
             }
         }
-    }
+    }*/
 }
