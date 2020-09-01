@@ -11,7 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.*
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mongodb.alliance.ChannelsActivity
+import com.mongodb.alliance.ChannelsRealmActivity
 import com.mongodb.alliance.R
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.StateChangedEvent

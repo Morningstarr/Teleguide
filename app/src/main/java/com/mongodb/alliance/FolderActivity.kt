@@ -60,7 +60,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         super.onCreate(savedInstanceState)
 
         subscribe<OpenFolderEvent>(lifecycleScope){ event ->
-            val intent = Intent(baseContext, ChannelsActivity::class.java)
+            val intent = Intent(baseContext, ChannelsRealmActivity::class.java)
             intent.putExtra("folderId", event.folderId)
             startActivity(intent)
         }

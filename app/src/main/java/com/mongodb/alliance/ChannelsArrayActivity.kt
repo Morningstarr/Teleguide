@@ -17,7 +17,6 @@ import cafe.adriel.broker.publish
 import cafe.adriel.broker.subscribe
 import cafe.adriel.broker.unsubscribe
 import com.mongodb.alliance.adapters.ChannelArrayAdapter
-import com.mongodb.alliance.adapters.ChannelFindAdapter
 import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
@@ -41,7 +40,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 @InternalCoroutinesApi
 @AndroidEntryPoint
-class ChannelsListActivity : AppCompatActivity(), GlobalBroker.Subscriber, GlobalBroker.Publisher, CoroutineScope {
+class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, GlobalBroker.Publisher, CoroutineScope {
     private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView

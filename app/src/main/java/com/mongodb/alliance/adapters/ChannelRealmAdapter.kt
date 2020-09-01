@@ -19,7 +19,7 @@ import io.realm.kotlin.where
 import org.bson.types.ObjectId
 
 
-internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<ChannelRealm, ChannelAdapter.ChannelViewHolder?>(data, true) {
+internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<ChannelRealm, ChannelRealmAdapter.ChannelViewHolder?>(data, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channel_view, parent, false)
@@ -63,8 +63,6 @@ internal class ChannelAdapter(data: OrderedRealmCollection<ChannelRealm>) : Glob
         val intent = Intent(Intent.ACTION_VIEW)
         intent.data = Uri.parse("http://www.t.me/$username")
         publish(OpenChannelEvent(intent))
-        //startActivity(ChannelProj.getContxt().applicationContext, intent, null)
-        //startActivity(baseContext, intent)
     }
 
     private fun removeAt(id: ObjectId) {
