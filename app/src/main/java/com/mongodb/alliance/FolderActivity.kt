@@ -120,6 +120,20 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             startActivity(Intent(this, LoginActivity::class.java))
         } else {
 
+            lifecycleScope.launch {
+                val task = async {
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).returnClientState()
+                    }
+                }
+                val state = task.await()
+                if(state == ClientState.waitParameters) {
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).setUpClient()
+                    }
+                }
+            }
+
             val config = SyncConfiguration.Builder(user!!, user!!.id)
                 .waitForInitialRemoteData()
                 .build()
@@ -156,7 +170,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         super.onDestroy()
         recyclerView.adapter = null
         realm.close()
-        //unsubscribe()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
