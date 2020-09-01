@@ -12,7 +12,10 @@ import cafe.adriel.broker.*
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.ChannelsRealmActivity
+import com.mongodb.alliance.PhoneChangedEvent
 import com.mongodb.alliance.R
+import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
+import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
@@ -37,13 +40,20 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     @TelegramServ
     @Inject lateinit var t_service: Service
     private lateinit var code: EditText
-    lateinit var bottomSheetFragment : BottomSheetDialogFragment;
+    private var bottomSheetFragment : BottomSheetDialogFragment? = null
+
+    private lateinit var binding: ActivityConnectTelegramBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_connect_telegram)
-        setSupportActionBar(findViewById(R.id.toolbar))
+
+        val actionbar = supportActionBar
+        actionbar!!.title = "Connect telegram"
+
+        binding = ActivityConnectTelegramBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
             Timber.d("State changed")
@@ -52,46 +62,102 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     bottomSheetFragment =
                         PhoneNumberFragment()
 
-                    bottomSheetFragment.show(
+                    (bottomSheetFragment as PhoneNumberFragment).show(
                         this.supportFragmentManager,
-                        bottomSheetFragment.tag
+                        (bottomSheetFragment as PhoneNumberFragment).tag
                     )
                 }
                 ClientState.waitCode -> {
                     bottomSheetFragment =
                         CodeFragment()
 
-                    bottomSheetFragment.show(
+                    (bottomSheetFragment as CodeFragment).show(
                         this.supportFragmentManager,
-                        bottomSheetFragment.tag
+                        (bottomSheetFragment as CodeFragment).tag
                     )
                 }
                 ClientState.waitPassword -> {
                     bottomSheetFragment =
                         PasswordFragment()
-                    bottomSheetFragment.show(
+                    (bottomSheetFragment as PasswordFragment).show(
                         this.supportFragmentManager,
-                        bottomSheetFragment.tag
+                        (bottomSheetFragment as PasswordFragment).tag
                     )
                 }
                 ClientState.ready -> {
                     finish()
                 }
             }
+            //bottomSheetFragment = null
         }
 
-        lifecycleScope.launch{
-            withContext(Dispatchers.IO) {
-                t_service.setUpClient()
-                t_service.initService()
+        subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
+            binding.labelNumber.text = event.newNumber
+        }
+
+        lifecycleScope.launch {
+            val task = async {
+                withContext(Dispatchers.IO) {
+                    (t_service as TelegramService).returnClientState()
+                }
+            }
+            val state = task.await()
+            when(state){
+                ClientState.ready ->{
+                    Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
+                }
+                ClientState.waitParameters ->{
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).setUpClient()
+                    }
+                }
+                ClientState.waitNumber ->{
+                    withContext(Dispatchers.IO) {
+                        t_service.initService()
+                    }
+                }
+                ClientState.waitPassword ->{
+                    withContext(Dispatchers.IO) {
+                        t_service.initService()
+                    }
+                }
+                ClientState.waitCode ->{
+                    withContext(Dispatchers.IO) {
+                        t_service.initService()
+                    }
+                }
+            }
+
+        }
+            /*if(state == ClientState.waitParameters) {
+                withContext(Dispatchers.IO) {
+
+
+                }
+            }*/
+        binding.fab.setOnClickListener { view ->
+            if(bottomSheetFragment != null) {
+                bottomSheetFragment!!.show(supportFragmentManager, bottomSheetFragment!!.tag)
+            }
+            else{
+                Toast.makeText(baseContext, "Nothing to show", Toast.LENGTH_SHORT).show()
             }
         }
 
+        binding.connTgResetNumber.setOnClickListener { view ->
+            lifecycleScope.launch {
+                val task = async {
+                    (t_service as TelegramService).getPhoneNumber()
+                }
+                val number = task.await()
 
-        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            bottomSheetFragment =
-                    PhoneNumberFragment()
-                bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag)
+                if(number == ""){
+                    Toast.makeText(baseContext, "No number is connected", Toast.LENGTH_SHORT).show()
+                }
+                else{
+                    (t_service as TelegramService).resetPhoneNumber()
+                }
+            }
         }
     }
 

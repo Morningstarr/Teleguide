@@ -13,7 +13,9 @@ import dev.whyoleg.ktd.api.TelegramObject
 import dev.whyoleg.ktd.api.authorization.getAuthorizationState
 import dev.whyoleg.ktd.api.chat.getChats
 import dev.whyoleg.ktd.api.log.logOut
+import dev.whyoleg.ktd.api.passport.getPassportElement
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
+import dev.whyoleg.ktd.api.user.getMe
 import dev.whyoleg.ktd.api.util.close
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -55,6 +57,8 @@ class TelegramService : Service, GlobalBroker.Publisher {
                     return ClientState.waitParameters
                 }
                 is TdApi.AuthorizationStateWaitPhoneNumber -> {
+                    clientState = ClientState.waitNumber
+                    publish(StateChangedEvent(clientState), retain = true)
                     return ClientState.waitNumber
                 }
                 is TdApi.AuthorizationStateWaitCode -> {
@@ -73,7 +77,8 @@ class TelegramService : Service, GlobalBroker.Publisher {
                     var newClient = telegram.client()
                     client = newClient
                     setUpClient()
-                    publish(ClientState.waitNumber)
+                    resetPhoneNumber()
+                    //publish(ClientState.waitNumber)
                     return ClientState.waitNumber
                 }
                 else -> {
@@ -124,8 +129,8 @@ class TelegramService : Service, GlobalBroker.Publisher {
                     when (state) {
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
-                            clientState = ClientState.waitNumber
-                            publish(StateChangedEvent(clientState), retain = true)
+                            //clientState = ClientState.waitNumber
+                            //publish(StateChangedEvent(clientState), retain = true)
                         }
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
@@ -204,6 +209,22 @@ class TelegramService : Service, GlobalBroker.Publisher {
     suspend fun returnGroupChat(id : Int) {
         var group_chat = client.exec(TdApi.GetBasicGroup(id)) as TdApi.BasicGroup
         //TdApi.GenerateChatInviteLink()
+    }
+
+    suspend fun getPhoneNumber(): String {
+        lateinit var number : String
+        return try {
+            number = client.getMe().phoneNumber
+            number
+        } catch (e:Exception){
+            ""
+        }
+    }
+
+    fun resetPhoneNumber(){
+        TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
+        val clientState = ClientState.waitNumber
+        publish(StateChangedEvent(clientState), retain = true)
     }
 
 }

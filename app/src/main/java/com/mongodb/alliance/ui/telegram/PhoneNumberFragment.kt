@@ -6,8 +6,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.mongodb.alliance.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
@@ -23,7 +26,7 @@ import kotlin.time.ExperimentalTime
 @InternalCoroutinesApi
 @ExperimentalTime
 @AndroidEntryPoint
-class PhoneNumberFragment : BottomSheetDialogFragment() {
+class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher {
 
     @TelegramServ
     @Inject
@@ -80,6 +83,7 @@ class PhoneNumberFragment : BottomSheetDialogFragment() {
                 }
                     showLoading(true)
                 dismiss()
+                    publish(PhoneChangedEvent(toNumber(input, "")))
                 /*if (result.toString().contains("Ok")) {
                     dismiss()
                 }*/
