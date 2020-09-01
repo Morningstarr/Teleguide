@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
@@ -14,6 +16,7 @@ import com.mongodb.alliance.databinding.ActivityChannelsBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.adapters.ChannelAdapter
+import com.mongodb.alliance.adapters.FolderAdapter
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -22,8 +25,10 @@ import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
+import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 import kotlin.time.ExperimentalTime
@@ -48,13 +53,14 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         super.onCreate(savedInstanceState)
 
         val folderId = intent.getStringExtra("folderId")
-        val folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
+        this.folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
         val actionbar = supportActionBar
         actionbar?.title = folder?.name
         actionbar?.setDisplayHomeAsUpEnabled(true)
         actionbar?.setDisplayHomeAsUpEnabled(true)
 
         binding = ActivityChannelsBinding.inflate(layoutInflater)
+        recyclerView = binding.channelsInFolderList
         val view = binding.root
         setContentView(view)
 
@@ -94,6 +100,53 @@ class ChannelsActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         else{
             binding.channelsInFolderProgress.visibility = View.GONE
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        try {
+            try {
+                user = channelApp.currentUser()
+            } catch (e: IllegalStateException) {
+                Timber.e(e.message)
+            }
+            if (user == null) {
+                startActivity(Intent(this, LoginActivity::class.java))
+            } else {
+
+                val config = SyncConfiguration.Builder(user!!, user!!.id)
+                    .waitForInitialRemoteData()
+                    .build()
+
+                Realm.setDefaultConfiguration(config)
+
+                try {
+                    Realm.getInstanceAsync(config, object : Realm.Callback() {
+                        override fun onSuccess(realm: Realm) {
+                            // since this realm should live exactly as long as this activity, assign the realm to a member variable
+                            this@ChannelsActivity.realm = realm
+                            setUpRecyclerView(realm)
+                        }
+                    })
+                } catch (e: Exception) {
+                    Timber.e(e.message)
+                }
+            }
+        }
+        catch(e:Exception){
+            Timber.e(e.message)
+        }
+    }
+
+    private fun setUpRecyclerView(realm: Realm) {
+        adapter = ChannelAdapter(
+            realm.where<ChannelRealm>().equalTo("folder._id", folder!!._id).sort("_id")
+                .findAll()
+        )
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+        recyclerView.setHasFixedSize(true)
+        recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
     }
 
     override fun onSupportNavigateUp(): Boolean {
