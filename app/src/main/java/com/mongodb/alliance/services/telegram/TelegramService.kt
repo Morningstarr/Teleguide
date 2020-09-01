@@ -196,12 +196,14 @@ class TelegramService : Service, GlobalBroker.Publisher {
         return (client.exec(TdApi.GetSupergroup(id)) as TdApi.Supergroup).username
     }
 
-    suspend fun returnChat(id : Long) : TdApi.Chat{
-        return client.exec(TdApi.GetChat(id)) as TdApi.Chat
+    suspend fun returnChat(id : Long) {
+        var chat = client.exec(TdApi.GetChat(id)) as TdApi.Chat
+
     }
 
-    suspend fun returnGroupChat(id : Int) : TdApi.BasicGroup{
-        return client.exec(TdApi.GetBasicGroup(id)) as TdApi.BasicGroup
+    suspend fun returnGroupChat(id : Int) {
+        var group_chat = client.exec(TdApi.GetBasicGroup(id)) as TdApi.BasicGroup
+        //TdApi.GenerateChatInviteLink()
     }
 
 }

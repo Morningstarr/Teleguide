@@ -224,7 +224,6 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
 
 
     suspend fun loadChats() {
-        var doNotAdd : Boolean = false
         val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
         }
@@ -232,9 +231,8 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         val nm = chats as ArrayList<TdApi.Chat>
         ChannelsArray = ArrayList(nm.size)
         for (i in 0 until nm.size){
-
-            // FIXME: show error if user is null
             if(nm[i].title != "") {
+                // FIXME: show error if user is null
                 val partition = user?.id.toString() ?: ""
                 val channel =
                     ChannelRealm(nm[i].title, partition)
@@ -252,19 +250,13 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
                         if (superg != "") {
                             channel.name = superg
                             channel.typeEnum = ChannelType.channel
-                        } else {
-                            doNotAdd = true
+                            if (realm.where<ChannelRealm>().equalTo("name", channel.name).and()
+                                    .equalTo("folder._id", ObjectId(folderId)).findFirst() == null) {
+                                ChannelsArray.add(channel)
+                            }
                         }
                     }
                 }
-
-                if (realm.where<ChannelRealm>().equalTo("name", channel.name).and()
-                        .equalTo("folder._id", ObjectId(folderId)).findFirst() == null
-                    && !doNotAdd
-                ) {
-                    ChannelsArray.add(channel)
-                }
-                doNotAdd = false
             }
         }
     }
