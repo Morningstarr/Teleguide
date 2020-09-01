@@ -48,6 +48,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     private lateinit var chatList : TdApi.ChatList
     private var folder: FolderRealm? = null
     private var ChannelsArray : ArrayList<ChannelRealm> = ArrayList()
+    private var folderId : String? = null
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -62,7 +63,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val folderId = intent.getStringExtra("folderId")
+        folderId = intent.getStringExtra("folderId")
         folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
 
         val actionbar = supportActionBar
@@ -223,6 +224,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
 
 
     suspend fun loadChats() {
+        var doNotAdd : Boolean = false
         val chats = withContext(coroutineContext) {
             (t_service as TelegramService).getChats()
         }
@@ -232,25 +234,38 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         for (i in 0 until nm.size){
 
             // FIXME: show error if user is null
-            val partition = user?.id.toString() ?: ""
-            val channel =
-                ChannelRealm(nm[i].title, partition)
+            if(nm[i].title != "") {
+                val partition = user?.id.toString() ?: ""
+                val channel =
+                    ChannelRealm(nm[i].title, partition)
 
-            when(nm[i].type){
-                is TdApi.ChatTypePrivate ->{
-                    channel.typeEnum = ChannelType.chat
+                when (nm[i].type) {
+                    is TdApi.ChatTypePrivate -> {
+                        channel.typeEnum = ChannelType.chat
+                    }
+                    is TdApi.ChatTypeBasicGroup -> {
+                        channel.typeEnum = ChannelType.groupChat
+                    }
+                    is TdApi.ChatTypeSupergroup -> {
+                        val superg =
+                            (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
+                        if (superg != "") {
+                            channel.name = superg
+                            channel.typeEnum = ChannelType.channel
+                        } else {
+                            doNotAdd = true
+                        }
+                    }
                 }
-                is TdApi.ChatTypeBasicGroup ->{
-                    channel.typeEnum = ChannelType.groupChat
+
+                if (realm.where<ChannelRealm>().equalTo("name", channel.name).and()
+                        .equalTo("folder._id", ObjectId(folderId)).findFirst() == null
+                    && !doNotAdd
+                ) {
+                    ChannelsArray.add(channel)
                 }
-                is TdApi.ChatTypeSupergroup ->{
-                    val superg = (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
-                    channel.name = superg
-                    channel.typeEnum = ChannelType.channel
-                }
+                doNotAdd = false
             }
-
-            ChannelsArray.add(channel)
         }
     }
 }
