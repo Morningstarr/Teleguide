@@ -8,24 +8,27 @@
     tools:context=".ui.telegram.ConnectTelegramActivity">
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="25dp">
+        android:layout_marginTop="25dp"
+        android:orientation="vertical">
+
         <TextView
             android:id="@+id/label_your_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
             android:text="Your number:"
-            android:textSize="18sp"
-            android:layout_marginStart="25dp"/>
+            android:textSize="18sp" />
+
         <TextView
             android:id="@+id/label_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
             android:text="No telephone number connected"
-            android:textSize="20sp"
-            android:layout_marginStart="25dp"/>
+            android:textSize="20sp" />
 
         <Button
             android:id="@+id/conn_tg_reset_number"
@@ -37,6 +40,7 @@
             android:background="@android:color/holo_blue_light"
             android:text="Reset number"
             android:textColor="@android:color/white" />
+
     </LinearLayout>
 
 
@@ -48,6 +52,17 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         app:srcCompat="@android:drawable/ic_input_add" />
+
+    <Button
+        android:id="@+id/conn_tg_reset_telegram_account"
+        android:layout_width="210dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="@android:color/holo_blue_light"
+        android:text="Change Telegram account"
+        android:textColor="@android:color/white"
+        app:layout_anchor="@+id/linearLayout"
+        app:layout_anchorGravity="center" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -210,21 +210,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             R.id.action_connect_telegram -> {
                 lateinit var state : ClientState
                 startActivity(Intent(baseContext, ConnectTelegramActivity::class.java))
-                /*launch {
-                    val task = async {
-                        withContext(Dispatchers.IO) {
-                            (t_service as TelegramService).returnClientState()
-                        }
-                    }
-                    state = task.await()
-
-                    if(state != ClientState.ready) {
-                        startActivity(Intent(baseContext, ConnectTelegramActivity::class.java))
-                    }
-                    else{
-                        Toast.makeText(baseContext, "Account already connected", Toast.LENGTH_SHORT).show()
-                    }
-                }*/
+                true
+            }
+            R.id.action_profile -> {
+                startActivity(Intent(baseContext, ProfileActivity::class.java))
                 true
             }
             else -> {

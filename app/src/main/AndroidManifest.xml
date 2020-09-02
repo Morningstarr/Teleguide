@@ -13,20 +13,28 @@
         <activity
             android:name=".ChannelsRealmActivity"
             android:configChanges="orientation"
-            android:launchMode="singleTop"></activity>
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ProfileActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ChannelsArrayActivity"
             android:configChanges="orientation"
-            android:launchMode="singleTop"></activity>
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.telegram.ConnectTelegramActivity"
-            android:configChanges="orientation"
             android:label="@string/title_activity_connect_telegram"
-            android:launchMode="singleTop"></activity>
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".FolderActivity"
             android:configChanges="orientation"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -36,7 +44,8 @@
         <activity
             android:name=".LoginActivity"
             android:configChanges="orientation"
-            android:launchMode="singleTop" />
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

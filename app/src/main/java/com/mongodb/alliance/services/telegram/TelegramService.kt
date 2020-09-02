@@ -221,6 +221,16 @@ class TelegramService : Service, GlobalBroker.Publisher {
         }
     }
 
+    suspend fun getProfileName(): String{
+        lateinit var username : String
+        return try{
+            username = client.getMe().username
+            username
+        } catch (e:Exception){
+            ""
+        }
+    }
+
     fun resetPhoneNumber(){
         TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
         val clientState = ClientState.waitNumber

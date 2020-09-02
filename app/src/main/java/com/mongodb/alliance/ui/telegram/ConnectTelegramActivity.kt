@@ -1,36 +1,33 @@
 package com.mongodb.alliance.ui.telegram
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import cafe.adriel.broker.*
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.subscribe
+import cafe.adriel.broker.unsubscribe
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mongodb.alliance.ChannelsRealmActivity
 import com.mongodb.alliance.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
-import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
-import dev.whyoleg.ktd.Telegram
-import dev.whyoleg.ktd.TelegramClientConfiguration
-import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.*
 import timber.log.Timber
-import java.lang.Runnable
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
+
 
 @InternalCoroutinesApi
 @ExperimentalTime
@@ -55,6 +52,8 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         val view = binding.root
         setContentView(view)
 
+        lateinit var behavior: BottomSheetBehavior<View>
+
         subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
             Timber.d("State changed")
             when(event.clientState){
@@ -66,6 +65,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                         this.supportFragmentManager,
                         (bottomSheetFragment as PhoneNumberFragment).tag
                     )
+
                 }
                 ClientState.waitCode -> {
                     bottomSheetFragment =
@@ -85,7 +85,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     )
                 }
                 ClientState.ready -> {
-                    finish()
+                    //finish()
                 }
             }
             //bottomSheetFragment = null
@@ -104,7 +104,12 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             val state = task.await()
             when(state){
                 ClientState.ready ->{
-                    Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
+                    val task = async {
+                        (t_service as TelegramService).getPhoneNumber()
+                    }
+                    val number = task.await()
+                    binding.labelNumber.text = number
                 }
                 ClientState.waitParameters ->{
                     withContext(Dispatchers.IO) {
@@ -127,14 +132,8 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     }
                 }
             }
-
         }
-            /*if(state == ClientState.waitParameters) {
-                withContext(Dispatchers.IO) {
 
-
-                }
-            }*/
         binding.fab.setOnClickListener { view ->
             if(bottomSheetFragment != null) {
                 bottomSheetFragment!!.show(supportFragmentManager, bottomSheetFragment!!.tag)
@@ -155,9 +154,29 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     Toast.makeText(baseContext, "No number is connected", Toast.LENGTH_SHORT).show()
                 }
                 else{
+                    //(t_service as TelegramService).resetPhoneNumber()
+                    Toast.makeText(baseContext, "You can't reset number while your account is connected. Please reconnect your telegram", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        binding.connTgResetTelegramAccount.setOnClickListener { view ->
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Alert")
+            builder.setMessage("Are you sure you want change Telegram Account?")
+
+            builder.setPositiveButton(android.R.string.yes) { dialog, which ->
+                lifecycleScope.launch {
+                    (t_service as TelegramService).logOut()
                     (t_service as TelegramService).resetPhoneNumber()
                 }
             }
+
+            builder.setNegativeButton(android.R.string.no) { dialog, which ->
+
+            }
+
+            builder.show()
         }
     }
 
