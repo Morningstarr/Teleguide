@@ -3,6 +3,7 @@ package com.mongodb.alliance
 import android.app.Application
 import android.content.Context
 import com.mongodb.alliance.BuildConfig.MONGODB_REALM_APP_ID
+import com.mongodb.alliance.model.UserRealm
 import dagger.hilt.android.HiltAndroidApp
 import io.realm.BuildConfig
 import io.realm.Realm
@@ -25,6 +26,7 @@ class ChannelProj : Application() {
             return appContext
         }
     }
+
     override fun onCreate() {
         super.onCreate()
         Realm.init(this)

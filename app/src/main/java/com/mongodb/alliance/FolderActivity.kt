@@ -21,6 +21,7 @@ import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.adapters.FolderAdapter
 import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.model.OpenFolderEvent
+import com.mongodb.alliance.model.UserRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -31,6 +32,7 @@ import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
+import org.bson.types.ObjectId
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext

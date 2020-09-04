@@ -6,11 +6,13 @@ import androidx.lifecycle.lifecycleScope
 import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.databinding.ActivityProfileBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.model.UserRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
+import io.realm.kotlin.where
 import io.realm.mongodb.User
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -25,6 +27,7 @@ class ProfileActivity : AppCompatActivity() {
     @Inject
     lateinit var t_service: Service
     private lateinit var binding: ActivityProfileBinding
+    private lateinit var realm: Realm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,14 +37,15 @@ class ProfileActivity : AppCompatActivity() {
         actionbar.setDisplayHomeAsUpEnabled(true)
         actionbar.setDisplayHomeAsUpEnabled(true)
 
+        realm = Realm.getDefaultInstance()
         binding = ActivityProfileBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
-        val user = channelApp.currentUser()
-        val realm = Realm.getDefaultInstance()
 
-        binding.profEmail.text = user!!.email.toString()
+        val currUser = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst()
+        binding.profEmail.text = currUser?.name.toString()
+        //val urs = realm.where<UserRealm>().findAll()
 
         lifecycleScope.launch {
             val task = async {
@@ -66,5 +70,10 @@ class ProfileActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 }

@@ -14,13 +14,17 @@ import cafe.adriel.broker.subscribe
 import com.mongodb.alliance.databinding.ActivityLoginBinding
 import com.mongodb.alliance.databinding.ActivityMainBinding
 import com.mongodb.alliance.model.StateChangedEvent
+import com.mongodb.alliance.model.UserRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.ui.telegram.CodeFragment
 import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
 import com.mongodb.alliance.ui.telegram.PasswordFragment
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
+import io.realm.Realm
+import io.realm.kotlin.where
 import io.realm.mongodb.Credentials
 import kotlinx.coroutines.InternalCoroutinesApi
+import org.bson.types.ObjectId
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
@@ -125,8 +129,8 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
     }
 
     private fun validateCredentials(): Boolean = when {
-        username.text.toString().isEmpty() || username.text.length < 3 -> false
-        password.text.toString().isEmpty() || password.text.length < 6 -> false
-        else -> true
+            username.text.toString().isEmpty() || username.text.length < 3 -> false
+            password.text.toString().isEmpty() || password.text.length < 6 -> false
+            else -> true
+        }
     }
-}
