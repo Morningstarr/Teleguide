@@ -8,7 +8,7 @@ import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
 import com.mongodb.alliance.model.FolderRealm
-import com.mongodb.alliance.model.OpenFolderEvent
+import com.mongodb.alliance.events.OpenFolderEvent
 import io.realm.OrderedRealmCollection
 import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
@@ -16,10 +16,10 @@ import io.realm.kotlin.where
 import org.bson.types.ObjectId
 
 
-internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<FolderRealm, FolderAdapter.FolderViewHolder?>(data, true) {
+internal class FolderRealmAdapter(data: OrderedRealmCollection<FolderRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<FolderRealm, FolderRealmAdapter.FolderViewHolder?>(data, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
-        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.folder_view, parent, false)
+        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.folder_realm_view, parent, false)
         return FolderViewHolder(itemView)
     }
 
@@ -70,9 +70,9 @@ internal class FolderAdapter(data: OrderedRealmCollection<FolderRealm>) : Global
     }
 
     internal inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var name: TextView = view.findViewById(R.id.name)
+        var name: TextView = view.findViewById(R.id.folder_realm_view_name)
         var data: FolderRealm? = null
-        var menu: TextView = view.findViewById(R.id.menu)
+        var menu: TextView = view.findViewById(R.id.folder_realm_view_menu)
 
     }
 }

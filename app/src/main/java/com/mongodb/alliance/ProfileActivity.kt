@@ -45,7 +45,6 @@ class ProfileActivity : AppCompatActivity() {
 
         val currUser = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst()
         binding.profEmail.text = currUser?.name.toString()
-        //val urs = realm.where<UserRealm>().findAll()
 
         lifecycleScope.launch {
             val task = async {

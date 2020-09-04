@@ -1,20 +1,16 @@
 package com.mongodb.alliance.ui.telegram
 
-import android.annotation.SuppressLint
-import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.mongodb.alliance.PhoneChangedEvent
+import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
@@ -90,7 +86,11 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher 
                 }
                     showLoading(true)
                 dismiss()
-                    publish(PhoneChangedEvent(toNumber(input, "")))
+                    publish(
+                        PhoneChangedEvent(
+                            toNumber(input, "")
+                        )
+                    )
                 /*if (result.toString().contains("Ok")) {
                     dismiss()
                 }*/

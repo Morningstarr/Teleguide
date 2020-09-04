@@ -18,10 +18,9 @@ import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.adapters.FolderAdapter
+import com.mongodb.alliance.adapters.FolderRealmAdapter
 import com.mongodb.alliance.model.FolderRealm
-import com.mongodb.alliance.model.OpenFolderEvent
-import com.mongodb.alliance.model.UserRealm
+import com.mongodb.alliance.events.OpenFolderEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -32,7 +31,6 @@ import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
-import org.bson.types.ObjectId
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -45,7 +43,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var realm: Realm
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: FolderAdapter
+    private lateinit var adapter: FolderRealmAdapter
     private lateinit var fab: FloatingActionButton
 
     private var job: Job = Job()
@@ -158,7 +156,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
 
     private fun setUpRecyclerView(realm: Realm) {
-        adapter = FolderAdapter(
+        adapter = FolderRealmAdapter(
             realm.where<FolderRealm>().sort("_id")
                 .findAll()
         )

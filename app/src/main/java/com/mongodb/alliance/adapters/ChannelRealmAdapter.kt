@@ -11,7 +11,7 @@ import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.ChannelType
-import com.mongodb.alliance.model.OpenChannelEvent
+import com.mongodb.alliance.events.OpenChannelEvent
 import io.realm.OrderedRealmCollection
 import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
@@ -22,7 +22,7 @@ import org.bson.types.ObjectId
 internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<ChannelRealm, ChannelRealmAdapter.ChannelViewHolder?>(data, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
-        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channel_view, parent, false)
+        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channels_realm_view, parent, false)
         return ChannelViewHolder(itemView)
     }
 
@@ -78,10 +78,10 @@ internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) :
     }
 
     internal inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var name: TextView = view.findViewById(R.id.name)
-        var type: TextView = view.findViewById(R.id.type)
+        var name: TextView = view.findViewById(R.id.realm_view_channel_name)
+        var type: TextView = view.findViewById(R.id.realm_view_channel_type)
         var data: ChannelRealm? = null
-        var menu: TextView = view.findViewById(R.id.menu)
+        var menu: TextView = view.findViewById(R.id.realm_view_channel_menu)
 
     }
 }

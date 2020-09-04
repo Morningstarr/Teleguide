@@ -17,7 +17,7 @@
         android:padding="8dp">
 
         <TextView
-            android:id="@+id/name"
+            android:id="@+id/folder_realm_view_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="1dp"
@@ -29,7 +29,7 @@
 
 
     <TextView
-        android:id="@+id/menu"
+        android:id="@+id/folder_realm_view_menu"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_alignParentEnd="true"

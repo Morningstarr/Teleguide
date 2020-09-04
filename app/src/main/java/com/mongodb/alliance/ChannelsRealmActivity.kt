@@ -12,10 +12,11 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mongodb.alliance.databinding.ActivityChannelsBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.adapters.ChannelRealmAdapter
+import com.mongodb.alliance.databinding.ActivityChannelsRealmBinding
+import com.mongodb.alliance.events.OpenChannelEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -40,7 +41,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private lateinit var adapter: ChannelRealmAdapter
     private lateinit var fab: FloatingActionButton
     private var folder: FolderRealm? = null
-    private lateinit var binding: ActivityChannelsBinding
+    private lateinit var binding: ActivityChannelsRealmBinding
     private var folderId : String? = null
 
     @TelegramServ
@@ -57,7 +58,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         actionbar?.setDisplayHomeAsUpEnabled(true)
         actionbar?.setDisplayHomeAsUpEnabled(true)
 
-        binding = ActivityChannelsBinding.inflate(layoutInflater)
+        binding = ActivityChannelsRealmBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 

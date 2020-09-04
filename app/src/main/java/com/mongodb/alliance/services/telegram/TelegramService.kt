@@ -4,25 +4,19 @@ import android.os.Build
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.ChannelProj
-import com.mongodb.alliance.model.StateChangedEvent
+import com.mongodb.alliance.events.StateChangedEvent
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import dev.whyoleg.ktd.api.authorization.getAuthorizationState
-import dev.whyoleg.ktd.api.chat.getChats
-import dev.whyoleg.ktd.api.log.logOut
-import dev.whyoleg.ktd.api.passport.getPassportElement
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
 import dev.whyoleg.ktd.api.user.getMe
-import dev.whyoleg.ktd.api.util.close
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 import javax.inject.Inject
@@ -58,7 +52,10 @@ class TelegramService : Service, GlobalBroker.Publisher {
                 }
                 is TdApi.AuthorizationStateWaitPhoneNumber -> {
                     clientState = ClientState.waitNumber
-                    publish(StateChangedEvent(clientState), retain = true)
+                    publish(
+                        StateChangedEvent(
+                            clientState
+                        ), retain = true)
                     return ClientState.waitNumber
                 }
                 is TdApi.AuthorizationStateWaitCode -> {
@@ -135,17 +132,26 @@ class TelegramService : Service, GlobalBroker.Publisher {
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
                             clientState = ClientState.waitCode
-                            publish(StateChangedEvent(clientState), retain = true)
+                            publish(
+                                StateChangedEvent(
+                                    clientState
+                                ), retain = true)
                         }
                         is TdApi.AuthorizationStateWaitPassword -> {
                             Timber.d("Waiting for password");
                             clientState = ClientState.waitPassword
-                            publish(StateChangedEvent(clientState), retain = true)
+                            publish(
+                                StateChangedEvent(
+                                    clientState
+                                ), retain = true)
                         }
                         is TdApi.AuthorizationStateReady -> {
                             Timber.d("State ready");
                             clientState = ClientState.ready
-                            publish(StateChangedEvent(clientState), retain = true)
+                            publish(
+                                StateChangedEvent(
+                                    clientState
+                                ), retain = true)
                         }
                     }
 

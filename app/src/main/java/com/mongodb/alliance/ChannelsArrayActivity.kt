@@ -1,6 +1,5 @@
 package com.mongodb.alliance
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
@@ -13,12 +12,12 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
-import cafe.adriel.broker.publish
 import cafe.adriel.broker.subscribe
 import cafe.adriel.broker.unsubscribe
 import com.mongodb.alliance.adapters.ChannelArrayAdapter
-import com.mongodb.alliance.databinding.ActivityMainBinding
+import com.mongodb.alliance.databinding.ActivityChannelsArrayBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.ChannelSaveEvent
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -29,7 +28,6 @@ import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
 import io.realm.kotlin.where
 import io.realm.mongodb.User
-import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
 import timber.log.Timber
@@ -54,7 +52,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityChannelsArrayBinding
 
     @TelegramServ
     @Inject
@@ -72,12 +70,12 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
 
         subscribe<ChannelSaveEvent>(lifecycleScope){ event ->
             if(event.parameter == 1){
-                Toast.makeText(baseContext, "channel saved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(baseContext, "Channel saved", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityChannelsArrayBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
@@ -144,36 +142,6 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_logout -> {
-                lifecycleScope.launch{
-                    binding.mainProgress.visibility = View.VISIBLE
-                    binding.activityMain.isEnabled = false
-
-                    user?.logOutAsync {
-                        if (it.isSuccess) {
-                            realm = Realm.getDefaultInstance()
-
-                            realm.close()
-
-                            user = null
-                        } else {
-                            Timber.e("log out failed! Error: ${it.error}")
-                            return@logOutAsync
-                        }
-                    }
-
-                    withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).logOut()
-                    }
-
-                    Timber.d("user logged out")
-
-                    binding.mainProgress.visibility = View.GONE
-                    binding.activityMain.isEnabled = true
-                    startActivity(Intent(baseContext, LoginActivity::class.java))
-                }
-                true
-            }
             R.id.action_connect_telegram -> {
                 lateinit var state : ClientState
                 launch {

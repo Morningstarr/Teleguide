@@ -14,11 +14,11 @@ import cafe.adriel.broker.subscribe
 import cafe.adriel.broker.unsubscribe
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.mongodb.alliance.PhoneChangedEvent
+import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.model.StateChangedEvent
+import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -166,6 +166,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             builder.setMessage("Are you sure you want change Telegram Account?")
 
             builder.setPositiveButton(android.R.string.yes) { dialog, which ->
+                binding.labelNumber.text = "@strings/no_telephone_number_connected"
                 lifecycleScope.launch {
                     (t_service as TelegramService).logOut()
                     (t_service as TelegramService).resetPhoneNumber()
@@ -188,7 +189,6 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_skip -> {
-                //todo окно подтверждения пропуска привязки
                 finish()
                 true
             }

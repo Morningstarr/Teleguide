@@ -1,4 +1,4 @@
-package com.mongodb.alliance.model
+package com.mongodb.alliance.events
 
 import android.content.Intent
 
