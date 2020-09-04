@@ -18,6 +18,7 @@ import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.RegistrationCompletedEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -87,13 +88,17 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 ClientState.ready -> {
                     //finish()
                 }
+                /*else -> {
+
+                }*/
             }
-            //bottomSheetFragment = null
         }
 
         subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
             binding.labelNumber.text = event.newNumber
         }
+
+        //registrationCompletedSubscription()
 
         lifecycleScope.launch {
             val task = async {
@@ -104,7 +109,6 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             val state = task.await()
             when(state){
                 ClientState.ready ->{
-                    //Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
                     val task = async {
                         (t_service as TelegramService).getPhoneNumber()
                     }
@@ -115,6 +119,11 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).setUpClient()
                     }
+                    val task = async {
+                        (t_service as TelegramService).getPhoneNumber()
+                    }
+                    val number = task.await()
+                    binding.labelNumber.text = number
                 }
                 ClientState.waitNumber ->{
                     withContext(Dispatchers.IO) {
@@ -151,10 +160,10 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 val number = task.await()
 
                 if(number == ""){
-                    Toast.makeText(baseContext, "No number is connected", Toast.LENGTH_SHORT).show()
+                    binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
+                    (t_service as TelegramService).resetPhoneNumber()
                 }
                 else{
-                    //(t_service as TelegramService).resetPhoneNumber()
                     Toast.makeText(baseContext, "You can't reset number while your account is connected. Please reconnect your telegram", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -166,10 +175,13 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             builder.setMessage("Are you sure you want change Telegram Account?")
 
             builder.setPositiveButton(android.R.string.yes) { dialog, which ->
-                binding.labelNumber.text = "@strings/no_telephone_number_connected"
+
+                binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
                 lifecycleScope.launch {
-                    (t_service as TelegramService).logOut()
-                    (t_service as TelegramService).resetPhoneNumber()
+
+                        (t_service as TelegramService).logOut()
+                        (t_service as TelegramService).resetPhoneNumber()
+
                 }
             }
 
@@ -194,6 +206,14 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             }
             else -> {
                 super.onOptionsItemSelected(item)
+            }
+        }
+    }
+
+    private fun registrationCompletedSubscription(){
+        subscribe<RegistrationCompletedEvent>(lifecycleScope, emitRetained = true) { event ->
+            if(event.clientState == ClientState.ready){
+                finish()
             }
         }
     }

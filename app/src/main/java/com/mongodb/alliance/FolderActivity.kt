@@ -121,6 +121,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         } else {
 
             lifecycleScope.launch {
+                showLoading(true)
                 val task = async {
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).returnClientState()
@@ -144,10 +145,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 Realm.getInstanceAsync(config, object : Realm.Callback() {
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
-                        this@FolderActivity.realm = realm
-                        setUpRecyclerView(realm)
-                    }
-                })
+                            this@FolderActivity.realm = realm
+                            setUpRecyclerView(realm)
+                            showLoading(false)
+                        }
+                    })
             } catch (e: Exception) {
                 Timber.e(e.message)
             }
@@ -219,6 +221,15 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             else -> {
                 super.onOptionsItemSelected(item)
             }
+        }
+    }
+
+    private fun showLoading(show : Boolean){
+        if(!show) {
+            binding.foldersProgress.visibility = View.GONE
+        }
+        else{
+            binding.foldersProgress.visibility = View.VISIBLE
         }
     }
 

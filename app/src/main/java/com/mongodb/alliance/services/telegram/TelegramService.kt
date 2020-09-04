@@ -4,6 +4,7 @@ import android.os.Build
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.ChannelProj
+import com.mongodb.alliance.events.RegistrationCompletedEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
