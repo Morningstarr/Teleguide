@@ -148,9 +148,9 @@ class TelegramService : Service, GlobalBroker.Publisher {
                         }
                         is TdApi.AuthorizationStateReady -> {
                             Timber.d("State ready");
-                            clientState = ClientState.ready
+                            clientState = ClientState.completed
                             publish(
-                                StateChangedEvent(
+                                RegistrationCompletedEvent(
                                     clientState
                                 ), retain = true)
                         }

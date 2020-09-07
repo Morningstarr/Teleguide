@@ -9,9 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import cafe.adriel.broker.GlobalBroker
-import cafe.adriel.broker.subscribe
-import cafe.adriel.broker.unsubscribe
+import cafe.adriel.broker.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.events.PhoneChangedEvent
@@ -53,59 +51,16 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         val view = binding.root
         setContentView(view)
 
-        lateinit var behavior: BottomSheetBehavior<View>
-
-        subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
-            Timber.d("State changed")
-            when(event.clientState){
-                ClientState.waitNumber -> {
-                    bottomSheetFragment =
-                        PhoneNumberFragment()
-
-                    (bottomSheetFragment as PhoneNumberFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as PhoneNumberFragment).tag
-                    )
-
-                }
-                ClientState.waitCode -> {
-                    bottomSheetFragment =
-                        CodeFragment()
-
-                    (bottomSheetFragment as CodeFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as CodeFragment).tag
-                    )
-                }
-                ClientState.waitPassword -> {
-                    bottomSheetFragment =
-                        PasswordFragment()
-                    (bottomSheetFragment as PasswordFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as PasswordFragment).tag
-                    )
-                }
-                ClientState.ready -> {
-                    //finish()
-                }
-                /*else -> {
-
-                }*/
-            }
-        }
-
-        subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
-            binding.labelNumber.text = event.newNumber
-        }
-
-        //registrationCompletedSubscription()
-
+        otherEventsSubscription()
+        registrationCompletedSubscription()
         lifecycleScope.launch {
             val task = async {
+                //unsubscribe()
                 withContext(Dispatchers.IO) {
                     (t_service as TelegramService).returnClientState()
                 }
             }
+
             val state = task.await()
             when(state){
                 ClientState.ready ->{
@@ -212,7 +167,8 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     private fun registrationCompletedSubscription(){
         subscribe<RegistrationCompletedEvent>(lifecycleScope, emitRetained = true) { event ->
-            if(event.clientState == ClientState.ready){
+            if(event.clientState == ClientState.completed){
+                removeRetained<RegistrationCompletedEvent>()
                 finish()
             }
         }
@@ -223,4 +179,59 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         unsubscribe()
     }
 
+    private fun otherEventsSubscription(){
+        subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
+            Timber.d("State changed")
+            when(event.clientState) {
+                ClientState.waitNumber -> {
+                    bottomSheetFragment =
+                        PhoneNumberFragment()
+
+                    (bottomSheetFragment as PhoneNumberFragment).show(
+                        this.supportFragmentManager,
+                        (bottomSheetFragment as PhoneNumberFragment).tag
+                    )
+
+                }
+                ClientState.waitCode -> {
+                    if (removeRetained<StateChangedEvent>()?.clientState == ClientState.waitCode ||
+                        removeRetained<StateChangedEvent>()?.clientState == null){
+                            bottomSheetFragment =
+                                CodeFragment()
+
+
+                            (bottomSheetFragment as CodeFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as CodeFragment).tag
+                            )
+                    }
+                }
+                ClientState.waitPassword -> {
+                    removeRetained<StateChangedEvent>()
+                    if(removeRetained<StateChangedEvent>()?.clientState == ClientState.waitPassword ||
+                        removeRetained<StateChangedEvent>()?.clientState == null) {
+                        if(bottomSheetFragment != null){
+                            bottomSheetFragment?.dismiss()
+                        }
+                        bottomSheetFragment =
+                            PasswordFragment()
+                        (bottomSheetFragment as PasswordFragment).show(
+                            this.supportFragmentManager,
+                            (bottomSheetFragment as PasswordFragment).tag
+                        )
+                    }
+                }
+                ClientState.ready -> {
+                    //finish()
+                }
+                else -> {
+
+                }
+            }
+        }
+
+        subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
+            binding.labelNumber.text = event.newNumber
+        }
+    }
 }

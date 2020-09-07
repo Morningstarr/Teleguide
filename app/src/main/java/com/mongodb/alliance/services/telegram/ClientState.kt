@@ -9,5 +9,6 @@ enum class ClientState(val displayName: String) {
     setParameters("Set Parameters"),
     closed("Closed"),
     loggingOut("Logging Out"),
-    undefined("Undefined")
+    undefined("Undefined"),
+    completed("Registration completed")
 }
