@@ -244,4 +244,14 @@ class TelegramService : Service, GlobalBroker.Publisher {
         publish(StateChangedEvent(clientState), retain = true)
     }
 
+    @ExperimentalCoroutinesApi
+    suspend fun changeAccount(){
+        var newClient = telegram.client()
+        client = newClient
+        setUpClient()
+        TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
+        val clientState = ClientState.waitNumber
+        publish(StateChangedEvent(clientState), retain = true)
+        initService()
+    }
 }

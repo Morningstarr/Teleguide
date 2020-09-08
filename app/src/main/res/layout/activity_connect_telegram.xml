@@ -64,5 +64,12 @@
         app:layout_anchor="@+id/linearLayout"
         app:layout_anchorGravity="center" />
 
+    <ProgressBar
+        android:id="@+id/conn_tg_progress"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:visibility="gone"></ProgressBar>
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

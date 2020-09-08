@@ -133,10 +133,12 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
                 binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
                 lifecycleScope.launch {
-
+                    showLoading(true)
+                    withContext(Dispatchers.IO) {
                         (t_service as TelegramService).logOut()
-                        (t_service as TelegramService).resetPhoneNumber()
-
+                        (t_service as TelegramService).changeAccount()
+                    }
+                    showLoading(false)
                 }
             }
 
@@ -232,6 +234,19 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
             binding.labelNumber.text = event.newNumber
+        }
+    }
+
+    private fun showLoading(show : Boolean){
+        if(show){
+            binding.connTgProgress.visibility = View.VISIBLE
+            binding.connTgResetTelegramAccount.isEnabled = false
+            binding.connTgResetNumber.isEnabled = false
+        }
+        else{
+            binding.connTgProgress.visibility = View.GONE
+            binding.connTgResetTelegramAccount.isEnabled = true
+            binding.connTgResetNumber.isEnabled = true
         }
     }
 }
