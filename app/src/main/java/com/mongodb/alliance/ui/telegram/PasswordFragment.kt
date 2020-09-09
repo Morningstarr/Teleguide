@@ -36,17 +36,15 @@ class PasswordFragment : BottomSheetDialogFragment() {
     @TelegramServ
     @Inject
     lateinit var t_service : Service
-    private var _binding: FragmentPasswordBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var binding: FragmentPasswordBinding
 
     private lateinit var input : EditText
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
         inflater.inflate(R.layout.fragment_password, container, false)
-        _binding = FragmentPasswordBinding.inflate(inflater, container, false)
-        val view = binding.root
-        return view
+        binding = FragmentPasswordBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
 
@@ -64,13 +62,9 @@ class PasswordFragment : BottomSheetDialogFragment() {
                     }
                     showLoading(true)
                     dismiss()
-
-                    /*if (result.toString().contains("Ok")) {
-                        dismiss()
-                    }*/
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
-                    Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
+                    Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
                         .show()
                     showLoading(true)
                 }

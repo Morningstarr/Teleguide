@@ -35,8 +35,7 @@ class CodeFragment() : BottomSheetDialogFragment() {
     @TelegramServ
     @Inject lateinit var t_service : Service
 
-    private var _binding: FragmentCodeBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var binding: FragmentCodeBinding
 
     private lateinit var n1 : EditText
     private lateinit var n2 : EditText
@@ -48,9 +47,8 @@ class CodeFragment() : BottomSheetDialogFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
         inflater.inflate(R.layout.fragment_code, container, false)
-        _binding = FragmentCodeBinding.inflate(inflater, container, false)
-        val view = binding.root
-        return view
+        binding = FragmentCodeBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,7 +82,7 @@ class CodeFragment() : BottomSheetDialogFragment() {
                     dismiss()
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
-                    Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
+                    Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
                         .show()
                     showLoading(true)
                 }
@@ -101,9 +99,5 @@ class CodeFragment() : BottomSheetDialogFragment() {
             binding.frCdProgress.visibility = View.VISIBLE
         }
     }
-
-    /*private suspend fun callCodeConfirm(): TelegramObject {
-        return (t_service.returnServiceObj() as TelegramClient).exec(TdApi.CheckAuthenticationCode(input.text.toString()))
-    }*/
 
 }

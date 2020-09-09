@@ -45,7 +45,9 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         super.onCreate(savedInstanceState)
 
         val actionbar = supportActionBar
-        actionbar!!.title = "Connect telegram"
+        if (actionbar != null) {
+            actionbar.title = "Connect telegram"
+        }
 
         binding = ActivityConnectTelegramBinding.inflate(layoutInflater)
         val view = binding.root
@@ -99,8 +101,9 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
 
         binding.fab.setOnClickListener { view ->
-            if(bottomSheetFragment != null) {
-                bottomSheetFragment!!.show(supportFragmentManager, bottomSheetFragment!!.tag)
+            val btf = bottomSheetFragment
+            if(btf != null) {
+                btf.show(supportFragmentManager, btf.tag)
             }
             else{
                 Toast.makeText(baseContext, "Nothing to show", Toast.LENGTH_SHORT).show()

@@ -35,8 +35,7 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher 
     @TelegramServ
     @Inject
     lateinit var t_service : Service
-    private var _binding: FragmentPhoneNumberBinding? = null
-    private val binding get() = _binding!!
+    lateinit var binding: FragmentPhoneNumberBinding
 
     private lateinit var input : PhoneNumberEditText
 
@@ -59,12 +58,11 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher 
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?
     {
         inflater.inflate(R.layout.fragment_phone_number, container, false)
-        _binding = FragmentPhoneNumberBinding.inflate(inflater, container, false)
-        val view = binding.root
-        return view
+        binding = FragmentPhoneNumberBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
 
@@ -114,9 +112,9 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher 
         }
     }
 
-    override fun onDestroyView() {
+    /*override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
-    }
+        binding = null
+    }*/
 
 }
