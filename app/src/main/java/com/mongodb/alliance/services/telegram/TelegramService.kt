@@ -12,6 +12,7 @@ import dev.whyoleg.ktd.TelegramClientConfiguration
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import dev.whyoleg.ktd.api.authorization.getAuthorizationState
+import dev.whyoleg.ktd.api.phone.sharePhoneNumber
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
 import dev.whyoleg.ktd.api.user.getMe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,7 +57,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
                     publish(
                         StateChangedEvent(
                             clientState
-                        ), retain = true)
+                        )/*, retain = true*/)
                     return ClientState.waitNumber
                 }
                 is TdApi.AuthorizationStateWaitCode -> {
@@ -241,7 +242,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
     fun resetPhoneNumber(){
         TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
         val clientState = ClientState.waitNumber
-        publish(StateChangedEvent(clientState), retain = true)
+        publish(StateChangedEvent(clientState)/*, retain = true*/)
     }
 
     @ExperimentalCoroutinesApi
@@ -251,7 +252,7 @@ class TelegramService : Service, GlobalBroker.Publisher {
         setUpClient()
         TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
         val clientState = ClientState.waitNumber
-        publish(StateChangedEvent(clientState), retain = true)
+        publish(StateChangedEvent(clientState)/*, retain = true*/)
         initService()
     }
 }

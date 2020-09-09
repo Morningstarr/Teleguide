@@ -112,18 +112,36 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         binding.connTgResetNumber.setOnClickListener { view ->
             lifecycleScope.launch {
-                val task = async {
+                /*val task = async {
                     (t_service as TelegramService).getPhoneNumber()
                 }
                 val number = task.await()
 
-                if(number == ""){
+                if(number != ""){
                     binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
                     (t_service as TelegramService).resetPhoneNumber()
                 }
                 else{
-                    Toast.makeText(baseContext, "You can't reset number while your account is connected. Please reconnect your telegram", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(baseContext, "You can't reset your number now", Toast.LENGTH_SHORT).show()
+                }*/
+                unsubscribe()
+                val task = async {
+                    //unsubscribe()
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).returnClientState()
+                    }
                 }
+
+                val state = task.await()
+                if(state == ClientState.waitCode || state == ClientState.waitPassword){
+                    binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
+                    (t_service as TelegramService).resetPhoneNumber()
+                }
+                else{
+                    Toast.makeText(baseContext, "You can't reset your number now", Toast.LENGTH_SHORT).show()
+                }
+                otherEventsSubscription()
+                registrationCompletedSubscription()
             }
         }
 
