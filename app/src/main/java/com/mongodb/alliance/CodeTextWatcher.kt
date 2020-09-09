@@ -7,15 +7,20 @@ import android.widget.EditText
 
 open class CodeTextWatcher (private var left : View, private var right : View, private var flag : Boolean) : TextWatcher{
     override fun afterTextChanged(s: Editable?) {
-        if(s?.isNotEmpty()!!) {
-            if (flag) {
-                right.requestFocus()
-            } else {
-                right.performClick()
+        if (s != null) {
+            if(s.isNotEmpty()) {
+                if (flag) {
+                    right.requestFocus()
+                } else {
+                    right.performClick()
+                }
+            }
+            else{
+                left.requestFocus()
             }
         }
         else{
-            left.requestFocus()
+            //todo eventbus error message handling
         }
     }
 

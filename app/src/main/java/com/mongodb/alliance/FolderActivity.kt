@@ -66,7 +66,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         val actionbar = supportActionBar
-        actionbar!!.title = "My folders"
+        if (actionbar != null) {
+            actionbar.title = "My folders"
+        }
 
         binding = ActivityFolderBinding.inflate(layoutInflater)
         val view = binding.root
@@ -135,7 +137,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 }
             }
 
-            val config = SyncConfiguration.Builder(user!!, user!!.id)
+            val config = SyncConfiguration.Builder(user, user?.id)
                 .waitForInitialRemoteData()
                 .build()
 

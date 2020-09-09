@@ -119,13 +119,17 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     }
 
     private fun setUpRecyclerView() {
-        adapter = ChannelArrayAdapter(
-            ChannelsArray, folder?.name!!
-        )
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
-        recyclerView.setHasFixedSize(true)
-        recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+        val adp = folder?.name?.let { ChannelArrayAdapter(ChannelsArray, it) }
+        if (adp != null) {
+            adapter = adp
+            recyclerView.layoutManager = LinearLayoutManager(this)
+            recyclerView.adapter = adapter
+            recyclerView.setHasFixedSize(true)
+            recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+        }
+        else{
+            Toast.makeText(baseContext, "Folder data error!", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroy() {

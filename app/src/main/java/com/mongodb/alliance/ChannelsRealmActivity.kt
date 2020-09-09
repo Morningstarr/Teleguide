@@ -102,7 +102,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-            val config = SyncConfiguration.Builder(user!!, user!!.id)
+
+            val config = SyncConfiguration.Builder(user, user?.id)
                 .waitForInitialRemoteData()
                 .build()
 

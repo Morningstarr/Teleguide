@@ -47,7 +47,6 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
 
     private fun onLoginAfterSignUpSuccess(){
         startActivity(Intent(this, ConnectTelegramActivity::class.java))
-        //publish(ClientState.waitNumber)
         finish()
     }
 

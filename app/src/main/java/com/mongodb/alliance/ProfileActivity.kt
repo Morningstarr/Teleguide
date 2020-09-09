@@ -33,9 +33,12 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val actionbar = supportActionBar
-        actionbar!!.title = "My profile"
-        actionbar.setDisplayHomeAsUpEnabled(true)
-        actionbar.setDisplayHomeAsUpEnabled(true)
+        if (actionbar != null) {
+            actionbar.title = "My profile"
+            actionbar.setDisplayHomeAsUpEnabled(true)
+            actionbar.setDisplayHomeAsUpEnabled(true)
+        }
+
 
         realm = Realm.getDefaultInstance()
         binding = ActivityProfileBinding.inflate(layoutInflater)
