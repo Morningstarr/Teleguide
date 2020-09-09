@@ -44,13 +44,18 @@ internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) :
 
                 popup.setOnMenuItemClickListener { item: MenuItem? ->
                     var type: ChannelType? = null
-                    when (item!!.itemId) {
-                        deleteCode -> {
-                            removeAt(holder.data?._id!!)
+                    if (item != null) {
+                        when (item.itemId) {
+                            deleteCode -> {
+                                holder.data?._id?.let { it1 -> removeAt(it1) }
+                            }
+                            openCode ->{
+                                holder.data?.name?.let { it1 -> openChannel(it1) }
+                            }
                         }
-                        openCode ->{
-                            openChannel(holder.data?.name!!)
-                        }
+                    }
+                    else{
+                        //todo обработка исключения через event bus
                     }
 
                     true
@@ -68,13 +73,19 @@ internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) :
     private fun removeAt(id: ObjectId) {
         val bgRealm = Realm.getDefaultInstance()
 
-        bgRealm!!.executeTransaction {
+        if(bgRealm != null) {
+            bgRealm.executeTransaction {
 
-            val item = it.where<ChannelRealm>().equalTo("_id", id).findFirst()
-            item?.deleteFromRealm()
+                val item = it.where<ChannelRealm>().equalTo("_id", id).findFirst()
+                item?.deleteFromRealm()
+            }
+
+            bgRealm.close()
+        }
+        else{
+            //todo обработка исключения через event bus
         }
 
-        bgRealm.close()
     }
 
     internal inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {

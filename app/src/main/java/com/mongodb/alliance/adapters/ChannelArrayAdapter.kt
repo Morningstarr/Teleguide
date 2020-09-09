@@ -39,7 +39,7 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
         holder.type.text = obj?.typeEnum?.displayName
 
         holder.itemView.setOnClickListener {
-            addToFolder(holder.data?.name!!, folderName)
+            holder.data?.name?.let { it1 -> addToFolder(it1, folderName) }
             publish(ChannelSaveEvent(1))
         }
     }
@@ -47,20 +47,25 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
     private fun addToFolder(channelName : String, folderName: String){
         val bgRealm = Realm.getDefaultInstance()
 
-        val item = data.find { it.name == channelName }
-        item?.folder = findFolder(folderName)
+        if(bgRealm != null) {
+            val item = data.find { it.name == channelName }
+            item?.folder = findFolder(folderName)
 
-        bgRealm!!.executeTransactionAsync { realm ->
-            realm.insert(item as ChannelRealm)
+            bgRealm.executeTransactionAsync { realm ->
+                realm.insert(item as ChannelRealm)
+            }
+
+            bgRealm.close()
         }
-
-        bgRealm.close()
+        else{
+            //todo обработка исключения через event bus
+        }
     }
 
     private fun findFolder(name : String) : FolderRealm? {
         val bgRealm = Realm.getDefaultInstance()
         var folder : FolderRealm? = null
-        bgRealm!!.executeTransaction {
+        bgRealm.executeTransaction {
             folder = it.where<FolderRealm>().equalTo("name", name).findFirst()
         }
 

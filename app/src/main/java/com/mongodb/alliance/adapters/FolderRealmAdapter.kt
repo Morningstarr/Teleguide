@@ -39,17 +39,22 @@ internal class FolderRealmAdapter(data: OrderedRealmCollection<FolderRealm>) : G
                 menu.add(0, deleteCode, Menu.NONE, "Delete Folder")
 
                 popup.setOnMenuItemClickListener { item: MenuItem? ->
-                    when (item!!.itemId) {
-                        deleteCode -> {
-                            removeAt(holder.data?._id!!)
-                        }
-                        openCode -> {
-                            publish(
-                                OpenFolderEvent(
-                                    holder.data?._id.toString()
+                    if (item != null) {
+                        when (item.itemId) {
+                            deleteCode -> {
+                                holder.data?._id?.let { it1 -> removeAt(it1) }
+                            }
+                            openCode -> {
+                                publish(
+                                    OpenFolderEvent(
+                                        holder.data?._id.toString()
+                                    )
                                 )
-                            )
+                            }
                         }
+                    }
+                    else{
+                        //todo обработка исключения через event bus
                     }
                     true
                 }
@@ -60,13 +65,18 @@ internal class FolderRealmAdapter(data: OrderedRealmCollection<FolderRealm>) : G
     private fun removeAt(id: ObjectId) {
         val bgRealm = Realm.getDefaultInstance()
 
-        bgRealm!!.executeTransaction {
+        if(bgRealm != null) {
+            bgRealm.executeTransaction {
 
-            val item = it.where<FolderRealm>().equalTo("_id", id).findFirst()
-            item?.deleteFromRealm()
+                val item = it.where<FolderRealm>().equalTo("_id", id).findFirst()
+                item?.deleteFromRealm()
+            }
+
+            bgRealm.close()
         }
-
-        bgRealm.close()
+        else{
+            //todo обработка исключения через event bus
+        }
     }
 
     internal inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
