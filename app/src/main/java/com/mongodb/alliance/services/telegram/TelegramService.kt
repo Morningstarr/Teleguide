@@ -54,10 +54,10 @@ class TelegramService : Service, GlobalBroker.Publisher {
                 }
                 is TdApi.AuthorizationStateWaitPhoneNumber -> {
                     clientState = ClientState.waitNumber
-                    publish(
+                    /*publish(
                         StateChangedEvent(
                             clientState
-                        )/*, retain = true*/)
+                        )/*, retain = true*/)*/
                     return ClientState.waitNumber
                 }
                 is TdApi.AuthorizationStateWaitCode -> {
@@ -128,8 +128,8 @@ class TelegramService : Service, GlobalBroker.Publisher {
                     when (state) {
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
-                            //clientState = ClientState.waitNumber
-                            //publish(StateChangedEvent(clientState), retain = true)
+                            clientState = ClientState.waitNumber
+                            publish(StateChangedEvent(clientState)/*, retain = true*/)
                         }
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");

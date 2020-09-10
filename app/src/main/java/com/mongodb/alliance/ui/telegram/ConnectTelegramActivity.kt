@@ -81,6 +81,9 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     }
                     val number = task.await()
                     binding.labelNumber.text = number
+                    withContext(Dispatchers.IO) {
+                        t_service.initService()
+                    }
                 }
                 ClientState.waitNumber ->{
                     withContext(Dispatchers.IO) {
@@ -94,6 +97,11 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 }
                 ClientState.waitCode ->{
                     withContext(Dispatchers.IO) {
+                        t_service.initService()
+                    }
+                }
+                ClientState.setParameters -> {
+                    withContext(Dispatchers.IO){
                         t_service.initService()
                     }
                 }
@@ -207,18 +215,27 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             Timber.d("State changed")
             when(event.clientState) {
                 ClientState.waitNumber -> {
-                    bottomSheetFragment =
-                        PhoneNumberFragment()
+                    if (removeRetained<StateChangedEvent>()?.clientState == null
+                    ) {
+                        if(bottomSheetFragment == null) {
 
-                    (bottomSheetFragment as PhoneNumberFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as PhoneNumberFragment).tag
-                    )
+                            bottomSheetFragment =
+                                PhoneNumberFragment()
 
+                            (bottomSheetFragment as PhoneNumberFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as PhoneNumberFragment).tag
+                            )
+                        }
+
+                    }
                 }
                 ClientState.waitCode -> {
                     if (removeRetained<StateChangedEvent>()?.clientState == ClientState.waitCode ||
                         removeRetained<StateChangedEvent>()?.clientState == null){
+                        /*if(bottomSheetFragment != null){
+                            bottomSheetFragment?.dismiss()
+                        }*/
                             bottomSheetFragment =
                                 CodeFragment()
 
