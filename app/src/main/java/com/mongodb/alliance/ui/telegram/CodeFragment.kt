@@ -9,11 +9,14 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.CodeTextWatcher
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,7 +33,7 @@ import kotlin.time.ExperimentalTime
 @InternalCoroutinesApi
 @ExperimentalTime
 @AndroidEntryPoint
-class CodeFragment() : BottomSheetDialogFragment() {
+class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
 
     @TelegramServ
     @Inject lateinit var t_service : Service
@@ -80,6 +83,7 @@ class CodeFragment() : BottomSheetDialogFragment() {
                     }
                     showLoading(true)
                     dismiss()
+                    removeRetained<StateChangedEvent>()
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, Toast.LENGTH_SHORT)

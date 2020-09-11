@@ -35,7 +35,8 @@
             app:cp_showCountryCodeInView="true"
             app:cp_showCountryDialCodeInView="true"
             app:cp_showFastScroll="true"
-            app:cp_showFullScreeDialog="true" />
+            app:cp_showFullScreeDialog="true"
+            app:cp_searchAllowed="true"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 

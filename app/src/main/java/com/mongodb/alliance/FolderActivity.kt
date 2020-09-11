@@ -200,9 +200,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         }
                     }
 
-                    withContext(Dispatchers.IO) {
+                    /*withContext(Dispatchers.IO) {
                         (t_service as TelegramService).logOut()
-                    }
+                    }*/
 
                     Timber.d("user logged out")
 

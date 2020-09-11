@@ -41,6 +41,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private lateinit var binding: ActivityConnectTelegramBinding
 
 
+    @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,12 +58,10 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         registrationCompletedSubscription()
         lifecycleScope.launch {
             val task = async {
-                //unsubscribe()
                 withContext(Dispatchers.IO) {
                     (t_service as TelegramService).returnClientState()
                 }
             }
-
             val state = task.await()
             when(state){
                 ClientState.ready ->{
@@ -71,6 +70,8 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     }
                     val number = task.await()
                     binding.labelNumber.text = number
+                    actionbar?.setDisplayHomeAsUpEnabled(true)
+                    actionbar?.setDisplayHomeAsUpEnabled(true)
                 }
                 ClientState.waitParameters ->{
                     withContext(Dispatchers.IO) {
@@ -81,30 +82,10 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     }
                     val number = task.await()
                     binding.labelNumber.text = number
-                    withContext(Dispatchers.IO) {
-                        t_service.initService()
-                    }
                 }
-                ClientState.waitNumber ->{
-                    withContext(Dispatchers.IO) {
-                        t_service.initService()
-                    }
-                }
-                ClientState.waitPassword ->{
-                    withContext(Dispatchers.IO) {
-                        t_service.initService()
-                    }
-                }
-                ClientState.waitCode ->{
-                    withContext(Dispatchers.IO) {
-                        t_service.initService()
-                    }
-                }
-                ClientState.setParameters -> {
-                    withContext(Dispatchers.IO){
-                        t_service.initService()
-                    }
-                }
+            }
+            withContext(Dispatchers.IO) {
+                t_service.initService()
             }
         }
 
@@ -120,21 +101,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         binding.connTgResetNumber.setOnClickListener { view ->
             lifecycleScope.launch {
-                /*val task = async {
-                    (t_service as TelegramService).getPhoneNumber()
-                }
-                val number = task.await()
-
-                if(number != ""){
-                    binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
-                    (t_service as TelegramService).resetPhoneNumber()
-                }
-                else{
-                    Toast.makeText(baseContext, "You can't reset your number now", Toast.LENGTH_SHORT).show()
-                }*/
-                unsubscribe()
                 val task = async {
-                    //unsubscribe()
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).returnClientState()
                     }
@@ -148,26 +115,54 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 else{
                     Toast.makeText(baseContext, "You can't reset your number now", Toast.LENGTH_SHORT).show()
                 }
-                otherEventsSubscription()
-                registrationCompletedSubscription()
             }
         }
 
         binding.connTgResetTelegramAccount.setOnClickListener { view ->
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Alert")
-            builder.setMessage("Are you sure you want change Telegram Account?")
+            builder.setMessage("Are you sure you want to change Telegram Account?")
 
             builder.setPositiveButton(android.R.string.yes) { dialog, which ->
 
                 binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
                 lifecycleScope.launch {
                     showLoading(true)
+                    while(getRetained<StateChangedEvent>() != null){
+                        removeRetained<StateChangedEvent>()
+                    }
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).logOut()
                         (t_service as TelegramService).changeAccount()
                     }
                     showLoading(false)
+                    /*val task = async {
+                        withContext(Dispatchers.IO) {
+                            (t_service as TelegramService).returnClientState()
+                        }
+                    }
+
+                    val state = task.await()
+                    if(state == ClientState.ready) {
+                        withContext(Dispatchers.IO)
+                        {
+                            (t_service as TelegramService).logOut()
+                            (t_service as TelegramService).changeAccount()
+                        }
+                    }
+                    else{
+                        withContext(Dispatchers.IO)
+                        {
+
+                            (t_service as TelegramService).logOut()
+                            //(t_service as TelegramService).clientClose()
+                            (t_service as TelegramService).changeAccount()
+                        }
+                    }
+                    *//*else{
+                        Toast.makeText(baseContext, "You can't reset your account now", Toast.LENGTH_SHORT).show()
+                    }*//*
+                    showLoading(false)*/
                 }
             }
 
@@ -200,7 +195,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         subscribe<RegistrationCompletedEvent>(lifecycleScope, emitRetained = true) { event ->
             if(event.clientState == ClientState.completed){
                 removeRetained<RegistrationCompletedEvent>()
-                finish()
+                //finish()
             }
         }
     }
@@ -213,53 +208,36 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private fun otherEventsSubscription(){
         subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
             Timber.d("State changed")
+            //removeRetained<StateChangedEvent>()
             when(event.clientState) {
                 ClientState.waitNumber -> {
-                    if (removeRetained<StateChangedEvent>()?.clientState == null
-                    ) {
-                        if(bottomSheetFragment == null) {
+                    //bottomSheetFragment?.dismiss()
+                    bottomSheetFragment =
+                        PhoneNumberFragment()
 
-                            bottomSheetFragment =
-                                PhoneNumberFragment()
-
-                            (bottomSheetFragment as PhoneNumberFragment).show(
-                                this.supportFragmentManager,
-                                (bottomSheetFragment as PhoneNumberFragment).tag
-                            )
-                        }
-
-                    }
+                    (bottomSheetFragment as PhoneNumberFragment).show(
+                        this.supportFragmentManager,
+                        (bottomSheetFragment as PhoneNumberFragment).tag
+                    )
                 }
                 ClientState.waitCode -> {
-                    if (removeRetained<StateChangedEvent>()?.clientState == ClientState.waitCode ||
-                        removeRetained<StateChangedEvent>()?.clientState == null){
-                        /*if(bottomSheetFragment != null){
-                            bottomSheetFragment?.dismiss()
-                        }*/
-                            bottomSheetFragment =
-                                CodeFragment()
+                    //bottomSheetFragment?.dismiss()
+                    bottomSheetFragment =
+                        CodeFragment()
 
-
-                            (bottomSheetFragment as CodeFragment).show(
-                                this.supportFragmentManager,
-                                (bottomSheetFragment as CodeFragment).tag
-                            )
-                    }
+                    (bottomSheetFragment as CodeFragment).show(
+                        this.supportFragmentManager,
+                        (bottomSheetFragment as CodeFragment).tag
+                    )
                 }
                 ClientState.waitPassword -> {
-                    removeRetained<StateChangedEvent>()
-                    if(removeRetained<StateChangedEvent>()?.clientState == ClientState.waitPassword ||
-                        removeRetained<StateChangedEvent>()?.clientState == null) {
-                        if(bottomSheetFragment != null){
-                            bottomSheetFragment?.dismiss()
-                        }
-                        bottomSheetFragment =
-                            PasswordFragment()
-                        (bottomSheetFragment as PasswordFragment).show(
-                            this.supportFragmentManager,
-                            (bottomSheetFragment as PasswordFragment).tag
-                        )
-                    }
+                    //bottomSheetFragment?.dismiss()
+                    bottomSheetFragment =
+                        PasswordFragment()
+                    (bottomSheetFragment as PasswordFragment).show(
+                        this.supportFragmentManager,
+                        (bottomSheetFragment as PasswordFragment).tag
+                    )
                 }
                 ClientState.ready -> {
                     //finish()
@@ -268,6 +246,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
                 }
             }
+            showLoading(false)
         }
 
         subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
@@ -286,5 +265,10 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             binding.connTgResetTelegramAccount.isEnabled = true
             binding.connTgResetNumber.isEnabled = true
         }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 }

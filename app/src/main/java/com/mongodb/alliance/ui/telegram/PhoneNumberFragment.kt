@@ -8,12 +8,14 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
+import cafe.adriel.broker.removeRetained
 import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment.PhoneEditConverter.toNumber
@@ -30,7 +32,7 @@ import kotlin.time.ExperimentalTime
 @InternalCoroutinesApi
 @ExperimentalTime
 @AndroidEntryPoint
-class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher {
+class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher, GlobalBroker.Subscriber {
 
     @TelegramServ
     @Inject
@@ -84,6 +86,7 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher 
                 }
                     showLoading(true)
                 dismiss()
+                    //removeRetained<StateChangedEvent>()
                     publish(
                         PhoneChangedEvent(
                             toNumber(input, "")
