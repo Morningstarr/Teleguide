@@ -22,4 +22,7 @@
     <string name="skip">Skip</string>
     <string name="connect_telegram">Connect Telegram</string>
     <string name="no_telephone_number_connected">No telephone number connected</string>
+    <string name="cont">Continue</string>
+    <string name="add_new">Add new</string>
+    <string name="some_id">Войти с помощью</string>
 </resources>

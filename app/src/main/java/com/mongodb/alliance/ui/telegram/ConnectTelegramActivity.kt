@@ -22,6 +22,7 @@ import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
+import dev.whyoleg.ktd.Telegram
 import kotlinx.coroutines.*
 import timber.log.Timber
 import javax.inject.Inject
@@ -34,9 +35,10 @@ import kotlin.time.ExperimentalTime
 class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     @TelegramServ
-    @Inject lateinit var t_service: Service
+    @Inject
+    lateinit var t_service: Service
     private lateinit var code: EditText
-    private var bottomSheetFragment : BottomSheetDialogFragment? = null
+    private var bottomSheetFragment: BottomSheetDialogFragment? = null
 
     private lateinit var binding: ActivityConnectTelegramBinding
 
@@ -44,6 +46,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var newAccount = intent.getBooleanExtra("newAcc", false)
 
         val actionbar = supportActionBar
         if (actionbar != null) {
@@ -56,6 +59,12 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         otherEventsSubscription()
         registrationCompletedSubscription()
+
+        if (newAccount) {
+            showDialog()
+        }
+
+
         lifecycleScope.launch {
             val task = async {
                 withContext(Dispatchers.IO) {
@@ -63,8 +72,8 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 }
             }
             val state = task.await()
-            when(state){
-                ClientState.ready ->{
+            when (state) {
+                ClientState.ready -> {
                     val task = async {
                         (t_service as TelegramService).getPhoneNumber()
                     }
@@ -73,28 +82,22 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     actionbar?.setDisplayHomeAsUpEnabled(true)
                     actionbar?.setDisplayHomeAsUpEnabled(true)
                 }
-                ClientState.waitParameters ->{
-                    withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).setUpClient()
+                ClientState.waitNumber, ClientState.waitPassword, ClientState.waitCode -> {
+                    if(!newAccount){
+                        (t_service as TelegramService).initService()
                     }
-                    val task = async {
-                        (t_service as TelegramService).getPhoneNumber()
-                    }
-                    val number = task.await()
-                    binding.labelNumber.text = number
                 }
-            }
-            withContext(Dispatchers.IO) {
-                t_service.initService()
+                else -> {
+
+                }
             }
         }
 
         binding.fab.setOnClickListener { view ->
             val btf = bottomSheetFragment
-            if(btf != null) {
+            if (btf != null) {
                 btf.show(supportFragmentManager, btf.tag)
-            }
-            else{
+            } else {
                 Toast.makeText(baseContext, "Nothing to show", Toast.LENGTH_SHORT).show()
             }
         }
@@ -108,12 +111,15 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 }
 
                 val state = task.await()
-                if(state == ClientState.waitCode || state == ClientState.waitPassword){
+                if (state == ClientState.waitCode || state == ClientState.waitPassword) {
                     binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
                     (t_service as TelegramService).resetPhoneNumber()
-                }
-                else{
-                    Toast.makeText(baseContext, "You can't reset your number now", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(
+                        baseContext,
+                        "You can't reset your number now",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -128,7 +134,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 binding.labelNumber.text = getString(R.string.no_telephone_number_connected)
                 lifecycleScope.launch {
                     showLoading(true)
-                    while(getRetained<StateChangedEvent>() != null){
+                    while (getRetained<StateChangedEvent>() != null) {
                         removeRetained<StateChangedEvent>()
                     }
                     withContext(Dispatchers.IO) {
@@ -191,9 +197,9 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
-    private fun registrationCompletedSubscription(){
+    private fun registrationCompletedSubscription() {
         subscribe<RegistrationCompletedEvent>(lifecycleScope, emitRetained = true) { event ->
-            if(event.clientState == ClientState.completed){
+            if (event.clientState == ClientState.completed) {
                 removeRetained<RegistrationCompletedEvent>()
                 //finish()
             }
@@ -205,11 +211,11 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         unsubscribe()
     }
 
-    private fun otherEventsSubscription(){
-        subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true){ event ->
+    private fun otherEventsSubscription() {
+        subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true) { event ->
             Timber.d("State changed")
             //removeRetained<StateChangedEvent>()
-            when(event.clientState) {
+            when (event.clientState) {
                 ClientState.waitNumber -> {
                     //bottomSheetFragment?.dismiss()
                     bottomSheetFragment =
@@ -249,21 +255,8 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             showLoading(false)
         }
 
-        subscribe<PhoneChangedEvent>(lifecycleScope){ event ->
+        subscribe<PhoneChangedEvent>(lifecycleScope) { event ->
             binding.labelNumber.text = event.newNumber
-        }
-    }
-
-    private fun showLoading(show : Boolean){
-        if(show){
-            binding.connTgProgress.visibility = View.VISIBLE
-            binding.connTgResetTelegramAccount.isEnabled = false
-            binding.connTgResetNumber.isEnabled = false
-        }
-        else{
-            binding.connTgProgress.visibility = View.GONE
-            binding.connTgResetTelegramAccount.isEnabled = true
-            binding.connTgResetNumber.isEnabled = true
         }
     }
 
@@ -271,4 +264,130 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         onBackPressed()
         return true
     }
+
+
+    private fun showLoading(show: Boolean) {
+        if (show) {
+            binding.connTgProgress.visibility = View.VISIBLE
+            binding.connTgResetTelegramAccount.isEnabled = false
+            binding.connTgResetNumber.isEnabled = false
+        } else {
+            binding.connTgProgress.visibility = View.GONE
+            binding.connTgResetTelegramAccount.isEnabled = true
+            binding.connTgResetNumber.isEnabled = true
+        }
+    }
+
+    @ExperimentalCoroutinesApi
+    private fun showDialog(){
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Alert")
+        lifecycleScope.launch {
+            val task = async {
+                withContext(Dispatchers.IO) {
+                    (t_service as TelegramService).returnClientState()
+                }
+            }
+
+            val state = task.await()
+            when(state){
+                ClientState.waitCode -> {
+                    Toast.makeText(baseContext, "waitCode", Toast.LENGTH_SHORT).show()
+                    builder.setMessage("Continue telegram connection or add new telegram account?")
+                    builder.setPositiveButton(R.string.cont) { dialog, which ->
+                        lifecycleScope.launch {
+                            (t_service as TelegramService).initService()
+                        }
+                    }
+                    builder.setNegativeButton(R.string.add_new) { dialog, which ->
+                        lifecycleScope.launch {
+                            (t_service as TelegramService).logOut()
+                            (t_service as TelegramService).initService()
+                        }
+                    }
+                    builder.show()
+                }
+                ClientState.waitPassword->
+                {
+                    Toast.makeText(baseContext, "waitPassword", Toast.LENGTH_SHORT).show()
+                    builder.setMessage("Continue telegram connection or add new telegram account?")
+                    builder.setPositiveButton(R.string.cont) { dialog, which ->
+                        lifecycleScope.launch {
+                            (t_service as TelegramService).initService()
+                        }
+                    }
+                    builder.setNegativeButton(R.string.add_new) { dialog, which ->
+                        lifecycleScope.launch {
+                            showLoading(true)
+                            withContext(Dispatchers.IO) {
+                                (t_service as TelegramService).logOut()
+                                (t_service as TelegramService).changeAccount()
+                            }
+                            numberRefresh()
+                            showLoading(false)
+                        }
+                    }
+                    builder.show()
+                }
+                ClientState.waitNumber -> {
+                    (t_service as TelegramService).initService()
+                }
+                ClientState.ready -> {
+                    Toast.makeText(baseContext, "ready", Toast.LENGTH_SHORT).show()
+                    builder.setMessage("Continue with connected telegram account?")
+                    builder.setPositiveButton(R.string.cont) { dialog, which ->
+                        finish()
+                    }
+                    builder.setNegativeButton(R.string.add_new) { dialog, which ->
+                        lifecycleScope.launch {
+                            showLoading(true)
+                            withContext(Dispatchers.IO) {
+                                (t_service as TelegramService).logOut()
+                                (t_service as TelegramService).changeAccount()
+                            }
+                            numberRefresh()
+                            showLoading(false)
+                        }
+                    }
+                    builder.show()
+                    //finish()
+                }
+                ClientState.completed -> {
+                    Toast.makeText(baseContext, "completed", Toast.LENGTH_SHORT).show()
+                    //finish()
+                }
+                ClientState.setParameters -> {
+                    Toast.makeText(baseContext, "setParameters", Toast.LENGTH_SHORT).show()
+                }
+                ClientState.waitParameters -> {
+                    Toast.makeText(baseContext, "waitParameters", Toast.LENGTH_SHORT).show()
+                    (t_service as TelegramService).setUpClient()
+                    showDialog()
+                }
+                ClientState.closed -> {
+                    Toast.makeText(baseContext, "closed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun numberRefresh(){
+        lateinit var number : String
+        lifecycleScope.launch {
+            val task = async {
+                (t_service as TelegramService).getPhoneNumber()
+            }
+            number = task.await()
+        }
+
+        if(number == ""){
+            binding.labelNumber.text = "No telephone number connected"
+        }
+        else{
+            binding.labelNumber.text = number
+        }
+
+    }
+
 }
+

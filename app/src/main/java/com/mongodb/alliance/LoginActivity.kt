@@ -1,8 +1,12 @@
 package com.mongodb.alliance
 
 import android.content.Intent
+import android.graphics.Outline
+import android.graphics.Rect
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.view.ViewOutlineProvider
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -25,10 +29,13 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
 
     public override fun onCreate(savedInstanceState: Bundle?)  {
         super.onCreate(savedInstanceState)
+        val actionbar = supportActionBar
+        actionbar?.hide()
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        //setContentView(R.layout.test_login_layout)
 
         username = binding.inputUsername
         password = binding.inputPassword
@@ -46,7 +53,9 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
 
 
     private fun onLoginAfterSignUpSuccess(){
-        startActivity(Intent(this, ConnectTelegramActivity::class.java))
+        var intent = Intent(this, ConnectTelegramActivity::class.java)
+        intent.putExtra("newAcc", true)
+        startActivity(intent)
         finish()
     }
 

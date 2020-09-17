@@ -130,15 +130,18 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                     when (state) {
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
-                            if (getRetained<StateChangedEvent>() == null /*&& returnClientState() != ClientState.ready*//*||*/
-                                ) {
+                            val state = returnClientState()
+                            if (getRetained<StateChangedEvent>() == null && state != ClientState.waitPassword &&
+                                state != ClientState.waitCode && state != ClientState.ready)
+                            {
                                 clientState = ClientState.waitNumber
                                 publish(StateChangedEvent(clientState), retain = true)
                             }
                         }
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
-                            if ((getRetained<StateChangedEvent>() == null && returnClientState() != ClientState.ready) ||
+                            val state = returnClientState()
+                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready && state != ClientState.waitPassword) ||
                                 getRetained<StateChangedEvent>()?.clientState == ClientState.waitNumber) {
                                 clientState = ClientState.waitCode
                                 publish(StateChangedEvent(clientState), retain = true)
@@ -147,7 +150,8 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                         is TdApi.AuthorizationStateWaitPassword -> {
                             Timber.d("Waiting for password");
                             clientState = ClientState.waitPassword
-                            if ((getRetained<StateChangedEvent>() == null && returnClientState() != ClientState.ready) ||
+                            val state = returnClientState()
+                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready) ||
                                 getRetained<StateChangedEvent>()?.clientState == ClientState.waitCode) {
                                 publish(StateChangedEvent(clientState), retain = true)
                             }
