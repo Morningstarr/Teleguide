@@ -10,9 +10,11 @@ import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.events.ChannelSaveEvent
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
+import org.greenrobot.eventbus.EventBus
 
 
 internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folderName : String) : GlobalBroker.Publisher,
@@ -58,7 +60,7 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
             bgRealm.close()
         }
         else{
-            //todo обработка исключения через event bus
+            EventBus.getDefault().post(NullObjectAccessEvent("The realm is null!"))
         }
     }
 

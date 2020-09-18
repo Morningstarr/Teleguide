@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.events.OpenFolderEvent
 import io.realm.OrderedRealmCollection
@@ -14,6 +15,7 @@ import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
 import io.realm.kotlin.where
 import org.bson.types.ObjectId
+import org.greenrobot.eventbus.EventBus
 
 
 internal class FolderRealmAdapter(data: OrderedRealmCollection<FolderRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<FolderRealm, FolderRealmAdapter.FolderViewHolder?>(data, true) {
@@ -54,7 +56,7 @@ internal class FolderRealmAdapter(data: OrderedRealmCollection<FolderRealm>) : G
                         }
                     }
                     else{
-                        //todo обработка исключения через event bus
+                        EventBus.getDefault().post(NullObjectAccessEvent("The item is null!"))
                     }
                     true
                 }
@@ -75,7 +77,7 @@ internal class FolderRealmAdapter(data: OrderedRealmCollection<FolderRealm>) : G
             bgRealm.close()
         }
         else{
-            //todo обработка исключения через event bus
+            EventBus.getDefault().post(NullObjectAccessEvent("The realm object is null!"))
         }
     }
 

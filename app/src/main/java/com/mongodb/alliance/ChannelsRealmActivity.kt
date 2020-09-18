@@ -16,6 +16,7 @@ import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.adapters.ChannelRealmAdapter
 import com.mongodb.alliance.databinding.ActivityChannelsRealmBinding
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.OpenChannelEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -27,6 +28,9 @@ import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -47,6 +51,11 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     @TelegramServ
     @Inject
     lateinit var t_service: Service
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: NullObjectAccessEvent) {
+        Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +98,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         subscribe<OpenChannelEvent>(lifecycleScope){ event ->
             startActivity(event.intent)
         }
+        EventBus.getDefault().register(this)
     }
 
     override fun onStart() {

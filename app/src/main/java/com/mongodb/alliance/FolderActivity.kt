@@ -16,11 +16,12 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.mongodb.alliance.adapters.FolderRealmAdapter
 import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.adapters.FolderRealmAdapter
-import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.OpenFolderEvent
+import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -31,10 +32,14 @@ import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
+
 
 @ExperimentalTime
 @InternalCoroutinesApi
@@ -56,6 +61,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     @Inject
     lateinit var t_service: Service
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: NullObjectAccessEvent) {
+        Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -64,6 +74,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             intent.putExtra("folderId", event.folderId)
             startActivity(intent)
         }
+
+        EventBus.getDefault().register(this)
 
         val actionbar = supportActionBar
         if (actionbar != null) {

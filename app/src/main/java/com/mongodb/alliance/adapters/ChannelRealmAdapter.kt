@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.ChannelType
 import com.mongodb.alliance.events.OpenChannelEvent
@@ -17,6 +18,7 @@ import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
 import io.realm.kotlin.where
 import org.bson.types.ObjectId
+import org.greenrobot.eventbus.EventBus
 
 
 internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) : GlobalBroker.Publisher, RealmRecyclerViewAdapter<ChannelRealm, ChannelRealmAdapter.ChannelViewHolder?>(data, true) {
@@ -55,7 +57,7 @@ internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) :
                         }
                     }
                     else{
-                        //todo обработка исключения через event bus
+                        EventBus.getDefault().post(NullObjectAccessEvent("The item is null!"))
                     }
 
                     true
@@ -83,7 +85,7 @@ internal class ChannelRealmAdapter(data: OrderedRealmCollection<ChannelRealm>) :
             bgRealm.close()
         }
         else{
-            //todo обработка исключения через event bus
+            EventBus.getDefault().post(NullObjectAccessEvent("The realm is null!"))
         }
 
     }

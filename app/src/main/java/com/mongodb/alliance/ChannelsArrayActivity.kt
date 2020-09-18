@@ -18,6 +18,7 @@ import com.mongodb.alliance.adapters.ChannelArrayAdapter
 import com.mongodb.alliance.databinding.ActivityChannelsArrayBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.ChannelSaveEvent
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -30,6 +31,9 @@ import io.realm.kotlin.where
 import io.realm.mongodb.User
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -58,6 +62,11 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     @Inject
     lateinit var t_service: Service
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: NullObjectAccessEvent) {
+        Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -74,6 +83,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
                 finish()
             }
         }
+        EventBus.getDefault().register(this)
 
         binding = ActivityChannelsArrayBinding.inflate(layoutInflater)
         val view = binding.root
