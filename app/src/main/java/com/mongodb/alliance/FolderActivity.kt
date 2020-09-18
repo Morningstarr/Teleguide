@@ -185,29 +185,30 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                lifecycleScope.launch{
-                    binding.foldersProgress.visibility = View.VISIBLE
+                try {
+                    lifecycleScope.launch {
+                        binding.foldersProgress.visibility = View.VISIBLE
 
-                    user?.logOutAsync {
-                        if (it.isSuccess) {
-                            realm = Realm.getDefaultInstance()
-                            realm.close()
+                        user?.logOutAsync {
+                            if (it.isSuccess) {
+                                realm = Realm.getDefaultInstance()
+                                realm.close()
 
-                            user = null
-                        } else {
-                            Timber.e("log out failed! Error: ${it.error}")
-                            return@logOutAsync
+                                user = null
+                            } else {
+                                Timber.e("log out failed! Error: ${it.error}")
+                                return@logOutAsync
+                            }
                         }
+
+                        Timber.d("user logged out")
+
+                        binding.foldersProgress.visibility = View.GONE
+                        startActivity(Intent(baseContext, LoginActivity::class.java))
                     }
-
-                    /*withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).logOut()
-                    }*/
-
-                    Timber.d("user logged out")
-
-                    binding.foldersProgress.visibility = View.GONE
-                    startActivity(Intent(baseContext, LoginActivity::class.java))
+                }
+                catch(e: Exception){
+                    Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
                 }
                 true
             }

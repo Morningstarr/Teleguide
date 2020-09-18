@@ -5,8 +5,8 @@ import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.getRetained
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.ChannelProj
-import com.mongodb.alliance.events.RegistrationCompletedEvent
 import com.mongodb.alliance.events.StateChangedEvent
+import com.mongodb.alliance.events.TelegramConnectedEvent
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
@@ -79,7 +79,6 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                     client = newClient
                     setUpClient()
                     resetPhoneNumber()
-                    //publish(ClientState.waitNumber)
                     return ClientState.waitNumber
                 }
                 else -> {
@@ -158,8 +157,8 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                         }
                         is TdApi.AuthorizationStateReady -> {
                             Timber.d("State ready");
-                            clientState = ClientState.completed
-                            publish(RegistrationCompletedEvent(clientState), retain = true)
+                            clientState = ClientState.ready
+                            publish(TelegramConnectedEvent(clientState), retain = true)
                         }
                     }
                 }
