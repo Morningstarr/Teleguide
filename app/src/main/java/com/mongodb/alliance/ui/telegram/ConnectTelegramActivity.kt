@@ -16,6 +16,7 @@ import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.events.TelegramConnectedEvent
 import com.mongodb.alliance.services.telegram.ClientState
@@ -24,6 +25,9 @@ import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.Telegram
 import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.properties.Delegates
@@ -44,6 +48,11 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private lateinit var binding: ActivityConnectTelegramBinding
     private var newAccount by Delegates.notNull<Boolean>()
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: NullObjectAccessEvent) {
+        Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
+
     @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +69,7 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         otherEventsSubscription()
         telegramConnectedSubscription()
+        EventBus.getDefault().register(this)
 
         if (newAccount) {
             showDialog()

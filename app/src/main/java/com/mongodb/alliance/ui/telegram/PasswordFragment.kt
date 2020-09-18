@@ -20,6 +20,7 @@ import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -28,10 +29,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -59,17 +58,24 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
         super.onViewCreated(view, savedInstanceState)
 
         input = binding.frPassInput
-        lateinit var result : TelegramObject;
+        var result : TelegramObject? = null
         binding.frPassConfirm.setOnClickListener {
             lifecycleScope.launch {
                 try {
                     showLoading(false)
                     withContext(Dispatchers.IO) {
-                        var result = (t_service as TelegramService).callPasswordConfirm(input.text.toString())
+                        var task = async {
+                            (t_service as TelegramService).callPasswordConfirm(input.text.toString())
+                        }
+                        result = task.await()
                     }
-                    showLoading(true)
-                    dismiss()
-                    removeRetained<StateChangedEvent>()
+                    if(result != null){
+                        dismiss()
+                        removeRetained<StateChangedEvent>()
+                    }
+                    else{
+                        EventBus.getDefault().post(NullObjectAccessEvent("The result of request is null. Please, try again."))
+                    }
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
@@ -78,14 +84,6 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
                 }
             }
         }
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        /*publish(FragmentDismissed())
-        publish(StateChangedEvent(ClientState.waitPassword))*/
-        //(dialog as BottomSheetDialog).dism
-        //publish(StateChangedEvent(ClientState.undefined))
     }
 
     fun showLoading(show : Boolean){

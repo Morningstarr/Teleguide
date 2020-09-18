@@ -15,16 +15,15 @@ import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment.PhoneEditConverter.toNumber
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.api.TelegramObject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -72,35 +71,36 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher,
         super.onViewCreated(view, savedInstanceState)
 
         input = binding.frPNInput
-        lateinit var result : TelegramObject
+        var result : TelegramObject? = null
         binding.frPNConfirm.setOnClickListener {
             lifecycleScope.launch {
                 try {
                     showLoading(false)
-                withContext(Dispatchers.IO) {
-                    var result = toNumber(input, "")?.let { it1 ->
-                        (t_service as TelegramService).callNumberConfirm(
-                            it1
-                        )
+                    withContext(Dispatchers.IO) {
+                        var task = async{
+                            toNumber(input, "")?.let { it1 ->
+                                (t_service as TelegramService).callNumberConfirm(
+                                    it1
+                                )
+                            }
+                        }
+                        result = task.await()
                     }
+                    if(result != null){
+                        dismiss()
+                        publish(PhoneChangedEvent(toNumber(input, "")))
+                    }
+                    else{
+                        EventBus.getDefault().post(NullObjectAccessEvent("The result of request is null. Please, try again."))
+                    }
+                    showLoading(true)
                 }
-                    showLoading(true)
-                dismiss()
-                    //removeRetained<StateChangedEvent>()
-                    publish(
-                        PhoneChangedEvent(
-                            toNumber(input, "")
-                        )
-                    )
-                /*if (result.toString().contains("Ok")) {
-                    dismiss()
-                }*/
-            } catch (e: Exception) {
-                timber.log.Timber.e(e.message)
-                Toast.makeText(context, e.message, android.widget.Toast.LENGTH_SHORT)
-                    .show()
-                    showLoading(true)
-            }
+                catch (e: Exception) {
+                    timber.log.Timber.e(e.message)
+                    Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
+                        .show()
+                        showLoading(true)
+                }
             }
         }
     }
@@ -114,10 +114,5 @@ class PhoneNumberFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher,
             binding.frPNProgress.visibility = View.VISIBLE
         }
     }
-
-    /*override fun onDestroyView() {
-        super.onDestroyView()
-        binding = null
-    }*/
 
 }

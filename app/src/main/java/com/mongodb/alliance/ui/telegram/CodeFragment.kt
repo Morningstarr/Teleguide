@@ -16,6 +16,7 @@ import com.mongodb.alliance.CodeTextWatcher
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -23,10 +24,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -70,7 +69,7 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
         n5.addTextChangedListener(object : CodeTextWatcher(n4, binding.frCdConfirm, false) { })
 
 
-        lateinit var result : TelegramObject;
+        var result : TelegramObject? = null
         binding.frCdConfirm.setOnClickListener {
             var input : String = n1.text.toString() + n2.text.toString() +
                     n3.text.toString() + n4.text.toString() + n5.text.toString()
@@ -79,11 +78,20 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
                 try {
                     withContext(Dispatchers.IO) {
                         //var result = callCodeConfirm()
-                        (t_service as TelegramService).callCodeConfirm(input)
+                        val task = async {
+                            (t_service as TelegramService).callCodeConfirm(input)
+                        }
+                        result = task.await()
+                    }
+                    if(result != null){
+                        dismiss()
+                        removeRetained<StateChangedEvent>()
+                    }
+                    else{
+                        EventBus.getDefault().post(NullObjectAccessEvent("The result of request is null. Please, try again."))
                     }
                     showLoading(true)
-                    dismiss()
-                    removeRetained<StateChangedEvent>()
+
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
                     Toast.makeText(context, e.message, Toast.LENGTH_SHORT)

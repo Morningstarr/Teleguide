@@ -170,16 +170,34 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         .collect()
     }
 
-    suspend fun callCodeConfirm(input : String): TelegramObject {
-        return client.exec(TdApi.CheckAuthenticationCode(input))
+    suspend fun callCodeConfirm(input : String): TelegramObject? {
+        try {
+            var res = client.exec(TdApi.CheckAuthenticationCode(input))
+            return res
+        }
+        catch (e: Exception){
+            return null
+        }
     }
 
-    suspend fun callPasswordConfirm(input : String): TelegramObject {
-        return client.exec(TdApi.CheckAuthenticationPassword(input))
+    suspend fun callPasswordConfirm(input : String): TelegramObject? {
+        try{
+            var res = client.exec(TdApi.CheckAuthenticationPassword(input))
+            return res
+        }
+        catch (e: Exception){
+            return null
+        }
     }
 
-    suspend fun callNumberConfirm(input : String): TelegramObject {
-        return client.exec(TdApi.SetAuthenticationPhoneNumber(input,null))
+    suspend fun callNumberConfirm(input : String): TelegramObject? {
+        try {
+            var res = client.exec(TdApi.SetAuthenticationPhoneNumber(input, null))
+            return res
+        }
+        catch (e: Exception){
+            return null
+        }
     }
 
     suspend fun getChatIds() : LongArray {
