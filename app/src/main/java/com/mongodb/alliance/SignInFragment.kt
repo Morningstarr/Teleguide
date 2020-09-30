@@ -1,0 +1,37 @@
+package com.mongodb.alliance
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.TextView
+
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+
+
+
+class SignInFragment: BottomSheetDialogFragment() {
+
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
+    {
+        var view = inflater.inflate(R.layout.fragment_sign_in, container, false)
+
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        view.findViewById<TextView>(R.id.label_create_acc).setOnClickListener{
+            dismiss()
+            var bsf = SignUpFragment()
+            fragmentManager?.let { it1 ->
+                bsf.show(
+                    it1,
+                    bsf.tag
+                )
+            }
+        }
+    }
+}

@@ -45,11 +45,11 @@
         app:sl_dx="0dp"
         app:sl_dy="0dp"
         app:sl_fillColor="#03CCFC"
-        app:sl_shadowColor="#59DFFF"
+        app:sl_shadowColor="#D2D2D2"
         app:sl_shadowRadius="8dp">
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/button_register_test"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_horizontal"
@@ -82,12 +82,12 @@
         app:sl_dx="0dp"
         app:sl_dy="0dp"
         app:sl_fillColor="#FFFFFF"
-        app:sl_shadowColor="#59DFFF"
+        app:sl_shadowColor="#D2D2D2"
         app:sl_shadowRadius="8dp">
 
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/button_enter_test"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_horizontal"

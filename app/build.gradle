@@ -97,6 +97,7 @@ dependencies {
     implementation "com.github.adrielcafe.broker:broker-lifecycle:1.1.1"
 
     implementation 'com.github.vardemin.MaterialCountryPicker:materialcountrypicker:0.2.3'
+    implementation 'com.github.mukeshsolanki:country-picker-android:2.0.4'
 
     implementation 'com.github.dmytrodanylyk.shadow-layout:library:1.0.1'
     implementation 'org.greenrobot:eventbus:3.2.0'

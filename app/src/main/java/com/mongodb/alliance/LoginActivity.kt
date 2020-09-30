@@ -13,6 +13,7 @@ import android.widget.Toast
 import cafe.adriel.broker.GlobalBroker
 import com.mongodb.alliance.databinding.ActivityLoginBinding
 import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
+import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import io.realm.mongodb.Credentials
 import kotlinx.coroutines.InternalCoroutinesApi
 import timber.log.Timber
@@ -34,9 +35,29 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         val view = binding.root
-        setContentView(view)
-        //setContentView(R.layout.test_login_layout)
+        //setContentView(view)
+        setContentView(R.layout.test_login_layout)
 
+        var btn = findViewById<Button>(R.id.button_enter_test)
+        btn.setOnClickListener {
+            var bottomSheetFragment =
+                SignInFragment()
+
+            bottomSheetFragment.show(
+                this.supportFragmentManager,
+                bottomSheetFragment.tag
+            )
+        }
+        var btn2 = findViewById<Button>(R.id.button_register_test)
+        btn2.setOnClickListener {
+            var bottomSheetFragment =
+                SignUpFragment()
+
+            bottomSheetFragment.show(
+                this.supportFragmentManager,
+                bottomSheetFragment.tag
+            )
+        }
         username = binding.inputUsername
         password = binding.inputPassword
         loginButton = binding.buttonLogin

@@ -48,16 +48,17 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
-        inflater.inflate(R.layout.fragment_password, container, false)
-        binding = FragmentPasswordBinding.inflate(inflater, container, false)
-        return binding.root
+        var view = inflater.inflate(R.layout.new_fragment_password, container, false)
+        //binding = FragmentPasswordBinding.inflate(inflater, container, false)
+        //return binding.root
+        return view
     }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        input = binding.frPassInput
+        /*input = binding.frPassInput
         var result : TelegramObject? = null
         binding.frPassConfirm.setOnClickListener {
             lifecycleScope.launch {
@@ -83,7 +84,7 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
                     showLoading(true)
                 }
             }
-        }
+        }*/
     }
 
     fun showLoading(show : Boolean){

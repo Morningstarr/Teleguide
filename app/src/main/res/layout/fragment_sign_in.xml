@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_sign_in_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    android:orientation="vertical"
+
+    app:behavior_hideable="true"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+
+    >
+
+    <TextView
+        android:id="@+id/label_enter"
+        android:layout_width="206dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="77dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="77dp"
+        android:fontFamily="@font/roboto_medium"
+        android:gravity="top"
+        android:text="@string/sign_in_with"
+        android:textAppearance="@style/some_id"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/label_enter"
+        tools:layout_editor_absoluteX="1dp">
+
+        <com.dd.ShadowLayout
+
+            android:layout_width="82dp"
+            android:layout_height="82dp"
+            android:layout_marginEnd="12.5dp"
+            app:layout_constrainedHeight="true"
+
+
+            app:sl_dx="0dp"
+            app:sl_dy="0dp"
+            app:sl_fillColor="#FFFFFF"
+            app:sl_shadowColor="#E5E5E5"
+            app:sl_shadowRadius="15dp">
+
+            <ImageButton
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/rectangle_9"
+                android:src="@drawable/ic_google" />
+        </com.dd.ShadowLayout>
+
+        <com.dd.ShadowLayout
+
+            android:layout_width="82dp"
+            android:layout_height="82dp"
+            android:layout_marginStart="12.5dp"
+            app:layout_constrainedHeight="true"
+
+
+            app:sl_dx="0dp"
+            app:sl_dy="0dp"
+            app:sl_fillColor="#FFFFFF"
+            app:sl_shadowColor="#E5E5E5"
+            app:sl_shadowRadius="15dp">
+
+            <ImageButton
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/rectangle_9"
+                android:src="@drawable/ic_facebook" />
+
+        </com.dd.ShadowLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="25dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="30dp"
+        android:fontFamily="@font/roboto"
+        android:gravity="top"
+        android:text="или"
+        android:textAppearance="@style/blured_string"
+        app:layout_constraintBottom_toTopOf="@+id/editText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
+
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="30dp"
+        android:background="@drawable/edit_text_shape"
+        android:fontFamily="@font/roboto"
+        android:hint="@string/email_hint"
+        android:paddingStart="25dp"
+        android:singleLine="true"
+
+        android:textSize="14dp"
+        android:viewportWidth="300"
+        android:viewportHeight="48"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.509"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView" />
+
+    <EditText
+        android:id="@+id/editText2"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="30dp"
+        android:background="@drawable/edit_text_shape"
+        android:fontFamily="@font/roboto"
+        android:hint="@string/password_hint"
+        android:inputType="textPassword"
+        android:paddingStart="25dp"
+        android:singleLine="true"
+        android:textSize="14dp"
+        android:viewportWidth="300"
+        android:viewportHeight="48"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editText" />
+
+    <com.dd.ShadowLayout
+        android:id="@+id/shadow"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="23dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="23dp"
+        android:maxHeight="60dp"
+        android:minWidth="276dp"
+        android:minHeight="52dp"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toTopOf="@+id/shadow2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="60dp"
+        app:layout_constraintHeight_min="60dp"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editText2"
+        app:sl_dx="0dp"
+        app:sl_dy="0dp"
+        app:sl_fillColor="#03CCFC"
+        app:sl_shadowColor="#D2D2D2"
+        app:sl_shadowRadius="8dp">
+
+        <Button
+            android:id="@+id/btn_enter"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/rectangle_8"
+            android:fontFamily="@font/roboto"
+            android:stateListAnimator="@drawable/animator"
+            android:text="Войти"
+            android:textAppearance="@style/facebook"
+            android:textColor="#FFFFFF"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+    </com.dd.ShadowLayout>
+
+    <TextView
+        android:id="@+id/label_create_acc"
+        android:layout_width="wrap_content"
+        android:layout_height="19dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="100dp"
+        android:layout_marginBottom="40dp"
+        android:fontFamily="@font/roboto_medium"
+        android:gravity="center_horizontal"
+        android:text="@string/create_acc"
+        android:textAppearance="@style/create_link"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/shadow" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

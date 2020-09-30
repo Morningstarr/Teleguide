@@ -48,14 +48,15 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
-        inflater.inflate(R.layout.fragment_code, container, false)
-        binding = FragmentCodeBinding.inflate(inflater, container, false)
-        return binding.root
+        var view = inflater.inflate(R.layout.new_fragment_code, container, false)
+        return view
+        //binding = FragmentCodeBinding.inflate(inflater, container, false)
+        //return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        n1 = binding.frCdN1
+        /*n1 = binding.frCdN1
         n1.requestFocus()
         n2 = binding.frCdN2
         n3 = binding.frCdN3
@@ -99,7 +100,7 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
                     showLoading(true)
                 }
             }
-        }
+        }*/
     }
 
     fun showLoading(show : Boolean){

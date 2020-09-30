@@ -24,5 +24,17 @@
     <string name="no_telephone_number_connected">No telephone number connected</string>
     <string name="cont">Continue</string>
     <string name="add_new">Add new</string>
-    <string name="some_id">Войти с помощью</string>
+    <string name="sign_in_with">Войти с помощью</string>
+    <string name="sign_up_with">Начать с помощью</string>
+    <string name="password_hint"><font size="14">Введите пароль</font></string>
+    <string name="repeat_password_hint"><font size="14">Повторите пароль</font></string>
+    <string name="email_hint"><font size="14">Введите почту</font></string>
+    <string name="create_acc">Создать аккаунт</string>
+    <string name="is_account">Уже есть аккаунт?</string>
+    <string name="or">или</string>
+    <string name="enter_new_email">Введите новую почту</string>
+    <string name="enter_new_pass">Измените пароль</string>
+    <string name="enter_code">Telegram отправил вам код. Введите его</string>
+    <string name="enter_tele_pass">Осталось только ввести пароль</string>
+    <string name="choose_number">Выберите страну и введите номер телефона</string>
 </resources>
