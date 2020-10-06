@@ -10,6 +10,10 @@
         <item name="popupMenuStyle">@style/MyPopupMenu</item>
     </style>
 
+    <style name="ProfileScreenTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="bottomSheetDialogTheme">@style/ImagePickerTheme</item>
+    </style>
+
     <style name="AppThemeActionBar" parent="@style/Widget.AppCompat.ActionBar">
         <item name="contentInsetLeft">0dp</item>
         <item name="contentInsetStart">0dp</item>
@@ -77,6 +81,20 @@
         <item name="android:windowIsFloating">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowSoftInputMode">stateHidden|adjustResize</item>
+    </style>
+
+    <style name="ImagePickerTheme"
+        parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/AppModalStyle</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowSoftInputMode">stateHidden|adjustResize</item>
+    </style>
+
+    <style name="ImagePickerStyle"
+        parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">#FFFFFF</item>
+        <item name="behavior_peekHeight">600dp</item>
     </style>
 
     <style name="AppModalStyle"
