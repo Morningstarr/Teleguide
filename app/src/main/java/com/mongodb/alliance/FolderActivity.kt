@@ -1,14 +1,16 @@
 package com.mongodb.alliance
 
+import android.app.ActionBar
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
+import android.view.ContextThemeWrapper
+import android.view.Gravity
 import android.view.View
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.setPadding
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,7 +27,6 @@ import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
-import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -36,6 +37,8 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -50,6 +53,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: FolderRealmAdapter
     private lateinit var fab: FloatingActionButton
+    private lateinit var customActionBarView : View
+    private lateinit var rootLayout : CoordinatorLayout
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -79,7 +84,65 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         val actionbar = supportActionBar
         if (actionbar != null) {
-            actionbar.title = "My folders"
+            actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+            actionbar.setDisplayShowCustomEnabled(true)
+            actionbar.setCustomView(R.layout.action_bar_drawable)
+            customActionBarView = actionbar.customView
+            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).visibility = View.GONE
+            val nameText = customActionBarView.findViewById<TextView>(R.id.name)
+            nameText.text = "TeleGuide"
+            nameText.gravity = Gravity.START
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                weight = 1.0f
+                gravity = Gravity.CENTER
+            }
+            nameText.layoutParams = params
+            val scale = resources.displayMetrics.density
+            val dpAsPixels = (31 * scale + 0.5f)
+            nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
+            nameText.textSize = 24F
+        }
+
+        customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
+            rootLayout = binding.coordinatorFolder
+            var anchor = binding.anchorFolders
+            val wrapper = ContextThemeWrapper(this, R.style.MyPopupMenu)
+            val popup = PopupMenu(wrapper, anchor, Gravity.END)
+
+            try {
+                val fields: Array<Field> = popup.javaClass.declaredFields
+                for (field in fields) {
+                    if ("mPopup" == field.getName()) {
+                        field.setAccessible(true)
+                        val menuPopupHelper: Any = field.get(popup)
+                        val classPopupHelper =
+                            Class.forName(menuPopupHelper.javaClass.name)
+                        val setForceIcons: Method = classPopupHelper.getMethod(
+                            "setForceShowIcon",
+                            Boolean::class.javaPrimitiveType
+                        )
+                        setForceIcons.invoke(menuPopupHelper, true)
+                        break
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e.message)
+            }
+
+            popup.menuInflater.inflate(R.menu.menu, popup.menu)
+            popup.show()
+
+            popup.setOnMenuItemClickListener { item ->
+                when(item.itemId){
+                    R.id.action_profile -> {
+                        startActivity(Intent(this, ProfileActivity::class.java))
+                    }
+                }
+                true
+            }
         }
 
         binding = ActivityFolderBinding.inflate(layoutInflater)
@@ -133,7 +196,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
         } else {
-
             lifecycleScope.launch {
                 showLoading(true)
                 val task = async {
@@ -188,7 +250,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         realm.close()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    /*override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu, menu)
         menu.findItem(R.id.action_refresh).isVisible = false
         return true
@@ -237,7 +299,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 super.onOptionsItemSelected(item)
             }
         }
-    }
+    }*/
 
     private fun showLoading(show : Boolean){
         if(!show) {

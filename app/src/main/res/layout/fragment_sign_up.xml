@@ -194,7 +194,7 @@
             app:sl_shadowRadius="8dp">
 
             <Button
-                android:id="@+id/btn_enter"
+                android:id="@+id/btn_create"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_horizontal"

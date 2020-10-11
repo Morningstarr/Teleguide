@@ -1,19 +1,14 @@
 package com.mongodb.alliance
 
 import android.content.Intent
-import android.graphics.Outline
-import android.graphics.Rect
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
-import android.view.ViewOutlineProvider
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import cafe.adriel.broker.GlobalBroker
 import com.mongodb.alliance.databinding.ActivityLoginBinding
 import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
-import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import io.realm.mongodb.Credentials
 import kotlinx.coroutines.InternalCoroutinesApi
 import timber.log.Timber
@@ -28,18 +23,16 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
     private lateinit var createUserButton: Button
     private lateinit var binding: ActivityLoginBinding
 
-    public override fun onCreate(savedInstanceState: Bundle?)  {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val actionbar = supportActionBar
         actionbar?.hide()
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         val view = binding.root
-        //setContentView(view)
-        setContentView(R.layout.test_login_layout)
+        setContentView(view)
 
-        var btn = findViewById<Button>(R.id.button_enter_test)
-        btn.setOnClickListener {
+        binding.buttonEnter.setOnClickListener {
             var bottomSheetFragment =
                 SignInFragment()
 
@@ -48,8 +41,7 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
                 bottomSheetFragment.tag
             )
         }
-        var btn2 = findViewById<Button>(R.id.button_register_test)
-        btn2.setOnClickListener {
+        binding.buttonRegister.setOnClickListener {
             var bottomSheetFragment =
                 SignUpFragment()
 
@@ -58,22 +50,15 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
                 bottomSheetFragment.tag
             )
         }
-        username = binding.inputUsername
-        password = binding.inputPassword
-        loginButton = binding.buttonLogin
-        createUserButton = binding.buttonCreate
-
-        loginButton.setOnClickListener { login(false, false) }
-        createUserButton.setOnClickListener { login(true, false) }
-
     }
 
     override fun onBackPressed() {
         moveTaskToBack(true)
     }
+}
 
 
-    private fun onLoginAfterSignUpSuccess(){
+    /*private fun onLoginAfterSignUpSuccess(){
         var intent = Intent(this, ConnectTelegramActivity::class.java)
         intent.putExtra("newAcc", true)
         startActivity(intent)
@@ -87,9 +72,9 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
     private fun onLoginFailed(errorMsg: String) {
         Timber.e(errorMsg)
         Toast.makeText(baseContext, errorMsg, Toast.LENGTH_LONG).show()
-    }
+    }*/
 
-    private fun login(createUser: Boolean, firstLogin: Boolean) {
+    /*private fun login(createUser: Boolean, firstLogin: Boolean) {
         if (!validateCredentials())
         {
             onLoginFailed("Invalid username or password")
@@ -141,11 +126,11 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
                 }
             }
         }
-    }
+    }*/
 
-    private fun validateCredentials(): Boolean = when {
+    /*private fun validateCredentials(): Boolean = when {
             username.text.toString().isEmpty() || username.text.length < 3 -> false
             password.text.toString().isEmpty() || password.text.length < 6 -> false
             else -> true
         }
-    }
+    }*/

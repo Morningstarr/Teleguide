@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="CLOUDINARY_URL"
+            android:value="cloudinary://688619238887231:qaR76fHsvBPInSVc8IBpW3mdhfQ@dbtelecloud" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.mongodb.alliance.fileprovider"
@@ -32,11 +36,7 @@
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".ChannelsArrayActivity"
@@ -53,7 +53,10 @@
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
-
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".LoginActivity"
