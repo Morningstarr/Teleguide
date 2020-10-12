@@ -101,7 +101,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
             nameText.layoutParams = params
             val scale = resources.displayMetrics.density
-            val dpAsPixels = (31 * scale + 0.5f)
+            val dpAsPixels = (16 * scale + 0.5f)
             nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
             nameText.textSize = 24F
         }
@@ -139,6 +139,33 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 when(item.itemId){
                     R.id.action_profile -> {
                         startActivity(Intent(this, ProfileActivity::class.java))
+                    }
+                    R.id.action_logout -> {
+                        try {
+                            lifecycleScope.launch {
+                                binding.foldersProgress.visibility = View.VISIBLE
+
+                                user?.logOutAsync {
+                                    if (it.isSuccess) {
+                                        realm = Realm.getDefaultInstance()
+                                        realm.close()
+
+                                        user = null
+                                    } else {
+                                        Timber.e("log out failed! Error: ${it.error}")
+                                        return@logOutAsync
+                                    }
+                                }
+
+                                Timber.d("user logged out")
+
+                                binding.foldersProgress.visibility = View.GONE
+                                startActivity(Intent(baseContext, LoginActivity::class.java))
+                            }
+                        }
+                        catch(e: Exception){
+                            Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
                 true

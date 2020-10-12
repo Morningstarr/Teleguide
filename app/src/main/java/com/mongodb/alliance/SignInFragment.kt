@@ -34,23 +34,44 @@ class SignInFragment: BottomSheetDialogFragment(), SignListener {
         val passEdit = binding.enterPassSin
 
         binding.btnEnter.setOnClickListener{
-            if(emailEdit.text.toString() != "" && passEdit.text.toString() != ""){
-                if(this.activity?.let { it1 ->
-                        validateCredentials(emailEdit.text.toString(), passEdit.text.toString(),
-                            it1
-                        )
-                    }!!){
-                    //this.activity?.let { it1 -> onLoginAfterSignUpSuccess(it1) }
-                    this.activity?.let { it1 ->
-                        login(false, false, emailEdit.text.toString(),
-                            passEdit.text.toString(), it1
-                        )
+            binding.btnEnter.isEnabled = false
+            binding.shadow.visibility = View.INVISIBLE
+            binding.shadowFacebookSin.visibility = View.INVISIBLE
+            binding.shadowGoogleSin.visibility = View.INVISIBLE
+            binding.googleBtnSin.isEnabled = false
+            binding.facebookBtnSin.isEnabled = false
+            emailEdit.isEnabled = false
+            passEdit.isEnabled = false
+            try {
+                if (emailEdit.text.toString() != "" && passEdit.text.toString() != "") {
+                    if (this.activity?.let { it1 ->
+                            validateCredentials(
+                                emailEdit.text.toString(), passEdit.text.toString(),
+                                it1
+                            )
+                        }!!) {
+                        //this.activity?.let { it1 -> onLoginAfterSignUpSuccess(it1) }
+                        this.activity?.let { it1 ->
+                            login(
+                                false, false, emailEdit.text.toString(),
+                                passEdit.text.toString(), it1
+                            )
+                        }
+                        //this.activity?.let { it1 -> onLoginSuccess(it1) }
                     }
-                    //this.activity?.let { it1 -> onLoginSuccess(it1) }
+                } else {
+                    this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
                 }
             }
-            else{
-                this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
+            catch(e:Exception){
+                binding.btnEnter.isEnabled = true
+                binding.shadow.visibility = View.VISIBLE
+                binding.shadowFacebookSin.visibility = View.VISIBLE
+                binding.shadowGoogleSin.visibility = View.VISIBLE
+                binding.googleBtnSin.isEnabled = true
+                binding.facebookBtnSin.isEnabled = true
+                emailEdit.isEnabled = true
+                passEdit.isEnabled = true
             }
         }
 

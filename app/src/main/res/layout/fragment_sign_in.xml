@@ -30,57 +30,84 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
-        android:id="@+id/linearLayout2"
+        android:id="@+id/linearLayout3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
-        android:gravity="center"
+        android:gravity="center_horizontal"
         android:orientation="horizontal"
         app:layout_constraintTop_toBottomOf="@+id/label_enter"
         tools:layout_editor_absoluteX="1dp">
 
         <com.dd.ShadowLayout
-
-            android:layout_width="82dp"
-            android:layout_height="82dp"
-            android:layout_marginEnd="12.5dp"
+            android:id="@+id/shadow_google_sin"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="12dp"
             app:layout_constrainedHeight="true"
 
 
             app:sl_dx="0dp"
             app:sl_dy="0dp"
-            app:sl_fillColor="#FFFFFF"
+            app:sl_fillColor="#E5E5E5"
             app:sl_shadowColor="#E5E5E5"
             app:sl_shadowRadius="15dp">
 
-            <ImageButton
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/rectangle_9"
-                android:src="@drawable/ic_google" />
+
         </com.dd.ShadowLayout>
 
         <com.dd.ShadowLayout
+            android:id="@+id/shadow_facebook_sin"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginStart="12dp"
 
-            android:layout_width="82dp"
-            android:layout_height="82dp"
-            android:layout_marginStart="12.5dp"
+
             app:layout_constrainedHeight="true"
-
-
             app:sl_dx="0dp"
             app:sl_dy="0dp"
-            app:sl_fillColor="#FFFFFF"
+            app:sl_fillColor="#E5E5E5"
             app:sl_shadowColor="#E5E5E5"
             app:sl_shadowRadius="15dp">
 
-            <ImageButton
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/rectangle_9"
-                android:src="@drawable/ic_facebook" />
 
         </com.dd.ShadowLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="@+id/linearLayout3"
+        app:layout_constraintTop_toBottomOf="@+id/label_enter"
+        tools:layout_editor_absoluteX="1dp">
+
+        <ImageButton
+            android:id="@+id/google_btn_sin"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+
+            android:layout_marginStart="-8dp"
+            android:layout_marginTop="1.5dp"
+            android:layout_marginEnd="26dp"
+            android:background="@drawable/rectangle_9"
+            android:src="@drawable/ic_google"
+            app:layout_constrainedHeight="true" />
+
+        <ImageButton
+            android:id="@+id/facebook_btn_sin"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+
+            android:layout_marginStart="26dp"
+            android:layout_marginTop="1.5dp"
+            android:layout_marginEnd="-7dp"
+            android:background="@drawable/rectangle_9"
+            android:src="@drawable/ic_facebook"
+            app:layout_constrainedHeight="true" />
 
     </LinearLayout>
 
@@ -98,7 +125,7 @@
         app:layout_constraintBottom_toTopOf="@+id/enter_email_sin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
     <EditText
         android:id="@+id/enter_email_sin"
@@ -154,7 +181,6 @@
         android:minWidth="276dp"
         android:minHeight="52dp"
         app:layout_constrainedHeight="true"
-        app:layout_constraintBottom_toTopOf="@+id/shadow2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_max="60dp"
         app:layout_constraintHeight_min="60dp"
@@ -167,20 +193,34 @@
         app:sl_shadowColor="#D2D2D2"
         app:sl_shadowRadius="8dp">
 
-        <Button
-            android:id="@+id/btn_enter"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_horizontal"
-            android:background="@drawable/rectangle_8"
-            android:fontFamily="@font/roboto"
-            android:stateListAnimator="@drawable/animator"
-            android:text="Войти"
-            android:textAppearance="@style/facebook"
-            android:textColor="#FFFFFF"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
     </com.dd.ShadowLayout>
+
+    <Button
+        android:id="@+id/btn_enter"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="23dp"
+        android:layout_marginEnd="30dp"
+
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/rectangle_8"
+        android:fontFamily="@font/roboto"
+        android:foregroundGravity="center"
+        android:gravity="center"
+        android:stateListAnimator="@drawable/animator"
+        android:text="Войти"
+        android:textAppearance="@style/facebook"
+        android:textColor="#FFFFFF"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toBottomOf="@+id/shadow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="56dp"
+        app:layout_constraintHeight_min="50dp"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/enter_pass_sin" />
 
     <TextView
         android:id="@+id/label_create_acc"

@@ -56,6 +56,7 @@ import com.mongodb.stitch.android.core.Stitch
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
+import io.realm.com_mongodb_alliance_model_UserRealmRealmProxy
 import io.realm.kotlin.where
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -109,7 +110,15 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
-
+        try{
+            MediaManager.init(this)
+        }
+        catch(e:Exception){
+            if(!e.message?.contains("already initialized")!!){
+                finish()
+            }
+            Timber.e(e.message)
+        }
         subscribe<ChangeUserDataEvent>(lifecycleScope, emitRetained = true) { event ->
             when(event.parameter){
                 0 -> {
@@ -304,12 +313,17 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         }
 
         try {
-
-            val appUserRealm : UserRealm? = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst()
-
-            Picasso.get()
-                .load(MediaManager.get().url().generate(appUserRealm?.image))
-                .into(binding.mainBackdrop)
+            
+            val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
+            val img = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$image`() //directly get value of some field
+            if(img != null) {
+                Picasso.get()
+                    .load(MediaManager.get().url().generate(appUserRealm.image.toString()))
+                    .into(binding.mainBackdrop)
+            }
+            else{
+                binding.profilePlaceholder.visibility = View.VISIBLE
+            }
         }
         catch(e:Exception){
             binding.profilePlaceholder.visibility = View.VISIBLE
@@ -344,7 +358,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         try {
             val config = HashMap<String, String>()
             config["cloud_name"] = "dbtelecloud"
-            MediaManager.init(this)
+
             val requestId = MediaManager.get().upload(FileUtils.getPath(baseContext, uris[0]))
                 .unsigned("klbmit6h")
                 .policy(UploadPolicy.Builder()
@@ -368,6 +382,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         }
 
                         Toast.makeText(baseContext, "success", Toast.LENGTH_SHORT).show()
+                        binding.profilePlaceholder.visibility = View.GONE
                     }
                     override fun onError(requestId: String, error: ErrorInfo) {
                         Toast.makeText(baseContext, error?.description, Toast.LENGTH_SHORT).show()

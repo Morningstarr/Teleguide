@@ -3,6 +3,7 @@ package com.mongodb.alliance
 
 import android.app.Dialog
 import android.content.DialogInterface.OnShowListener
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -13,6 +14,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import com.dd.ShadowLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -43,36 +45,65 @@ class SignUpFragment: BottomSheetDialogFragment(), SignListener {
         val repPassEdit = binding.repeatPassSup
 
         binding.btnCreate.setOnClickListener{
-            if(emailEdit.text.toString() != "" && passEdit.text.toString() != ""
-                && repPassEdit.text.toString() != ""){
-                if(passEdit.text.toString() == repPassEdit.text.toString()){
-                    if(this.activity?.let { it1 ->
-                            validateCredentials(emailEdit.text.toString(), passEdit.text.toString(),
-                                it1
-                            )
-                        }!!){
-                        //this.activity?.let { it1 -> onLoginAfterSignUpSuccess(it1) }
-                        this.activity?.let { it1 ->
-                            login(true, true, emailEdit.text.toString(),
-                                passEdit.text.toString(), it1
-                            )
+            binding.btnCreate.isEnabled = false
+            binding.shadow.visibility = View.INVISIBLE
+            binding.shadowFacebookSup.visibility = View.INVISIBLE
+            binding.shadowGoogleSup.visibility = View.INVISIBLE
+            binding.googleBtnSup.isEnabled = false
+            binding.facebookBtnSup.isEnabled = false
+            emailEdit.isEnabled = false
+            passEdit.isEnabled = false
+            repPassEdit.isEnabled = false
+            try {
+                if (emailEdit.text.toString() != "" && passEdit.text.toString() != ""
+                    && repPassEdit.text.toString() != ""
+                ) {
+                    if (passEdit.text.toString() == repPassEdit.text.toString()) {
+                        if (this.activity?.let { it1 ->
+                                validateCredentials(
+                                    emailEdit.text.toString(), passEdit.text.toString(),
+                                    it1
+                                )
+                            }!!) {
+                            //this.activity?.let { it1 -> onLoginAfterSignUpSuccess(it1) }
+                            this.activity?.let { it1 ->
+                                login(
+                                    true, true, emailEdit.text.toString(),
+                                    passEdit.text.toString(), it1
+                                )
+                            }
+                            dismiss()
+                            var bsf = SignInFragment()
+                            fragmentManager?.let { it1 ->
+                                bsf.show(
+                                    it1,
+                                    bsf.tag
+                                )
+                            }
                         }
-                        dismiss()
-                        var bsf = SignInFragment()
-                        fragmentManager?.let { it1 ->
-                            bsf.show(
-                                it1,
-                                bsf.tag
-                            )
-                        }
+                    } else {
+                        this.activity?.let { it1 -> onLoginFailed("Пароли не совпадают!", it1) }
                     }
-                }
-                else{
-                    this.activity?.let { it1 -> onLoginFailed( "Пароли не совпадают!", it1) }
+                } else {
+                    this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
                 }
             }
-            else{
-                this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
+            catch(e:Exception){
+                binding.btnCreate.isEnabled = true
+                emailEdit.isEnabled = true
+                passEdit.isEnabled = true
+                repPassEdit.isEnabled = true
+                binding.shadow.visibility = View.VISIBLE
+                binding.shadowFacebookSup.visibility = View.VISIBLE
+                binding.shadowGoogleSup.visibility = View.VISIBLE
+                binding.googleBtnSup.isEnabled = true
+                binding.facebookBtnSup.isEnabled = true
+            }
+            finally{
+                /*binding.btnCreate.isEnabled = true
+                emailEdit.isEnabled = true
+                passEdit.isEnabled = true
+                repPassEdit.isEnabled = true*/
             }
         }
 
