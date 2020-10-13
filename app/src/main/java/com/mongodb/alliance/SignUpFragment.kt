@@ -20,6 +20,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.databinding.FragmentSignUpBinding
 import kotlinx.coroutines.InternalCoroutinesApi
+import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 @InternalCoroutinesApi
@@ -89,6 +90,10 @@ class SignUpFragment: BottomSheetDialogFragment(), SignListener {
                 }
             }
             catch(e:Exception){
+                Timber.e(e.message)
+                Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
+            }
+            finally{
                 binding.btnCreate.isEnabled = true
                 emailEdit.isEnabled = true
                 passEdit.isEnabled = true
@@ -98,12 +103,6 @@ class SignUpFragment: BottomSheetDialogFragment(), SignListener {
                 binding.shadowGoogleSup.visibility = View.VISIBLE
                 binding.googleBtnSup.isEnabled = true
                 binding.facebookBtnSup.isEnabled = true
-            }
-            finally{
-                /*binding.btnCreate.isEnabled = true
-                emailEdit.isEnabled = true
-                passEdit.isEnabled = true
-                repPassEdit.isEnabled = true*/
             }
         }
 

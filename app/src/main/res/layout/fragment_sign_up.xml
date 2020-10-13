@@ -209,7 +209,7 @@
             app:layout_constrainedHeight="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHeight_max="60dp"
-            app:layout_constraintHeight_min="60dp"
+            app:layout_constraintHeight_min="52dp"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/repeat_pass_sup"
@@ -224,15 +224,13 @@
         <Button
             android:id="@+id/btn_create"
             android:layout_width="0dp"
-            app:layout_constraintHeight_max="56dp"
-            app:layout_constraintHeight_min="50dp"
             android:layout_height="0dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginStart="30dp"
-            android:layout_marginTop="23dp"
+            android:layout_marginTop="5dp"
             android:layout_marginEnd="30dp"
+            android:layout_marginBottom="5dp"
 
-            android:layout_marginBottom="28dp"
             android:background="@drawable/rectangle_8"
             android:fontFamily="@font/roboto"
             android:stateListAnimator="@drawable/animator"
@@ -241,12 +239,14 @@
 
 
             android:textAppearance="@style/facebook"
-            android:textColor="#FFFFFF"
-            app:layout_constraintBottom_toTopOf="@+id/label_is_acc"
+            android:textColor="@drawable/text_color_selector"
+            app:layout_constraintBottom_toBottomOf="@+id/shadow"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="56dp"
+            app:layout_constraintHeight_min="48dp"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/repeat_pass_sup" />
+            app:layout_constraintTop_toTopOf="@+id/shadow" />
 
         <TextView
             android:id="@+id/label_is_acc"

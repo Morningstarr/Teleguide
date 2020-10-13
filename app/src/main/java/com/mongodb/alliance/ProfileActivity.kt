@@ -10,12 +10,10 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -27,10 +25,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
-import com.asksira.bsimagepicker.BSImagePicker
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
-import com.cloudinary.android.callback.ListenerService
 import com.cloudinary.android.callback.UploadCallback
 import com.cloudinary.android.policy.UploadPolicy
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -40,36 +36,24 @@ import com.mongodb.alliance.adapters.UserDataAdapter
 import com.mongodb.alliance.databinding.ActivityProfileBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.ChangeUserDataEvent
-import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.model.UserData
 import com.mongodb.alliance.model.UserRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
-import com.mongodb.client.MongoClients
-import com.mongodb.client.MongoDatabase
-import com.mongodb.client.gridfs.GridFSBucket
-import com.mongodb.client.gridfs.GridFSBuckets
-import com.mongodb.client.gridfs.model.GridFSUploadOptions
-import com.mongodb.client.model.Filters.where
-import com.mongodb.stitch.android.core.Stitch
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
 import io.realm.com_mongodb_alliance_model_UserRealmRealmProxy
 import io.realm.kotlin.where
 import io.realm.mongodb.App
-import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.mongodb.mongo.MongoClient
 import io.realm.mongodb.mongo.MongoCollection
 import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import org.bson.Document
-import org.bson.types.ObjectId
 import timber.log.Timber
-import java.io.FileInputStream
-import java.io.InputStream
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import javax.inject.Inject
@@ -149,13 +133,35 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     )
                 }
                 3 -> {
-                    bottomSheetFragment =
-                        NewPasswordFragment()
+                    val builder =
+                        AlertDialog.Builder(this)
 
-                    (bottomSheetFragment as NewPasswordFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as NewPasswordFragment).tag
-                    )
+                    builder.setTitle("Warning")
+                    builder.setMessage("Are you sure you want to change your account password? It can't be undone!")
+
+                    builder.setPositiveButton(
+                        "YES"
+                    ) { dialog, which -> // Do nothing but close the dialog
+                        realm = Realm.getDefaultInstance()
+                        val appUserRealm = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst() as UserRealm
+                        val userEmail = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
+                        channelApp.emailPasswordAuth.sendResetPasswordEmailAsync(userEmail) {
+                            if (it.isSuccess) {
+                                Toast.makeText(this, "Successfully sent the user a reset password link to $userEmail", Toast.LENGTH_LONG).show().also { finish() }
+                            } else {
+                                Toast.makeText(this, "Failed to send the user a reset password link to $userEmail", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+
+                    builder.setNegativeButton(
+                        "NO"
+                    ) { dialog, which -> // Do nothing
+                        dialog.dismiss()
+                    }
+
+                    val alert = builder.create()
+                    alert.show()
                 }
             }
         }
@@ -283,6 +289,25 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
     override fun onStart() {
         super.onStart()
+
+        val action: String? = intent?.action
+        val data: Uri? = intent?.data
+
+        if(data != null){
+            val token = data.toString().subSequence(data.toString().lastIndexOf("/") + 7, data.toString().lastIndexOf("&")).toString()
+            val tokenId = data.toString().subSequence(data.toString().lastIndexOf("&") + 1, data.toString().length).toString()
+            bottomSheetFragment =
+                NewPasswordFragment(token, tokenId)
+
+            (bottomSheetFragment as NewPasswordFragment).show(
+                this.supportFragmentManager,
+                (bottomSheetFragment as NewPasswordFragment).tag
+            )
+        }
+        else{
+            Toast.makeText(this, "no data", Toast.LENGTH_SHORT).show()
+        }
+
         setUpRecyclerView()
         try {
             user = channelApp.currentUser()

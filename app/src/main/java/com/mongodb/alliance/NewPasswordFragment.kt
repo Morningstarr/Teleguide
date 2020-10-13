@@ -7,26 +7,85 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.mongodb.alliance.databinding.FragmentNewPasswordBinding
+import com.mongodb.alliance.model.UserRealm
+import io.realm.Realm
+import io.realm.com_mongodb_alliance_model_UserRealmRealmProxy
+import io.realm.kotlin.where
+import io.realm.mongodb.App
+import kotlinx.coroutines.flow.callbackFlow
+import timber.log.Timber
 
 
+class NewPasswordFragment (var token : String = "", var tokenId : String = ""): BottomSheetDialogFragment() {
 
-class NewPasswordFragment (): BottomSheetDialogFragment() {
-
-
+    private lateinit var binding : FragmentNewPasswordBinding
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
-        var view = inflater.inflate(R.layout.fragment_new_password, container, false)
-
-        return view
+        binding = FragmentNewPasswordBinding.inflate(layoutInflater)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<TextView>(R.id.new_password_change_btn).setOnClickListener{
-            //todo changePassword
-            dismiss()
+        binding.newPasswordChangeBtn.setOnClickListener{
+            val passwordEdit = binding.fragmentNewPasswordEdit
+            val oldPasswordEdit = binding.fragmentOldPasswordEdit
+            val repeatPasswordEdit = binding.fragmentNewPasswordConfirmEdit
+            passwordEdit.isEnabled = false
+            oldPasswordEdit.isEnabled = false
+            repeatPasswordEdit.isEnabled = false
+            binding.newPasswordChangeBtn.isEnabled = false
+            binding.shadowChange.visibility = View.INVISIBLE
+            try {
+                if (passwordEdit.text.toString() == repeatPasswordEdit.text.toString()) {
+                    if (passwordEdit.text.toString().length > 6 && repeatPasswordEdit.text.toString().length > 6) {
+                        val realm = Realm.getDefaultInstance()
+                        val appUserRealm = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst() as UserRealm
+                        val userEmail = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
+                        /*channelApp.emailPasswordAuth.sendResetPasswordEmailAsync(userEmail) {
+                            if (it.isSuccess) {
+                                Toast.makeText(activity, "Successfully sent the user a reset password link to $userEmail", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(activity, "Failed to send the user a reset password link to $userEmail", Toast.LENGTH_LONG).show()
+                            }
+                        }*/
+
+                        channelApp.emailPasswordAuth.resetPasswordAsync(token, tokenId, passwordEdit.text.toString()){
+                            if (it.isSuccess) {
+                                Toast.makeText(activity, "Password successfully changed", Toast.LENGTH_LONG).show()
+                                dismiss()
+                            } else {
+                                Toast.makeText(activity, "Failed to change password", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(
+                            activity,
+                            "Длина пароля должна превышать 6 символов!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    Toast.makeText(activity, "Пароли не совпадают!", Toast.LENGTH_SHORT).show()
+                }
+            }
+            catch(e:Exception){
+                Timber.e(e.message)
+                Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
+            }
+            finally{
+                passwordEdit.isEnabled = true
+                oldPasswordEdit.isEnabled = true
+                repeatPasswordEdit.isEnabled = true
+                binding.newPasswordChangeBtn.isEnabled = true
+                binding.shadowChange.visibility = View.VISIBLE
+            }
+            //dismiss()
         }
     }
+
 }

@@ -6,11 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.TextView
+import android.widget.Toast
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.databinding.FragmentSignInBinding
 import com.mongodb.alliance.databinding.FragmentSignUpBinding
 import kotlinx.coroutines.InternalCoroutinesApi
+import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -49,7 +51,8 @@ class SignInFragment: BottomSheetDialogFragment(), SignListener {
                                 emailEdit.text.toString(), passEdit.text.toString(),
                                 it1
                             )
-                        }!!) {
+                        }!!)
+                    {
                         //this.activity?.let { it1 -> onLoginAfterSignUpSuccess(it1) }
                         this.activity?.let { it1 ->
                             login(
@@ -59,11 +62,18 @@ class SignInFragment: BottomSheetDialogFragment(), SignListener {
                         }
                         //this.activity?.let { it1 -> onLoginSuccess(it1) }
                     }
+                    else{
+
+                    }
                 } else {
                     this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
                 }
             }
             catch(e:Exception){
+                Timber.e(e.message)
+                Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
+            }
+            finally{
                 binding.btnEnter.isEnabled = true
                 binding.shadow.visibility = View.VISIBLE
                 binding.shadowFacebookSin.visibility = View.VISIBLE

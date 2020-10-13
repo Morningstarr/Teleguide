@@ -3,6 +3,7 @@ package com.mongodb.alliance
 import android.app.ActionBar
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -215,6 +216,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     override fun onStart() {
         super.onStart()
+
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
