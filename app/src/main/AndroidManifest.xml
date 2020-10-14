@@ -27,12 +27,12 @@
         </provider>
 
         <activity
-            android:name=".ChannelsRealmActivity"
+            android:name=".ui.ChannelsRealmActivity"
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ProfileActivity"
+            android:name=".ui.ProfileActivity"
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
@@ -46,7 +46,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ChannelsArrayActivity"
+            android:name=".ui.ChannelsArrayActivity"
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />
@@ -56,7 +56,7 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".FolderActivity"
+            android:name=".ui.FolderActivity"
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
@@ -66,7 +66,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
+            android:name=".ui.authorization.LoginActivity"
             android:configChanges="orientation"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />

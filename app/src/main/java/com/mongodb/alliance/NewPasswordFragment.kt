@@ -8,6 +8,7 @@ import android.view.WindowManager
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.databinding.FragmentNewPasswordBinding
@@ -17,6 +18,7 @@ import io.realm.com_mongodb_alliance_model_UserRealmRealmProxy
 import io.realm.kotlin.where
 import io.realm.mongodb.App
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
@@ -42,7 +44,7 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
             binding.shadowChange.visibility = View.INVISIBLE
             try {
                 if (passwordEdit.text.toString() == repeatPasswordEdit.text.toString()) {
-                    if (passwordEdit.text.toString().length > 6 && repeatPasswordEdit.text.toString().length > 6) {
+                    if (passwordEdit.text.toString().length > 6) {
                         val realm = Realm.getDefaultInstance()
                         val appUserRealm = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst() as UserRealm
                         val userEmail = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
@@ -54,14 +56,15 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
                             }
                         }*/
 
-                        channelApp.emailPasswordAuth.resetPasswordAsync(token, tokenId, passwordEdit.text.toString()){
-                            if (it.isSuccess) {
-                                Toast.makeText(activity, "Password successfully changed", Toast.LENGTH_LONG).show()
-                                dismiss()
-                            } else {
-                                Toast.makeText(activity, "Failed to change password", Toast.LENGTH_LONG).show()
-                            }
+                        channelApp.emailPasswordAuth.resetPasswordAsync(token, tokenId, binding.fragmentNewPasswordEdit.text.toString()){
+                           if (it.isSuccess) {
+                               Toast.makeText(activity, "Password successfully changed", Toast.LENGTH_LONG).show()
+                               dismiss()
+                           } else {
+                               Toast.makeText(activity, "Failed to change password", Toast.LENGTH_LONG).show()
+                           }
                         }
+
                     } else {
                         Toast.makeText(
                             activity,

@@ -1,23 +1,26 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui.authorization
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
-import android.widget.TextView
 import android.widget.Toast
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.mongodb.alliance.authorization.SignInListener
+import com.mongodb.alliance.authorization.SignListener
 import com.mongodb.alliance.databinding.FragmentSignInBinding
-import com.mongodb.alliance.databinding.FragmentSignUpBinding
+import io.realm.mongodb.App
+import io.realm.mongodb.User
 import kotlinx.coroutines.InternalCoroutinesApi
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 @InternalCoroutinesApi
-class SignInFragment: BottomSheetDialogFragment(), SignListener {
+class SignInFragment: BottomSheetDialogFragment(),
+    SignListener,
+    SignInListener {
 
     private lateinit var binding : FragmentSignInBinding
 
@@ -53,17 +56,10 @@ class SignInFragment: BottomSheetDialogFragment(), SignListener {
                             )
                         }!!)
                     {
-                        //this.activity?.let { it1 -> onLoginAfterSignUpSuccess(it1) }
-                        this.activity?.let { it1 ->
-                            login(
-                                false, false, emailEdit.text.toString(),
-                                passEdit.text.toString(), it1
-                            )
-                        }
-                        //this.activity?.let { it1 -> onLoginSuccess(it1) }
+                        signIn(false, emailEdit.text.toString(), passEdit.text.toString())
                     }
                     else{
-
+                        this.activity?.let { it1 -> onLoginFailed("Некорректное имя пользователя или пароль", it1) }
                     }
                 } else {
                     this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
@@ -72,8 +68,6 @@ class SignInFragment: BottomSheetDialogFragment(), SignListener {
             catch(e:Exception){
                 Timber.e(e.message)
                 Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
-            }
-            finally{
                 binding.btnEnter.isEnabled = true
                 binding.shadow.visibility = View.VISIBLE
                 binding.shadowFacebookSin.visibility = View.VISIBLE
@@ -95,5 +89,18 @@ class SignInFragment: BottomSheetDialogFragment(), SignListener {
                 )
             }
         }
+    }
+
+    override fun onResult(result: App.Result<User>?) {
+        dismiss()
+        activity?.finish()
+        binding.btnEnter.isEnabled = true
+        binding.shadow.visibility = View.VISIBLE
+        binding.shadowFacebookSin.visibility = View.VISIBLE
+        binding.shadowGoogleSin.visibility = View.VISIBLE
+        binding.googleBtnSin.isEnabled = true
+        binding.facebookBtnSin.isEnabled = true
+        binding.enterEmailSin.isEnabled = true
+        binding.enterPassSin.isEnabled = true
     }
 }

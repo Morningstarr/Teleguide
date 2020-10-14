@@ -1,4 +1,4 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui
 
 import android.Manifest.permission.*
 import android.annotation.TargetApi
@@ -32,15 +32,18 @@ import com.cloudinary.android.policy.UploadPolicy
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.kroegerama.imgpicker.BottomSheetImagePicker
 import com.kroegerama.imgpicker.ButtonType
+import com.mongodb.alliance.*
 import com.mongodb.alliance.adapters.UserDataAdapter
 import com.mongodb.alliance.databinding.ActivityProfileBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.ChangeUserDataEvent
 import com.mongodb.alliance.model.UserData
+import com.mongodb.alliance.model.UserDataType
 import com.mongodb.alliance.model.UserRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
+import com.mongodb.alliance.ui.authorization.LoginActivity
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
@@ -208,7 +211,9 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
             chooseFragment = builder.build()
 
-            chooseFragment.setStyle(DialogFragment.STYLE_NORMAL, R.style.ImagePickerTheme)
+            chooseFragment.setStyle(DialogFragment.STYLE_NORMAL,
+                R.style.ImagePickerTheme
+            )
 
             lifecycleScope.launch {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -231,7 +236,9 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
             rootLayout = binding.coordinatorProfile
             val anchor = binding.anchorProfile
-            val wrapper = ContextThemeWrapper(this, R.style.MyPopupMenu)
+            val wrapper = ContextThemeWrapper(this,
+                R.style.MyPopupMenu
+            )
             val popup = PopupMenu(wrapper, anchor, Gravity.END)
 
             try {
@@ -384,7 +391,12 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             val config = HashMap<String, String>()
             config["cloud_name"] = "dbtelecloud"
 
-            val requestId = MediaManager.get().upload(FileUtils.getPath(baseContext, uris[0]))
+            val requestId = MediaManager.get().upload(
+                FileUtils.getPath(
+                    baseContext,
+                    uris[0]
+                )
+            )
                 .unsigned("klbmit6h")
                 .policy(UploadPolicy.Builder()
                     .maxRetries(3).build())

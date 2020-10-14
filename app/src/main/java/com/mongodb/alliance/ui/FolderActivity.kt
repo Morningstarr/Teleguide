@@ -1,9 +1,8 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui
 
 import android.app.ActionBar
 import android.app.AlertDialog
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -11,7 +10,6 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.view.setPadding
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,7 +17,9 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.FolderRealmAdapter
+import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
@@ -28,6 +28,7 @@ import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
+import com.mongodb.alliance.ui.authorization.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -110,7 +111,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
             rootLayout = binding.coordinatorFolder
             var anchor = binding.anchorFolders
-            val wrapper = ContextThemeWrapper(this, R.style.MyPopupMenu)
+            val wrapper = ContextThemeWrapper(this,
+                R.style.MyPopupMenu
+            )
             val popup = PopupMenu(wrapper, anchor, Gravity.END)
 
             try {

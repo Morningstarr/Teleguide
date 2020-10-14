@@ -1,17 +1,14 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui.authorization
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import cafe.adriel.broker.GlobalBroker
 import com.mongodb.alliance.databinding.ActivityLoginBinding
-import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
-import io.realm.mongodb.Credentials
+import com.mongodb.alliance.ui.authorization.SignInFragment
+import com.mongodb.alliance.ui.authorization.SignUpFragment
 import kotlinx.coroutines.InternalCoroutinesApi
-import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime

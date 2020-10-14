@@ -1,6 +1,5 @@
 package com.mongodb.alliance.adapters
 
-import android.text.InputType
 import android.text.method.PasswordTransformationMethod
 import android.view.LayoutInflater
 import android.view.View
@@ -10,16 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
-import com.mongodb.alliance.UserDataType
+import com.mongodb.alliance.model.UserDataType
 import com.mongodb.alliance.events.ChangeUserDataEvent
-import com.mongodb.alliance.events.ChannelSaveEvent
-import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.model.ChannelRealm
-import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.model.UserData
-import io.realm.Realm
-import io.realm.kotlin.where
-import org.greenrobot.eventbus.EventBus
 
 internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Publisher,
     RecyclerView.Adapter<UserDataAdapter.UserDataViewHolder?>() {

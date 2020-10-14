@@ -1,4 +1,4 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -14,7 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import cafe.adriel.broker.unsubscribe
+import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.ChannelArrayAdapter
+import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityChannelsArrayBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.ChannelSaveEvent
@@ -23,6 +25,7 @@ import com.mongodb.alliance.model.*
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
+import com.mongodb.alliance.ui.authorization.LoginActivity
 import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.api.TdApi

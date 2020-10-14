@@ -1,4 +1,4 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -15,12 +15,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
 import com.mongodb.alliance.adapters.ChannelRealmAdapter
+import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityChannelsRealmBinding
 import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.OpenChannelEvent
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
+import com.mongodb.alliance.ui.authorization.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
 import io.realm.kotlin.where
