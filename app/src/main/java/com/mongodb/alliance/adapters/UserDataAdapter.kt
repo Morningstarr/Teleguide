@@ -4,14 +4,17 @@ import android.text.method.PasswordTransformationMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.marginTop
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
-import com.mongodb.alliance.model.UserDataType
 import com.mongodb.alliance.events.ChangeUserDataEvent
 import com.mongodb.alliance.model.UserData
+import com.mongodb.alliance.model.UserDataType
+
 
 internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Publisher,
     RecyclerView.Adapter<UserDataAdapter.UserDataViewHolder?>() {
@@ -40,14 +43,26 @@ internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Pub
             holder.record.transformationMethod = PasswordTransformationMethod.getInstance()
         }
 
+        if(obj?.dataType == UserDataType.telegramAccount && obj.dataValue == ""){
+            holder.record.visibility = View.GONE
+            val params =
+                holder.hint.layoutParams as LinearLayout.LayoutParams
+            params.setMargins(0, 95, 0, 0) //substitute parameters for left, top, right, bottom
+            holder.hint.layoutParams = params
+        }
+
+        if(obj?.dataType == UserDataType.phoneNumber && obj.dataValue == ""){
+            holder.record.visibility = View.GONE
+            val params =
+                holder.hint.layoutParams as LinearLayout.LayoutParams
+            params.setMargins(0, 95, 0, 0) //substitute parameters for left, top, right, bottom
+            holder.hint.layoutParams = params
+        }
+
         holder.itemView.setOnClickListener {
             when(holder.data?.dataType){
                 UserDataType.email -> {
-                    obj?.dataValue?.let { it1 -> ChangeUserDataEvent(0, it1) }?.let { it2 ->
-                        publish(
-                            it2
-                        )
-                    }
+
                 }
                 UserDataType.password -> {
                     publish(ChangeUserDataEvent(3))

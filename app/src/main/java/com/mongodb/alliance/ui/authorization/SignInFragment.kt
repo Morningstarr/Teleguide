@@ -26,8 +26,6 @@ class SignInFragment: BottomSheetDialogFragment(),
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
-        //var view = inflater.inflate(R.layout.fragment_sign_in, container, false)
-        //return view
         binding = FragmentSignInBinding.inflate(inflater, container, false)
         return binding.root
     }

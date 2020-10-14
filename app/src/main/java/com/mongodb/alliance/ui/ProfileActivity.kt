@@ -15,6 +15,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.ImageButton
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -79,7 +80,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
     private var bottomSheetFragment: BottomSheetDialogFragment? = null
-    private lateinit var chooseFragment : BottomSheetDialogFragment
+    private lateinit var chooseImageFragment : BottomSheetDialogFragment
+    private lateinit var placeholder : TextView
 
     private var permissionsToRequest: ArrayList<String>? = null
     private val permissionsRejected: ArrayList<String> = ArrayList()
@@ -88,15 +90,12 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     private val ALL_PERMISSIONS_RESULT = 107
     private val IMAGE_RESULT = 200
 
-    private lateinit var realmApp: App
-    private var mongoClient: MongoClient? = null
-    private lateinit var mongoCollection: MongoCollection<Document>
     private var user: User? = null
-    private var TAG: String = "EXAMPLE"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
+
         try{
             MediaManager.init(this)
         }
@@ -182,24 +181,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             customActionBarView = actionbar.customView
         }
 
-        //rootLayout = binding.coordinatorProfile
         val fab = binding.chooseImageFab
         fab.setOnClickListener{
-            /*val singleSelectionPicker: BSImagePicker =
-                BSImagePicker.Builder("com.mongodb.alliance.fileprovider")
-                    .setMaximumDisplayingImages(Integer.MAX_VALUE) //Default: Integer.MAX_VALUE. Don't worry about performance :)
-                    .setSpanCount(3) //Default: 3. This is the number of columns
-                    .setGridSpacing(Utils.dp2px(3)) //Default: 2dp. Remember to pass in a value in pixel.
-                    .setPeekHeight(Utils.dp2px(360)) //Default: 360dp. This is the initial height of the dialog.
-                    //.hideCameraTile() //Default: show. Set this if you don't want user to take photo.
-                    //.hideGalleryTile() //Default: show. Set this if you don't want to further let user select from a gallery app. In such case, I suggest you to set maximum displaying images to Integer.MAX_VALUE.
-                    .setTag("A request ID") //Default: null. Set this if you need to identify which picker is calling back your fragment / activity.
-
-                    //.useFrontCamera() //Default: false. Launching camera by intent has no reliable way to open front camera so this does not always work.
-                    .build()
-
-            singleSelectionPicker.show(this.supportFragmentManager, "A request ID")*/
-
             val builder =
                 BottomSheetImagePicker.Builder("com.mongodb.alliance.fileprovider")
                     .cameraButton(ButtonType.Tile)            //style of the camera link (Button in header, Image tile, None)
@@ -209,9 +192,9 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     .columnSize(R.dimen.columnSize)             //size of the columns (will be changed a little to fit)
                     .requestTag("single")
 
-            chooseFragment = builder.build()
+            chooseImageFragment = builder.build()
 
-            chooseFragment.setStyle(DialogFragment.STYLE_NORMAL,
+            chooseImageFragment.setStyle(DialogFragment.STYLE_NORMAL,
                 R.style.ImagePickerTheme
             )
 
@@ -222,7 +205,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                             ?.let { requestPermissions(it, ALL_PERMISSIONS_RESULT) }
                     }
                     else{
-                        chooseFragment.show(supportFragmentManager, "single")
+                        chooseImageFragment.show(supportFragmentManager, "single")
                     }
 
                 }
@@ -268,7 +251,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         val view = binding.root
         setContentView(view)
         recyclerView = binding.userDataRecView
-
+        placeholder = binding.profilePlaceholder
         lifecycleScope.launch {
             val task = async {
                 withContext(Dispatchers.IO) {
@@ -315,7 +298,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             Toast.makeText(this, "no data", Toast.LENGTH_SHORT).show()
         }
 
-        setUpRecyclerView()
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
@@ -344,9 +326,12 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             }
         }
 
+        setUpRecyclerView()
+
         try {
             
             val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
+            placeholder.text = appUserRealm.name.subSequence(0, 3)
             val img = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$image`() //directly get value of some field
             if(img != null) {
                 Picasso.get()
@@ -354,20 +339,21 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     .into(binding.mainBackdrop)
             }
             else{
-                binding.profilePlaceholder.visibility = View.VISIBLE
+                placeholder.visibility = View.VISIBLE
             }
         }
         catch(e:Exception){
-            binding.profilePlaceholder.visibility = View.VISIBLE
+            placeholder.visibility = View.VISIBLE
         }
 
     }
 
     private fun setUpRecyclerView() {
         var userDataArray = ArrayList<UserData>()
-        userDataArray.add(UserData("kirill_kovrik@mail.ru","Нажмите, чтобы изменить почту", UserDataType.email))
-        userDataArray.add(UserData("+380 71 331 2170", "Нажмите, чтобы изменить номер телефона", UserDataType.phoneNumber))
-        userDataArray.add(UserData("YourMorningstar", "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount))
+        val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
+        userDataArray.add(UserData(appUserRealm.name,"Ваш электронный адрес", UserDataType.email))
+        userDataArray.add(checkNumber())
+        userDataArray.add(checkTelegram())
         userDataArray.add(UserData("123123123", "Нажмите, чтобы изменить пароль", UserDataType.password))
         /*userDataArray.add(UserData("123123123", "Нажмите, чтобы изменить пароль", UserDataType.password))
         userDataArray.add(UserData("YourMorningstar", "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount))
@@ -419,11 +405,11 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         }
 
                         Toast.makeText(baseContext, "success", Toast.LENGTH_SHORT).show()
-                        binding.profilePlaceholder.visibility = View.GONE
+                        placeholder.visibility = View.GONE
                     }
                     override fun onError(requestId: String, error: ErrorInfo) {
                         Toast.makeText(baseContext, error?.description, Toast.LENGTH_SHORT).show()
-                        binding.profilePlaceholder.visibility = View.VISIBLE
+                        placeholder.visibility = View.VISIBLE
                     }
                     override fun onReschedule(requestId: String, error: ErrorInfo) {
                         // your code here
@@ -487,7 +473,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     }
                 }
                 else{
-                    chooseFragment.show(supportFragmentManager, "single")
+                    chooseImageFragment.show(supportFragmentManager, "single")
                 }
             }
         }
@@ -502,4 +488,39 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             .show()
     }
 
+    private fun checkTelegram() : UserData{
+        var username = "default"
+        runBlocking {
+            val taskName = async {
+                (t_service as TelegramService).getProfileName()
+            }
+            username = taskName.await()
+        }
+
+        if(username != ""){
+            return UserData(username, "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount)
+        }
+        else{
+            return UserData("", "Нажмите, чтобы добавить телеграм аккаунт", UserDataType.telegramAccount)
+        }
+
+    }
+
+    private fun checkNumber() : UserData{
+        var number = "default"
+        runBlocking {
+            val taskName = async {
+                (t_service as TelegramService).getPhoneNumber()
+            }
+            number = taskName.await()
+        }
+
+        if(number != ""){
+            return UserData(number, "Нажмите, чтобы изменить номер телефона", UserDataType.phoneNumber)
+        }
+        else{
+            return UserData("", "Нажмите, чтобы добавить номер телефона", UserDataType.phoneNumber)
+        }
+
+    }
 }
