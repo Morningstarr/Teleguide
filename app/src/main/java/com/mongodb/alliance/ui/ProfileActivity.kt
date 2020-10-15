@@ -147,7 +147,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         realm = Realm.getDefaultInstance()
                         val appUserRealm = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst() as UserRealm
                         val userEmail = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
-                        channelApp.emailPasswordAuth.sendResetPasswordEmailAsync(userEmail) {
+                        channelApp.emailPassword.sendResetPasswordEmailAsync(userEmail) {
                             if (it.isSuccess) {
                                 Toast.makeText(this, "Successfully sent the user a reset password link to $userEmail", Toast.LENGTH_LONG).show().also { finish() }
                             } else {
@@ -284,8 +284,10 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         val data: Uri? = intent?.data
 
         if(data != null){
-            val token = data.toString().subSequence(data.toString().lastIndexOf("/") + 7, data.toString().lastIndexOf("&")).toString()
-            val tokenId = data.toString().subSequence(data.toString().lastIndexOf("&") + 1, data.toString().length).toString()
+            var token = data.toString().subSequence(data.toString().lastIndexOf("/") + 7, data.toString().lastIndexOf("&")).toString()
+            var tokenId = data.toString().subSequence(data.toString().lastIndexOf("&") + 1, data.toString().length).toString()
+            token = token.drop(6)
+            tokenId = tokenId.drop(8)
             bottomSheetFragment =
                 NewPasswordFragment(token, tokenId)
 

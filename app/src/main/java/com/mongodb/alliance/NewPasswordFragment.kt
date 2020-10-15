@@ -56,7 +56,7 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
                             }
                         }*/
 
-                        channelApp.emailPasswordAuth.resetPasswordAsync(token, tokenId, binding.fragmentNewPasswordEdit.text.toString()){
+                        channelApp.emailPassword.resetPasswordAsync(token, tokenId, binding.fragmentNewPasswordEdit.text.toString()){
                            if (it.isSuccess) {
                                Toast.makeText(activity, "Password successfully changed", Toast.LENGTH_LONG).show()
                                dismiss()

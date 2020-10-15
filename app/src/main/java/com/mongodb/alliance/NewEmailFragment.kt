@@ -42,16 +42,16 @@ class NewEmailFragment (var hint : String): BottomSheetDialogFragment() {
             val user = channelApp.currentUser()
             val mongoClient = user?.getMongoClient("mongodb-atlas")
             val functionsManager: Functions = channelApp.getFunctions(user)
-            val args: List<String?> = listOf(user?.email)
-            functionsManager.callFunctionAsync("updateUser", args, User::class.java) { result ->
-                run {
-                    if (result.isSuccess) {
-                        Toast.makeText(activity, "success", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(activity, "failed", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+//            val args: List<String?> = listOf(user?.email)
+//            functionsManager.callFunctionAsync("updateUser", args, User::class.java) { result ->
+//                run {
+//                    if (result.isSuccess) {
+//                        Toast.makeText(activity, "success", Toast.LENGTH_SHORT).show()
+//                    } else {
+//                        Toast.makeText(activity, "failed", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//            }
             dismiss()
         }
     }

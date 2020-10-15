@@ -5,6 +5,6 @@ import io.realm.mongodb.App
 
 interface SignUpListener : App.Callback<Void>{
     fun signUp(username : String, password : String) {
-        channelApp.emailPasswordAuth.registerUserAsync(username, password, this)
+        channelApp.emailPassword.registerUserAsync(username, password, this)
     }
 }
