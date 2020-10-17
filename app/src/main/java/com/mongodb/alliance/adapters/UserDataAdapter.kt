@@ -6,18 +6,32 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.marginTop
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.mongodb.alliance.R
-import com.mongodb.alliance.events.ChangeUserDataEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.UserData
 import com.mongodb.alliance.model.UserDataType
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 
 internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Publisher,
     RecyclerView.Adapter<UserDataAdapter.UserDataViewHolder?>() {
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: ChangePhoneHintEvent) {
+        data[1].dataHint = event.hint
+        //data[1].
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: ChangeTelegramHintEvent) {
+        data[2].dataHint = event.hint
+    }
 
     override fun getItemCount(): Int {
         return data.size
@@ -55,9 +69,10 @@ internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Pub
             holder.record.visibility = View.GONE
             val params =
                 holder.hint.layoutParams as LinearLayout.LayoutParams
-            params.setMargins(0, 95, 0, 0) //substitute parameters for left, top, right, bottom
+            params.setMargins(0, 75, 0, 0) //substitute parameters for left, top, right, bottom
             holder.hint.layoutParams = params
         }
+
 
         holder.itemView.setOnClickListener {
             when(holder.data?.dataType){
@@ -68,16 +83,18 @@ internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Pub
                     publish(ChangeUserDataEvent(3))
                 }
                 UserDataType.phoneNumber -> {
-                    obj?.dataValue?.let { it1 -> ChangeUserDataEvent(1, it1) }?.let { it2 ->
-                        publish(
-                            it2
-                        )
+                    if(holder.data?.disabled != null && !(holder.data?.disabled as Boolean)) {
+                        if (obj != null) {
+                            publish(
+                                ChangeUserDataEvent(1, obj.dataValue)
+                            )
+                        }
                     }
                 }
                 UserDataType.telegramAccount -> {
-                    obj?.dataValue?.let { it1 -> ChangeUserDataEvent(2, it1) }?.let { it2 ->
+                    if (obj != null) {
                         publish(
-                            it2
+                            ChangeUserDataEvent(2, obj.dataValue)
                         )
                     }
                 }

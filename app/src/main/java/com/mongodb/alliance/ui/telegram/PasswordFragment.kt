@@ -19,6 +19,7 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.databinding.FragmentPasswordBinding
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
+import com.mongodb.alliance.databinding.NewFragmentPasswordBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.StateChangedEvent
@@ -42,25 +43,23 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
     @TelegramServ
     @Inject
     lateinit var t_service : Service
-    private lateinit var binding: FragmentPasswordBinding
+    private lateinit var binding: NewFragmentPasswordBinding
 
     private lateinit var input : EditText
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
     {
-        var view = inflater.inflate(R.layout.new_fragment_password, container, false)
-        //binding = FragmentPasswordBinding.inflate(inflater, container, false)
-        //return binding.root
-        return view
+        binding = NewFragmentPasswordBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        /*input = binding.frPassInput
+        input = binding.telePassEdit
         var result : TelegramObject? = null
-        binding.frPassConfirm.setOnClickListener {
+        binding.passConfirmBtn.setOnClickListener {
             lifecycleScope.launch {
                 try {
                     showLoading(false)
@@ -84,17 +83,12 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
                     showLoading(true)
                 }
             }
-        }*/
+        }
     }
 
     fun showLoading(show : Boolean){
-        binding.frPassConfirm.isEnabled = show
-        if(show) {
-            binding.frPassProgress.visibility = View.GONE
-        }
-        else{
-            binding.frPassProgress.visibility = View.VISIBLE
-        }
+        binding.passConfirmBtn.isEnabled = show
+        binding.telePassEdit.isEnabled = show
     }
 
 }

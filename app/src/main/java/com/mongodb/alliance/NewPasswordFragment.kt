@@ -48,15 +48,7 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
                         val realm = Realm.getDefaultInstance()
                         val appUserRealm = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst() as UserRealm
                         val userEmail = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
-                        /*channelApp.emailPasswordAuth.sendResetPasswordEmailAsync(userEmail) {
-                            if (it.isSuccess) {
-                                Toast.makeText(activity, "Successfully sent the user a reset password link to $userEmail", Toast.LENGTH_LONG).show()
-                            } else {
-                                Toast.makeText(activity, "Failed to send the user a reset password link to $userEmail", Toast.LENGTH_LONG).show()
-                            }
-                        }*/
-
-                        channelApp.emailPasswordAuth.resetPasswordAsync(token, tokenId, binding.fragmentNewPasswordEdit.text.toString()){
+                        channelApp.emailPassword.resetPasswordAsync(token, tokenId, binding.fragmentNewPasswordEdit.text.toString()){
                            if (it.isSuccess) {
                                Toast.makeText(activity, "Password successfully changed", Toast.LENGTH_LONG).show()
                                dismiss()
@@ -64,7 +56,6 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
                                Toast.makeText(activity, "Failed to change password", Toast.LENGTH_LONG).show()
                            }
                         }
-
                     } else {
                         Toast.makeText(
                             activity,

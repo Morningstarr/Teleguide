@@ -269,6 +269,15 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         }
     }
 
+    suspend fun isUser() : TdApi.User?{
+        lateinit var username : String
+        return try{
+            client.getMe()
+        } catch (e:Exception){
+            null
+        }
+    }
+
     @ExperimentalCoroutinesApi
     suspend fun resetPhoneNumber(){
         TdApi.SetAuthenticationPhoneNumber()

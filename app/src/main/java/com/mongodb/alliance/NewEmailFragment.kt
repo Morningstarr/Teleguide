@@ -38,7 +38,7 @@ class NewEmailFragment (var hint : String): BottomSheetDialogFragment() {
 
         changeBtn.setOnClickListener{
             //todo changeEmail
-            realm = Realm.getDefaultInstance()
+            /*realm = Realm.getDefaultInstance()
             val user = channelApp.currentUser()
             val mongoClient = user?.getMongoClient("mongodb-atlas")
             val functionsManager: Functions = channelApp.getFunctions(user)
@@ -51,7 +51,7 @@ class NewEmailFragment (var hint : String): BottomSheetDialogFragment() {
                         Toast.makeText(activity, "failed", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }
+            }*/
             dismiss()
         }
     }
