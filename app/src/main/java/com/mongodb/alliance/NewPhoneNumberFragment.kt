@@ -1,6 +1,9 @@
 package com.mongodb.alliance
 
+import android.content.DialogInterface
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
+import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputLayout
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
@@ -18,6 +22,7 @@ import com.mongodb.alliance.databinding.NewFragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.PhoneChangedEvent
+import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
@@ -53,8 +58,8 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
         var result : TelegramObject? = null
         val countryNameEdit : EditText = binding.countryName
         countryNameEdit.setOnClickListener {
-            var picker : CountryPicker
-            var builder = this.context?.let { it1 ->
+            val picker : CountryPicker
+            val builder = this.context?.let { it1 ->
                 CountryPicker.Builder().with(it1)
                     .listener(this)
             }
@@ -64,8 +69,8 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
         val textInputLayout: TextInputLayout = binding.countryEdit
         textInputLayout.setEndIconOnClickListener {
             // do something.
-            var picker : CountryPicker
-            var builder = this.context?.let { it1 ->
+            val picker : CountryPicker
+            val builder = this.context?.let { it1 ->
                 CountryPicker.Builder().with(it1)
                     .listener(this)
             }
@@ -78,7 +83,7 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
                 try {
                     showLoading(false)
                     withContext(Dispatchers.IO) {
-                        var task = async{
+                        val task = async{
                                 (t_service as TelegramService).callNumberConfirm(binding.countryDialCode.text.toString() +
                                     binding.numberEdit.text.toString())
                         }
@@ -90,7 +95,7 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
                                 binding.numberEdit.text.toString()))
                     }
                     else{
-                        EventBus.getDefault().post(NullObjectAccessEvent("The result of request is null. Please, try again."))
+                        EventBus.getDefault().post(NullObjectAccessEvent("Bad request. Check your entering data and internet connection and try again"))
                     }
                     showLoading(true)
                 }
@@ -102,6 +107,7 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
                 }
             }
         }
+
     }
 
     override fun onSelectCountry(country: Country?) {
@@ -112,6 +118,11 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
     fun showLoading(show : Boolean){
         binding.numberConfirmBtn.isEnabled = show
         binding.numberEdit.isEnabled = show
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        removeRetained<StateChangedEvent>()
     }
 
 }

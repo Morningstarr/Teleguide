@@ -74,7 +74,7 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
                         removeRetained<StateChangedEvent>()
                     }
                     else{
-                        EventBus.getDefault().post(NullObjectAccessEvent("The result of request is null. Please, try again."))
+                        EventBus.getDefault().post(NullObjectAccessEvent("Bad request. Check your entering data and internet connection and try again"))
                     }
                 } catch (e: Exception) {
                     timber.log.Timber.e(e.message)
@@ -89,6 +89,11 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
     fun showLoading(show : Boolean){
         binding.passConfirmBtn.isEnabled = show
         binding.telePassEdit.isEnabled = show
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        removeRetained<StateChangedEvent>()
     }
 
 }

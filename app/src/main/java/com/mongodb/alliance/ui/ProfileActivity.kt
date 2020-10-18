@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.telephony.PhoneNumberUtils
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -112,7 +113,10 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
-
+        EventBus.getDefault().register(this)
+        lifecycleScope.launch {
+            (t_service as TelegramService).setUpClient()
+        }
         try{
             MediaManager.init(this)
         }
@@ -124,15 +128,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         }
         subscribe<ChangeUserDataEvent>(lifecycleScope, emitRetained = true) { event ->
             when(event.parameter) {
-                0 -> {
-                    bottomSheetFragment =
-                        NewEmailFragment(event.data)
-
-                    (bottomSheetFragment as NewEmailFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as NewEmailFragment).tag
-                    )
-                }
                 1 -> {
                     val builder =
                         AlertDialog.Builder(this)
@@ -143,18 +138,19 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     builder.setPositiveButton(
                         "YES"
                     ) { dialog, which ->
-                        EventBus.getDefault().post(ChangePhoneHintEvent("Добавьте телеграм аккаунт для отображения номера телефона"))
                         lifecycleScope.launch {
-                            (t_service as TelegramService).logOut()
+                            withContext(Dispatchers.IO) {
+                                (t_service as TelegramService).logOut()
+                            }
+                            withContext(Dispatchers.Main) {
+                                setUpRecyclerView()
+                            }
+                            withContext(Dispatchers.IO) {
+                                (t_service as TelegramService).setUpClient()
+                                (t_service as TelegramService).initService()
+                            }
                         }
-                        setUpRecyclerView()
-                        bottomSheetFragment =
-                            NewPhoneNumberFragment()
 
-                        (bottomSheetFragment as NewPhoneNumberFragment).show(
-                            this.supportFragmentManager,
-                            (bottomSheetFragment as NewPhoneNumberFragment).tag
-                        )
                     }
                     builder.setNegativeButton(
                         "NO"
@@ -172,22 +168,21 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
                         builder.setTitle("Warning")
                         builder.setMessage("Are you sure you want to change your telegram account?")
-                        EventBus.getDefault()
-                            .post(ChangeTelegramHintEvent("Нажмите, чтобы добавить телеграм аккаунт"))
                         builder.setPositiveButton(
                             "YES"
                         ) { dialog, which ->
                             lifecycleScope.launch {
-                                (t_service as TelegramService).logOut()
+                                withContext(Dispatchers.IO) {
+                                    (t_service as TelegramService).logOut()
+                                }
+                                withContext(Dispatchers.Main) {
+                                    setUpRecyclerView()
+                                }
+                                withContext(Dispatchers.IO) {
+                                    (t_service as TelegramService).setUpClient()
+                                    (t_service as TelegramService).initService()
+                                }
                             }
-                            setUpRecyclerView()
-                            bottomSheetFragment =
-                                NewPhoneNumberFragment()
-
-                            (bottomSheetFragment as NewPhoneNumberFragment).show(
-                                this.supportFragmentManager,
-                                (bottomSheetFragment as NewPhoneNumberFragment).tag
-                            )
                         }
                         builder.setNegativeButton(
                             "NO"
@@ -199,13 +194,25 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         alert.show()
                     }
                     else{
-                        bottomSheetFragment =
-                            NewPhoneNumberFragment()
-
-                        (bottomSheetFragment as NewPhoneNumberFragment).show(
-                            this.supportFragmentManager,
-                            (bottomSheetFragment as NewPhoneNumberFragment).tag
-                        )
+                        lifecycleScope.launch {
+                            val task = async {
+                                withContext(Dispatchers.IO) {
+                                    (t_service as TelegramService).returnClientState()
+                                }
+                            }
+                            val state = task.await()
+                            when (state) {
+                                ClientState.ready -> {
+                                    Toast.makeText(baseContext, "state ready", Toast.LENGTH_SHORT).show()
+                                }
+                                ClientState.waitNumber, ClientState.waitPassword, ClientState.waitCode -> {
+                                    (t_service as TelegramService).initService()
+                                }
+                                else -> {
+                                    Toast.makeText(baseContext, "unknown state", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
                     }
                 }
                 3 -> {
@@ -255,35 +262,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
         otherEventsSubscription()
         telegramConnectedSubscription()
-        EventBus.getDefault().register(this)
 
-        lifecycleScope.launch {
-            val task = async {
-                withContext(Dispatchers.IO) {
-                    (t_service as TelegramService).returnClientState()
-                }
-            }
-            val state = task.await()
-            when (state) {
-                ClientState.ready -> {
-                    /*val task = async {
-                        (t_service as TelegramService).getPhoneNumber()
-                    }
-                    val number = task.await()*/
-                    //binding.labelNumber.text = number
-                    //actionbar?.setDisplayHomeAsUpEnabled(true)
-                    setUpRecyclerView()
-                }
-                ClientState.waitNumber, ClientState.waitPassword, ClientState.waitCode -> {
-                    //if(!newAccount){
-                        (t_service as TelegramService).initService()
-                    //}
-                }
-                else -> {
-
-                }
-            }
-        }
 
         permissions.add(CAMERA);
         permissions.add(WRITE_EXTERNAL_STORAGE);
@@ -428,29 +407,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         setContentView(view)
         recyclerView = binding.userDataRecView
         placeholder = binding.profilePlaceholder
-        lifecycleScope.launch {
-            val task = async {
-                withContext(Dispatchers.IO) {
-                    (t_service as TelegramService).returnClientState()
-                }
-            }
-            val state = task.await()
-            when (state) {
-                ClientState.ready -> {
-                    val taskNumber = async {
-                        (t_service as TelegramService).getPhoneNumber()
-                    }
-                    val number = taskNumber.await()
-                    //binding.profNumber.text = number
 
-                    val taskName = async {
-                        (t_service as TelegramService).getProfileName()
-                    }
-                    val username = taskName.await()
-                    //binding.profTgAccount.text = username
-                }
-            }
-        }
     }
 
     override fun onStart() {
@@ -472,9 +429,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 (bottomSheetFragment as NewPasswordFragment).tag
             )
         }
-        /*else{
-            Toast.makeText(this, "no data", Toast.LENGTH_SHORT).show()
-        }*/
 
         try {
             user = channelApp.currentUser()
@@ -668,6 +622,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     }
 
     private fun checkTelegram() : UserData{
+        var isNotFinishedConnection : Boolean = false
         var username = "default"
         runBlocking {
             val taskName = async {
@@ -676,13 +631,43 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             username = taskName.await()
         }
 
-        if(username != ""){
+        if(username == ""){
+            return UserData("Your account has no username", "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount)
+        }
+        if(username != " "){
             return UserData(username, "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount)
         }
-        else{
-            return UserData("", "Нажмите, чтобы добавить телеграм аккаунт", UserDataType.telegramAccount)
+        else {
+            runBlocking {
+                val task = async {
+                    withContext(Dispatchers.IO) {
+                        (t_service as TelegramService).returnClientState()
+                    }
+                }
+                val state = task.await()
+                when (state) {
+                    ClientState.waitPassword, ClientState.waitCode -> {
+                        isNotFinishedConnection = true
+                    }
+                    ClientState.waitNumber -> {
+                        isNotFinishedConnection = false
+                    }
+                }
+            }
+            if (!isNotFinishedConnection) {
+                return UserData(
+                    "",
+                    "Нажмите, чтобы добавить телеграм аккаунт",
+                    UserDataType.telegramAccount
+                )
+            } else {
+                return UserData(
+                    "",
+                    "Нажмите, чтоб завершить вход в телеграм",
+                    UserDataType.telegramAccount
+                )
+            }
         }
-
     }
 
     private fun checkNumber() : UserData{
@@ -695,6 +680,9 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         }
 
         if(number != ""){
+            if(number[0] != '+') {
+                number = "+$number"
+            }
             return UserData(number, "Нажмите, чтобы изменить номер телефона", UserDataType.phoneNumber)
         }
         else{
@@ -769,7 +757,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
     private fun telegramConnectedSubscription() {
         subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true) { event ->
-            Toast.makeText(baseContext, "Telegram connected event", Toast.LENGTH_SHORT)
+            setUpRecyclerView()
+            //Toast.makeText(baseContext, "Telegram connected event", Toast.LENGTH_SHORT)
             /*if(newAccount){
                 finish()
             }*/
@@ -785,16 +774,15 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true) { event ->
             Timber.d("State changed")
             when (event.clientState) {
-                /*ClientState.waitNumber -> {
-                    //bottomSheetFragment?.dismiss()
+                ClientState.waitNumber -> {
                     bottomSheetFragment =
-                        PhoneNumberFragment()
+                        NewPhoneNumberFragment()
 
-                    (bottomSheetFragment as PhoneNumberFragment).show(
+                    (bottomSheetFragment as NewPhoneNumberFragment).show(
                         this.supportFragmentManager,
-                        (bottomSheetFragment as PhoneNumberFragment).tag
+                        (bottomSheetFragment as NewPhoneNumberFragment).tag
                     )
-                }*/
+                }
                 ClientState.waitCode -> {
                     //bottomSheetFragment?.dismiss()
                     bottomSheetFragment =
@@ -818,10 +806,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
                 }
             }
-        }
-
-        subscribe<PhoneChangedEvent>(lifecycleScope) { event ->
-            Toast.makeText(baseContext, "Phone changed event", Toast.LENGTH_SHORT)
         }
     }
 }

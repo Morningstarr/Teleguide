@@ -1,5 +1,8 @@
 package com.mongodb.alliance.adapters
 
+import android.telephony.PhoneNumberFormattingTextWatcher
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
 import android.view.LayoutInflater
 import android.view.View
@@ -65,20 +68,57 @@ internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Pub
             holder.hint.layoutParams = params
         }
 
-        if(obj?.dataType == UserDataType.phoneNumber && obj.dataValue == ""){
-            holder.record.visibility = View.GONE
-            val params =
-                holder.hint.layoutParams as LinearLayout.LayoutParams
-            params.setMargins(0, 75, 0, 0) //substitute parameters for left, top, right, bottom
-            holder.hint.layoutParams = params
-        }
+        if(obj?.dataType == UserDataType.phoneNumber){
+            /*holder.record.addTextChangedListener(object : PhoneNumberFormattingTextWatcher("+380") {
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
 
+                override fun afterTextChanged(editable: Editable) {
+                    val text = holder.record.text.toString()
+                    val textLength = holder.record.text.length
+
+                    if (text.endsWith("-") || text.endsWith(" ")) {
+                        return
+                    }
+
+                    if (textLength == 1) {
+                        if (!text.contains("(")) {
+                            setText(StringBuilder(text).insert(text.length - 1, "(").toString())
+                        }
+                    } else if (textLength == 5) {
+                        if (!text.contains(")")) {
+                            setText(StringBuilder(text).insert(text.length - 1, ")").toString())
+                        }
+                    } else if (textLength == 6) {
+                        setText(StringBuilder(text).insert(text.length - 1, " ").toString())
+                    } else if (textLength == 10) {
+                        if (!text.contains("-")) {
+                            setText(StringBuilder(text).insert(text.length - 1, "-").toString())
+                        }
+                    } else if (textLength == 15) {
+                        if (text.contains("-")) {
+                            setText(StringBuilder(text).insert(text.length - 1, " ext").toString())
+                        }
+                    }
+                }
+
+                private fun setText(text: String){
+                    holder.record.removeTextChangedListener(this)
+                    holder.record.editableText.replace(0, holder.record.text.length, text)
+                    holder.record.addTextChangedListener(this)
+                }
+            })*/
+            if(obj.dataValue == "") {
+                holder.record.visibility = View.GONE
+                val params =
+                    holder.hint.layoutParams as LinearLayout.LayoutParams
+                params.setMargins(0, 75, 0, 0) //substitute parameters for left, top, right, bottom
+                holder.hint.layoutParams = params
+            }
+        }
 
         holder.itemView.setOnClickListener {
             when(holder.data?.dataType){
-                UserDataType.email -> {
-
-                }
                 UserDataType.password -> {
                     publish(ChangeUserDataEvent(3))
                 }

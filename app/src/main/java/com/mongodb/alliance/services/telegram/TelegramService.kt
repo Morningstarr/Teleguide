@@ -4,6 +4,7 @@ import android.os.Build
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.getRetained
 import cafe.adriel.broker.publish
+import cafe.adriel.broker.removeRetained
 import com.mongodb.alliance.ChannelProj
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.events.TelegramConnectedEvent
@@ -113,7 +114,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                 )
                 client.exec(TdApi.CheckDatabaseEncryptionKey())
             }
-            publish(StateChangedEvent(clientState))
+            //publish(StateChangedEvent(clientState))
         }
         catch(e: Exception){
             Timber.e(e.message)
@@ -140,8 +141,8 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
                             val state = returnClientState()
-                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready && state != ClientState.waitPassword) ||
-                                getRetained<StateChangedEvent>()?.clientState == ClientState.waitNumber) {
+                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready && state != ClientState.waitPassword) /*||
+                                getRetained<StateChangedEvent>()?.clientState == ClientState.waitNumber*/) {
                                 clientState = ClientState.waitCode
                                 publish(StateChangedEvent(clientState), retain = true)
                             }
@@ -150,15 +151,18 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                             Timber.d("Waiting for password");
                             clientState = ClientState.waitPassword
                             val state = returnClientState()
-                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready) ||
-                                getRetained<StateChangedEvent>()?.clientState == ClientState.waitCode) {
+                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready)/* ||
+                                getRetained<StateChangedEvent>()?.clientState == ClientState.waitCode*/) {
                                 publish(StateChangedEvent(clientState), retain = true)
                             }
                         }
                         is TdApi.AuthorizationStateReady -> {
-                            Timber.d("State ready");
-                            clientState = ClientState.ready
-                            publish(TelegramConnectedEvent(clientState), retain = true)
+                            val state = returnClientState()
+                            if(state == ClientState.ready) {
+                                Timber.d("State ready");
+                                clientState = ClientState.ready
+                                publish(TelegramConnectedEvent(clientState), retain = true)
+                            }
                         }
                     }
                 }
@@ -193,9 +197,17 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     suspend fun callNumberConfirm(input : String): TelegramObject? {
         try {
             var res = client.exec(TdApi.SetAuthenticationPhoneNumber(input, null))
+            removeRetained<StateChangedEvent>()
             return res
         }
         catch (e: Exception){
+            val mes = e.message
+            if(mes != null) {
+                if(mes == "Unauthorized"){
+                    setUpClient()
+                    callNumberConfirm(input)
+                }
+            }
             return null
         }
     }
@@ -265,7 +277,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             username = client.getMe().username
             username
         } catch (e:Exception){
-            ""
+            " "
         }
     }
 
@@ -282,8 +294,8 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     suspend fun resetPhoneNumber(){
         TdApi.SetAuthenticationPhoneNumber()
         returnClientState()
-        val clientState = ClientState.waitNumber
-        publish(StateChangedEvent(clientState), retain = true)
+        //val clientState = ClientState.waitNumber
+        //publish(StateChangedEvent(clientState), retain = true)
     }
 
     @ExperimentalCoroutinesApi

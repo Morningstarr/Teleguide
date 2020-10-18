@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui.telegram
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -66,7 +67,7 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
                         removeRetained<StateChangedEvent>()
                     }
                     else{
-                        EventBus.getDefault().post(NullObjectAccessEvent("The result of request is null. Please, try again."))
+                        EventBus.getDefault().post(NullObjectAccessEvent("Bad request. Check your entering data and internet connection and try again"))
                     }
                     showLoading(true)
 
@@ -83,6 +84,11 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
     fun showLoading(show : Boolean){
         binding.codeConfirmBtn.isEnabled = show
         binding.teleCodeEdit.isEnabled = show
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        removeRetained<StateChangedEvent>()
     }
 
 }
