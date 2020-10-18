@@ -1,9 +1,7 @@
-package com.mongodb.alliance
+package com.mongodb.alliance.ui.telegram
 
 import android.content.DialogInterface
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,8 +14,6 @@ import cafe.adriel.broker.publish
 import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputLayout
-import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
-import com.mongodb.alliance.databinding.FragmentSignUpBinding
 import com.mongodb.alliance.databinding.NewFragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
@@ -25,7 +21,6 @@ import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
-import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import com.mukesh.countrypicker.Country
 import com.mukesh.countrypicker.CountryPicker
 import com.mukesh.countrypicker.listeners.OnCountryPickerListener

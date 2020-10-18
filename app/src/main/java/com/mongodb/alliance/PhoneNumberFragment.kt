@@ -1,4 +1,4 @@
-package com.mongodb.alliance.ui.telegram
+package com.mongodb.alliance
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,18 +8,15 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
-import cafe.adriel.broker.removeRetained
 import com.github.vardemin.materialcountrypicker.PhoneNumberEditText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.events.PhoneChangedEvent
-import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.FragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
-import com.mongodb.alliance.ui.telegram.PhoneNumberFragment.PhoneEditConverter.toNumber
+import com.mongodb.alliance.PhoneNumberFragment.PhoneEditConverter.toNumber
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.*

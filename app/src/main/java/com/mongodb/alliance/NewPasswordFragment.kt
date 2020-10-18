@@ -35,10 +35,8 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
         super.onViewCreated(view, savedInstanceState)
         binding.newPasswordChangeBtn.setOnClickListener{
             val passwordEdit = binding.fragmentNewPasswordEdit
-            val oldPasswordEdit = binding.fragmentOldPasswordEdit
             val repeatPasswordEdit = binding.fragmentNewPasswordConfirmEdit
             passwordEdit.isEnabled = false
-            oldPasswordEdit.isEnabled = false
             repeatPasswordEdit.isEnabled = false
             binding.newPasswordChangeBtn.isEnabled = false
             binding.shadowChange.visibility = View.INVISIBLE
@@ -73,7 +71,6 @@ class NewPasswordFragment (var token : String = "", var tokenId : String = ""): 
             }
             finally{
                 passwordEdit.isEnabled = true
-                oldPasswordEdit.isEnabled = true
                 repeatPasswordEdit.isEnabled = true
                 binding.newPasswordChangeBtn.isEnabled = true
                 binding.shadowChange.visibility = View.VISIBLE

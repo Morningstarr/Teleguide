@@ -11,7 +11,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.telephony.PhoneNumberUtils
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -51,8 +50,8 @@ import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.authorization.LoginActivity
 import com.mongodb.alliance.ui.telegram.CodeFragment
+import com.mongodb.alliance.ui.telegram.NewPhoneNumberFragment
 import com.mongodb.alliance.ui.telegram.PasswordFragment
-import com.mongodb.alliance.ui.telegram.PhoneNumberFragment
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
