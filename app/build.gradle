@@ -111,4 +111,6 @@ dependencies {
 
     implementation group: 'com.cloudinary', name: 'cloudinary-android', version: '1.30.0'
 
+    implementation "com.daimajia.swipelayout:library:1.2.0@aar"
+
 }

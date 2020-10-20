@@ -11,14 +11,16 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
+import com.daimajia.swipe.SwipeLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
-import com.mongodb.alliance.adapters.FolderRealmAdapter
+import com.mongodb.alliance.adapters.FolderAdapter
+import com.mongodb.alliance.adapters.SimpleItemTouchHelperCallback
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
@@ -53,7 +55,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var realm: Realm
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: FolderRealmAdapter
+    private lateinit var adapter: FolderAdapter
     private lateinit var fab: FloatingActionButton
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
@@ -266,14 +268,18 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
 
     private fun setUpRecyclerView(realm: Realm) {
-        adapter = FolderRealmAdapter(
+        adapter = FolderAdapter(
             realm.where<FolderRealm>().sort("_id")
-                .findAll()
+                .findAll().toMutableList()
         )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
-        recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+
+        //recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+        val touchHelper = ItemTouchHelper(callback)
+        touchHelper.attachToRecyclerView(recyclerView)
     }
 
     override fun onDestroy() {
