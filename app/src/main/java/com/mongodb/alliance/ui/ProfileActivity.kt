@@ -495,7 +495,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
-        recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+        /*recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))*/
     }
 
     override fun onSupportNavigateUp(): Boolean {

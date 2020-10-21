@@ -269,14 +269,13 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     private fun setUpRecyclerView(realm: Realm) {
         adapter = FolderAdapter(
-            realm.where<FolderRealm>().sort("_id")
+            realm.where<FolderRealm>().sort("order")
                 .findAll().toMutableList()
         )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
 
-        //recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
         val touchHelper = ItemTouchHelper(callback)
         touchHelper.attachToRecyclerView(recyclerView)

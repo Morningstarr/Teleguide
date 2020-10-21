@@ -1,9 +1,7 @@
 package com.mongodb.alliance.adapters
 
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -12,15 +10,21 @@ import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.model.FolderRealm
-import io.realm.OrderedRealmCollection
-import io.realm.RealmRecyclerViewAdapter
+import io.realm.Realm
+import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 
 internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher,
+    ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope {
 
-    ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>() {
+    private var job: Job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
@@ -92,6 +96,8 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
 
 
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
+        //val prev: FolderRealm = data.removeAt(fromPosition)
+        //data.add(if (toPosition > fromPosition) toPosition - 1 else toPosition, prev)
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
                 Collections.swap(data, i, i + 1)
@@ -101,11 +107,29 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
                 Collections.swap(data, i, i - 1)
             }
         }
+        try {
+            launch {
+                withContext(Dispatchers.IO) {
+                    updateOrder(data[fromPosition], toPosition)
+                    updateOrder(data[toPosition], fromPosition)
+                }
+            }
+        }
+        catch(e:Exception){
+            EventBus.getDefault().post(e.message?.let { NullObjectAccessEvent(it) })
+        }
         notifyItemMoved(fromPosition, toPosition)
         return true
     }
 
     override fun getItemCount(): Int {
         return data.count()
+    }
+
+    private fun updateOrder(updated : FolderRealm, position: Int){
+        val realm = Realm.getDefaultInstance()
+        realm.executeTransactionAsync {
+            updated.order = position
+        }
     }
 }

@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 
 class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemTouchHelper.Callback() {
-    private val mAdapter: ItemTouchHelperAdapter? = null
+    //private val mAdapter: ItemTouchHelperAdapter? = null
 
     override fun getMovementFlags(
         recyclerView: RecyclerView,
@@ -24,7 +24,8 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        mAdapter?.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
+        //a
+        adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
         return true
     }
 
