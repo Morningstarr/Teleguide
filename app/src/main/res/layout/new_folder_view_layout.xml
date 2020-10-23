@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.daimajia.swipe.SwipeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipe_layout"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:background="@drawable/folder_shape"
+    android:layout_marginTop="2.5dp"
+    android:layout_marginBottom="2.5dp"
+    android:orientation="horizontal">
+    <!-- Bottom View Start-->
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="60dp"
+        android:background="#027A97" />
+
+    <LinearLayout
+        android:id="@+id/bottom_wrapper"
+        android:layout_width="wrap_content"
+        android:weightSum="1"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#027A97">
+
+            <ImageView
+                android:id="@+id/edit_folder"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="#03CCFC"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_pin">
+
+            </ImageView>
+
+            <ImageView
+                android:id="@+id/pin_folder"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="#027A97"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_edit">
+            </ImageView>
+    </LinearLayout>
+
+    <!-- Bottom View End-->
+
+    <!-- Surface View Start -->
+    <LinearLayout
+        android:id="@+id/item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2.5dp"
+        android:layout_marginBottom="2.5dp"
+        android:background="@drawable/rectangle_7"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:id="@+id/pictures_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="40dp"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_shape"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_arrow_back" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="-5dp"
+                android:background="@drawable/round_shape"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_camera" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="-5dp"
+                android:background="@drawable/round_shape"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_logout" />
+
+            <TextView
+                android:id="@+id/additional_count"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="-5dp"
+                android:background="@drawable/round_shape"
+                android:gravity="center"
+                android:text="+17"
+                android:textSize="8dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/folder_name"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:fontFamily="@font/roboto_medium"
+            android:gravity="center"
+            android:lineSpacingExtra="3sp"
+            android:text="Уральские парни"
+            android:textColor="#1A1A1A"
+            android:textSize="18sp">
+
+        </TextView>
+    </LinearLayout>
+    <!-- Surface View End -->
+</com.daimajia.swipe.SwipeLayout>
+

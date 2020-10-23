@@ -1,7 +1,8 @@
 package com.mongodb.alliance.model
 
+
 enum class ChannelType(val displayName: String) {
-    groupChat("Group Chat"),
-    chat("Chat"),
-    channel("Channel"),
+    groupChat("telegram_group_chat"),
+    chat("telegram_chat"),
+    channel("telegram_channel"),
 }

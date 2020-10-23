@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_enter_code_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    android:orientation="vertical"
+
+    app:behavior_hideable="true"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+
+    >
+
+    <TextView
+        android:id="@+id/label_number_frag"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="47dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="47dp"
+        android:fontFamily="@font/roboto_medium"
+        android:gravity="center|top"
+        android:text="@string/choose_number"
+        android:textAppearance="@style/fragment_header"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/country_edit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        app:endIconDrawable="@drawable/ic_expand"
+        app:endIconMode="custom"
+        app:layout_constraintBottom_toTopOf="@+id/layout_number_edits"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/label_number_frag">
+
+
+        <EditText
+            android:id="@+id/country_name"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/edit_text_shape"
+            android:enabled="false"
+            android:paddingStart="60dp"
+            android:textSize="14sp"
+            android:textColor="@drawable/discolor"></EditText>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <LinearLayout
+        android:id="@+id/layout_number_edits"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.509"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/country_edit">
+
+        <EditText
+            android:id="@+id/country_dial_code"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/edit_text_shape"
+            android:paddingStart="10dp"
+            android:textSize="14sp"
+            android:enabled="false"
+            android:textColor="@drawable/discolor"/>
+
+
+        <EditText
+            android:id="@+id/number_edit"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginEnd="30dp"
+            android:background="@drawable/edit_text_shape"
+
+            android:fontFamily="@font/roboto"
+            android:hint="Номер телефона"
+
+            android:inputType="number"
+            android:paddingStart="25dp"
+            android:singleLine="true"
+            android:textSize="14sp"
+            android:viewportWidth="300"
+            android:viewportHeight="48"
+            tools:layout_editor_absoluteX="161dp"
+            tools:layout_editor_absoluteY="-8dp" />
+    </LinearLayout>
+
+    <com.dd.ShadowLayout
+        android:id="@+id/shadow"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="23dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="23dp"
+        android:layout_marginBottom="40dp"
+        android:maxHeight="60dp"
+        android:minWidth="276dp"
+        android:minHeight="52dp"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="60dp"
+        app:layout_constraintHeight_min="60dp"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layout_number_edits"
+        app:sl_dx="0dp"
+        app:sl_dy="0dp"
+        app:sl_fillColor="#03CCFC"
+        app:sl_shadowColor="#D2D2D2"
+        app:sl_shadowRadius="8dp">
+
+        <Button
+            android:id="@+id/number_confirm_btn"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/rectangle_8"
+            android:fontFamily="@font/roboto"
+            android:stateListAnimator="@drawable/animator"
+            android:text="Продолжить"
+            android:textAppearance="@style/facebook"
+            android:textColor="#FFFFFF"
+            android:textSize="14dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+    </com.dd.ShadowLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+

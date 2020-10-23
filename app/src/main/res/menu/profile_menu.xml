@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+
+    >
+
+    <item
+        android:id="@+id/profile_action_choose_img"
+        android:icon="@drawable/ic_camera"
+        android:title="Выбрать фотографию"
+/>
+    <item
+        android:id="@+id/profile_action_delete_img"
+        android:icon="@drawable/ic_delete"
+        android:title="Удалить"
+/>
+    <item
+        android:id="@+id/profile_action_exit"
+        android:icon="@drawable/ic_logout"
+        android:title="Выход"
+        />
+
+</menu>

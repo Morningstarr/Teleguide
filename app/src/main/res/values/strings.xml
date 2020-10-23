@@ -8,4 +8,35 @@
     <string name="new_task">Create new task</string>
     <string name="logout">Log Out</string>
     <string name="new_folder">New Folder</string>
+    <string name="title_activity_connect_telegram">Connect Telegram</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="skip">Skip</string>
+    <string name="connect_telegram">Connect Telegram</string>
+    <string name="no_telephone_number_connected">No telephone number connected</string>
+    <string name="cont">Continue</string>
+    <string name="add_new">Add new</string>
+    <string name="sign_in_with">Войти с помощью</string>
+    <string name="sign_up_with">Начать с помощью</string>
+    <string name="password_hint"><font size="14">Введите пароль</font></string>
+    <string name="repeat_password_hint"><font size="14">Повторите пароль</font></string>
+    <string name="email_hint"><font size="14">Введите почту</font></string>
+    <string name="create_acc">Создать аккаунт</string>
+    <string name="is_account">Уже есть аккаунт?</string>
+    <string name="or">или</string>
+    <string name="enter_new_email">Введите новую почту</string>
+    <string name="enter_new_pass">Измените пароль</string>
+    <string name="enter_code">Telegram отправил вам код. Введите его</string>
+    <string name="enter_tele_pass">Осталось только ввести пароль</string>
+    <string name="choose_number">Выберите страну и введите номер телефона</string>
+    <string name="pick_single">Выберите изображение</string>
+    <string name="enter">Войти</string>
 </resources>

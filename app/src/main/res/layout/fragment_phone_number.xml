@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottom_sheet_layout1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    app:behavior_hideable="true"
+    app:behavior_peekHeight="56dp"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_marginTop="50dp">
+
+        <com.github.vardemin.materialcountrypicker.PhoneNumberEditText
+            android:id="@+id/fr_p_n_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="58dp"
+            android:layout_marginEnd="8dp"
+            android:singleLine="false"
+            app:cp_autoDetectCountry="false"
+            app:cp_fastScrollerBubbleColor="@color/colorPrimary"
+            app:cp_fastScrollerBubbleTextAppearance="@style/TextAppearance.AppCompat.Medium"
+            app:cp_fastScrollerHandleColor="@color/colorAccent"
+            app:cp_fullScreenToolbarColor="@color/colorAccent"
+            app:cp_listItemTextColor="@color/design_default_color_on_secondary"
+            app:cp_preferredCountries="us,ru,am"
+            app:cp_rememberLastSelection="false"
+            app:cp_setCountryCodeBorder="false"
+            app:cp_showCountryCodeInView="true"
+            app:cp_showCountryDialCodeInView="true"
+            app:cp_showFastScroll="true"
+            app:cp_showFullScreeDialog="true"
+            app:cp_searchAllowed="true"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <ProgressBar
+        android:id="@+id/fr_p_n_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"></ProgressBar>
+
+    <Button
+            android:id="@+id/fr_p_n_confirm"
+            android:layout_width="210dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="250dp"
+            android:background="@android:color/holo_blue_light"
+            android:text="Enter phone number"
+            android:textColor="@android:color/white" />
+
+
+</LinearLayout>

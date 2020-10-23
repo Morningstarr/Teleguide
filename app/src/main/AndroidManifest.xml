@@ -3,25 +3,73 @@
     package="com.mongodb.alliance">
 
     <application
-        android:name="com.mongodb.alliance.ChannelProj"
+        android:name=".ChannelProj"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_tele_giude"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_tele_giude_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.mongodb.alliance.FolderActivity">
+
+        <meta-data
+            android:name="CLOUDINARY_URL"
+            android:value="cloudinary://688619238887231:qaR76fHsvBPInSVc8IBpW3mdhfQ@dbtelecloud" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.mongodb.alliance.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+
+        <activity
+            android:name=".ui.ChannelsRealmActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.ProfileActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                    android:host="www.teleguide.com"
+                    android:pathPrefix="/reset" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.ChannelsArrayActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.telegram.ConnectTelegramActivity"
+            android:label="@string/title_activity_connect_telegram"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.FolderActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
-        <activity android:name="com.mongodb.alliance.LoginActivity" />
-        <activity android:name="com.mongodb.alliance.ChannelsActivity">
-
-        </activity>
+        <activity
+            android:name=".ui.authorization.LoginActivity"
+            android:configChanges="orientation"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
