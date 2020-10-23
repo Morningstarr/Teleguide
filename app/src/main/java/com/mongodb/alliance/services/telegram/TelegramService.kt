@@ -57,10 +57,6 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                 }
                 is TdApi.AuthorizationStateWaitPhoneNumber -> {
                     clientState = ClientState.waitNumber
-                    /*publish(
-                        StateChangedEvent(
-                            clientState
-                        )/*, retain = true*/)*/
                     return ClientState.waitNumber
                 }
                 is TdApi.AuthorizationStateWaitCode -> {

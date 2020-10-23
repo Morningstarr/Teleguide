@@ -24,7 +24,6 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        //a
         adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
         return true
     }

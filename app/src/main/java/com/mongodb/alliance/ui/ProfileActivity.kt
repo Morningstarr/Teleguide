@@ -486,16 +486,11 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         userDataArray.add(checkNumber())
         userDataArray.add(checkTelegram())
         userDataArray.add(UserData("123123123", "Нажмите, чтобы изменить пароль", UserDataType.password))
-        /*userDataArray.add(UserData("123123123", "Нажмите, чтобы изменить пароль", UserDataType.password))
-        userDataArray.add(UserData("YourMorningstar", "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount))
-        userDataArray.add(UserData("kirill_kovrik@mail.ru","Нажмите, чтобы изменить почту", UserDataType.email))
-        userDataArray.add(UserData("+380 71 331 2170", "Нажмите, чтобы изменить номер телефона", UserDataType.phoneNumber))*/
 
         adapter = UserDataAdapter(userDataArray)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
-        /*recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))*/
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -757,10 +752,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     private fun telegramConnectedSubscription() {
         subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true) { event ->
             setUpRecyclerView()
-            //Toast.makeText(baseContext, "Telegram connected event", Toast.LENGTH_SHORT)
-            /*if(newAccount){
-                finish()
-            }*/
         }
     }
 
@@ -776,24 +767,20 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 ClientState.waitNumber -> {
                     bottomSheetFragment =
                         NewPhoneNumberFragment()
-
                     (bottomSheetFragment as NewPhoneNumberFragment).show(
                         this.supportFragmentManager,
                         (bottomSheetFragment as NewPhoneNumberFragment).tag
                     )
                 }
                 ClientState.waitCode -> {
-                    //bottomSheetFragment?.dismiss()
                     bottomSheetFragment =
                         CodeFragment()
-
                     (bottomSheetFragment as CodeFragment).show(
                         this.supportFragmentManager,
                         (bottomSheetFragment as CodeFragment).tag
                     )
                 }
                 ClientState.waitPassword -> {
-                    //bottomSheetFragment?.dismiss()
                     bottomSheetFragment =
                         PasswordFragment()
                     (bottomSheetFragment as PasswordFragment).show(

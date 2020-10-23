@@ -11,8 +11,10 @@ import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.NullObjectAccessEvent
+import com.mongodb.alliance.events.UpdateOrderEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
+import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import java.util.*
@@ -22,6 +24,7 @@ import kotlin.coroutines.CoroutineContext
 internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher,
     ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope {
 
+    private lateinit var foldersList : MutableList<FolderRealm>
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
@@ -29,6 +32,7 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
             .inflate(R.layout.new_folder_view_layout, parent, false)
+        foldersList = data
         return FolderViewHolder(itemView)
     }
 
@@ -96,8 +100,6 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
 
 
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
-        //val prev: FolderRealm = data.removeAt(fromPosition)
-        //data.add(if (toPosition > fromPosition) toPosition - 1 else toPosition, prev)
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
                 Collections.swap(data, i, i + 1)
@@ -107,17 +109,8 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
                 Collections.swap(data, i, i - 1)
             }
         }
-        try {
-            launch {
-                withContext(Dispatchers.IO) {
-                    updateOrder(data[fromPosition], toPosition)
-                    updateOrder(data[toPosition], fromPosition)
-                }
-            }
-        }
-        catch(e:Exception){
-            EventBus.getDefault().post(e.message?.let { NullObjectAccessEvent(it) })
-        }
+
+        EventBus.getDefault().post(UpdateOrderEvent("", data))
         notifyItemMoved(fromPosition, toPosition)
         return true
     }
@@ -126,10 +119,5 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
         return data.count()
     }
 
-    private fun updateOrder(updated : FolderRealm, position: Int){
-        val realm = Realm.getDefaultInstance()
-        realm.executeTransactionAsync {
-            updated.order = position
-        }
-    }
+
 }

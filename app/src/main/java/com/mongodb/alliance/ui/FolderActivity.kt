@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
-import com.daimajia.swipe.SwipeLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.FolderAdapter
@@ -26,6 +25,7 @@ import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.OpenFolderEvent
+import com.mongodb.alliance.events.UpdateOrderEvent
 import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -33,6 +33,8 @@ import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.authorization.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
+import io.realm.Realm.Transaction.OnSuccess
+import io.realm.RealmModel
 import io.realm.kotlin.where
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
@@ -73,6 +75,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: NullObjectAccessEvent) {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: UpdateOrderEvent) {
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -286,57 +293,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         recyclerView.adapter = null
         realm.close()
     }
-
-    /*override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu, menu)
-        menu.findItem(R.id.action_refresh).isVisible = false
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_logout -> {
-                try {
-                    lifecycleScope.launch {
-                        binding.foldersProgress.visibility = View.VISIBLE
-
-                        user?.logOutAsync {
-                            if (it.isSuccess) {
-                                realm = Realm.getDefaultInstance()
-                                realm.close()
-
-                                user = null
-                            } else {
-                                Timber.e("log out failed! Error: ${it.error}")
-                                return@logOutAsync
-                            }
-                        }
-
-                        Timber.d("user logged out")
-
-                        binding.foldersProgress.visibility = View.GONE
-                        startActivity(Intent(baseContext, LoginActivity::class.java))
-                    }
-                }
-                catch(e: Exception){
-                    Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
-                }
-                true
-            }
-            R.id.action_connect_telegram -> {
-                lateinit var state : ClientState
-                startActivity(Intent(baseContext, ConnectTelegramActivity::class.java))
-                true
-            }
-            R.id.action_profile -> {
-                startActivity(Intent(baseContext, ProfileActivity::class.java))
-                true
-            }
-            else -> {
-                super.onOptionsItemSelected(item)
-            }
-        }
-    }*/
 
     private fun showLoading(show : Boolean){
         if(!show) {
