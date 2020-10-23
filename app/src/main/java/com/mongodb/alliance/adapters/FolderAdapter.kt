@@ -10,13 +10,10 @@ import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
-import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.events.UpdateOrderEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
-import org.greenrobot.eventbus.EventBus
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -110,9 +107,29 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
             }
         }
 
-        EventBus.getDefault().post(UpdateOrderEvent("", data))
         notifyItemMoved(fromPosition, toPosition)
+        updateOrders()
+
         return true
+    }
+
+    private fun updateOrders(){
+        val bgRealm = Realm.getDefaultInstance()
+        for (i in 0 until foldersList.size) {
+            launch {
+                val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", foldersList[i]._id)
+                    .findFirst() as FolderRealm
+                if(tempFolder.order != i) {
+                    bgRealm.executeTransaction { realm ->
+                        tempFolder.order = i
+                    }
+                }
+                else{
+                    cancel()
+                }
+            }
+        }
+        bgRealm.close()
     }
 
     override fun getItemCount(): Int {
