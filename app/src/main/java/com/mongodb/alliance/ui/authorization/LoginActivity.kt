@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui.authorization
 
+import android.app.PendingIntent.getActivity
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -9,6 +10,7 @@ import com.mongodb.alliance.databinding.ActivityLoginBinding
 import com.mongodb.alliance.ui.authorization.SignInFragment
 import com.mongodb.alliance.ui.authorization.SignUpFragment
 import kotlinx.coroutines.InternalCoroutinesApi
+import org.greenrobot.eventbus.EventBus
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
