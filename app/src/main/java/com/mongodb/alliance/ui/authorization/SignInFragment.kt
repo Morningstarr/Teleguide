@@ -10,9 +10,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.authorization.SignInListener
 import com.mongodb.alliance.authorization.SignListener
 import com.mongodb.alliance.databinding.FragmentSignInBinding
+import com.mongodb.alliance.events.SuccessSignIn
 import io.realm.mongodb.App
 import io.realm.mongodb.User
 import kotlinx.coroutines.InternalCoroutinesApi
+import org.greenrobot.eventbus.EventBus
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
@@ -37,14 +39,7 @@ class SignInFragment: BottomSheetDialogFragment(),
         val passEdit = binding.enterPassSin
 
         binding.btnEnter.setOnClickListener{
-            binding.btnEnter.isEnabled = false
-            binding.shadow.visibility = View.INVISIBLE
-            binding.shadowFacebookSin.visibility = View.INVISIBLE
-            binding.shadowGoogleSin.visibility = View.INVISIBLE
-            binding.googleBtnSin.isEnabled = false
-            binding.facebookBtnSin.isEnabled = false
-            emailEdit.isEnabled = false
-            passEdit.isEnabled = false
+            loading(false)
             try {
                 if (emailEdit.text.toString() != "" && passEdit.text.toString() != "") {
                     if (this.activity?.let { it1 ->
@@ -56,25 +51,21 @@ class SignInFragment: BottomSheetDialogFragment(),
                     {
                         signIn(false, emailEdit.text.toString(), passEdit.text.toString())
                     }
-                    else{
+                    /*else{
                         this.activity?.let { it1 -> onLoginFailed("Некорректное имя пользователя или пароль", it1) }
-                    }
+                        loading(true)
+                    }*/
                 } else {
                     this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
+                    loading(true)
                 }
             }
             catch(e:Exception){
                 Timber.e(e.message)
-                Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
-                binding.btnEnter.isEnabled = true
-                binding.shadow.visibility = View.VISIBLE
-                binding.shadowFacebookSin.visibility = View.VISIBLE
-                binding.shadowGoogleSin.visibility = View.VISIBLE
-                binding.googleBtnSin.isEnabled = true
-                binding.facebookBtnSin.isEnabled = true
-                emailEdit.isEnabled = true
-                passEdit.isEnabled = true
+                Toast.makeText(activity, e.message, Toast.LENGTH_LONG).show()
+                loading(true)
             }
+
         }
 
         binding.labelCreateAcc.setOnClickListener{
@@ -90,15 +81,51 @@ class SignInFragment: BottomSheetDialogFragment(),
     }
 
     override fun onResult(result: App.Result<User>?) {
-        dismiss()
-        activity?.finish()
-        binding.btnEnter.isEnabled = true
-        binding.shadow.visibility = View.VISIBLE
-        binding.shadowFacebookSin.visibility = View.VISIBLE
-        binding.shadowGoogleSin.visibility = View.VISIBLE
-        binding.googleBtnSin.isEnabled = true
-        binding.facebookBtnSin.isEnabled = true
-        binding.enterEmailSin.isEnabled = true
-        binding.enterPassSin.isEnabled = true
+        try{
+            if(result != null) {
+                if (result.isSuccess) {
+                    dismiss()
+                    activity?.finish()
+                    loading(true)
+                } else {
+                    throw Exception("An error occured, while performing a request: " + result.error.errorMessage)
+                }
+            }
+            else{
+                throw Exception("The request cannot be completed. Please, try again later")
+            }
+        }
+        catch(e:Exception){
+            if(!this.isVisible) {
+                if (e.message.toString().contains("binding")) {
+                    EventBus.getDefault().post(SuccessSignIn("ok"))
+                } else {
+                    EventBus.getDefault().post(SuccessSignIn(e.message.toString()))
+                }
+            }
+            else{
+                Toast.makeText(activity, e.message.toString(), Toast.LENGTH_LONG).show()
+                loading(true)
+            }
+        }
+    }
+
+    fun loading(show : Boolean){
+        binding.btnEnter.isEnabled = show
+        binding.googleBtnSin.isEnabled = show
+        binding.facebookBtnSin.isEnabled = show
+        binding.enterEmailSin.isEnabled = show
+        binding.enterPassSin.isEnabled = show
+        if(show) {
+            binding.shadow.visibility = View.VISIBLE
+            binding.shadowFacebookSin.visibility = View.VISIBLE
+            binding.shadowGoogleSin.visibility = View.VISIBLE
+        }
+        else{
+            binding.shadow.visibility = View.INVISIBLE
+            binding.shadowFacebookSin.visibility = View.INVISIBLE
+            binding.shadowGoogleSin.visibility = View.INVISIBLE
+        }
+
     }
 }
