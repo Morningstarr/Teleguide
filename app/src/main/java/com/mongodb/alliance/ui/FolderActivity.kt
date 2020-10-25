@@ -3,11 +3,13 @@ package com.mongodb.alliance.ui
 import android.app.ActionBar
 import android.app.AlertDialog
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
@@ -19,12 +21,12 @@ import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.FolderAdapter
+import com.mongodb.alliance.adapters.PinnedFolderAdapter
 import com.mongodb.alliance.adapters.SimpleItemTouchHelperCallback
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityFolderBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.events.OpenFolderEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
@@ -54,7 +56,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var realm: Realm
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
+    private lateinit var pinnedRecyclerView: RecyclerView
     private lateinit var adapter: FolderAdapter
+    private lateinit var pinnedAdapter: PinnedFolderAdapter
     private lateinit var fab: FloatingActionButton
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
@@ -64,7 +68,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         get() = Dispatchers.Main + job
 
     private lateinit var binding: ActivityFolderBinding
-    private lateinit var folders: MutableList<FolderRealm>
 
     @TelegramServ
     @Inject
@@ -74,6 +77,44 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     fun onMessageEvent(event: NullObjectAccessEvent) {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: FolderPinDenyEvent) {
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("Нельзя закрепить более одного чата.")
+
+        builder.setPositiveButton(
+            "Открепить чат"
+        ) { dialog, which ->
+            //todo unpin folder
+            dialog.dismiss()
+        }
+        builder.setNegativeButton(
+            "Назад"
+        ) { dialog, which -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert = builder.create()
+        alert.show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: FolderPinEvent){
+        setUpRecyclerPinned(event.pinnedFolder)
+        setUpRecyclerView(realm)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: FolderUnpinEvent){
+        setUpRecyclerPinned(null)
+        setUpRecyclerView(realm)
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,7 +153,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
             rootLayout = binding.coordinatorFolder
-            var anchor = binding.anchorFolders
+            val anchor = binding.anchorFolders
             val wrapper = ContextThemeWrapper(this,
                 R.style.MyPopupMenu
             )
@@ -121,8 +162,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             try {
                 val fields: Array<Field> = popup.javaClass.declaredFields
                 for (field in fields) {
-                    if ("mPopup" == field.getName()) {
-                        field.setAccessible(true)
+                    if ("mPopup" == field.name) {
+                        field.isAccessible = true
                         val menuPopupHelper: Any = field.get(popup)
                         val classPopupHelper =
                             Class.forName(menuPopupHelper.javaClass.name)
@@ -184,6 +225,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         realm = Realm.getDefaultInstance()
         recyclerView = binding.foldersList
+        pinnedRecyclerView = binding.recyclerPinned
+        pinnedRecyclerView.visibility = View.GONE
         fab = binding.fldrFab
 
         fab.setOnClickListener {
@@ -253,10 +296,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
             try {
                 Realm.getInstanceAsync(config, object : Realm.Callback() {
+                    @RequiresApi(Build.VERSION_CODES.N)
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
                             this@FolderActivity.realm = realm
                             setUpRecyclerView(realm)
+                            setUpRecyclerPinned(null)
                             showLoading(false)
                         }
                     })
@@ -267,10 +312,15 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun setUpRecyclerView(realm: Realm) {
+        val mutableFolders = realm.where<FolderRealm>().sort("order")
+            .findAll().toMutableList()
+        mutableFolders.removeIf {
+            it.isPinned
+        }
         adapter = FolderAdapter(
-            realm.where<FolderRealm>().sort("order")
-                .findAll().toMutableList()
+            mutableFolders
         )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
@@ -279,6 +329,35 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
         val touchHelper = ItemTouchHelper(callback)
         touchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    private fun setUpRecyclerPinned(pinned: FolderRealm?){
+        val found : FolderRealm?
+        if(pinned == null){
+            realm = Realm.getDefaultInstance()
+            found = realm.where<FolderRealm>().equalTo("isPinned", true).findFirst()
+            if(found != null){
+                pinnedAdapter = PinnedFolderAdapter(found)
+                pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
+                pinnedRecyclerView.adapter = pinnedAdapter
+                recyclerView.setHasFixedSize(true)
+                pinnedRecyclerView.visibility = View.VISIBLE
+            }
+            else{
+                pinnedRecyclerView.adapter = null
+                pinnedRecyclerView.visibility = View.GONE
+            }
+        }
+        else {
+            pinnedAdapter = PinnedFolderAdapter(pinned)
+            pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
+            pinnedRecyclerView.adapter = pinnedAdapter
+            recyclerView.setHasFixedSize(true)
+            pinnedRecyclerView.visibility = View.VISIBLE
+        }
+
+
+
     }
 
     override fun onDestroy() {

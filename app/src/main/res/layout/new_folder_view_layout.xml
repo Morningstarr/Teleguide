@@ -23,24 +23,24 @@
         android:orientation="horizontal"
         android:background="#027A97">
 
-            <ImageView
-                android:id="@+id/edit_folder"
+            <ImageButton
+                android:id="@+id/pin_folder"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:background="#03CCFC"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_pin">
 
-            </ImageView>
+            </ImageButton>
 
-            <ImageView
-                android:id="@+id/pin_folder"
+            <ImageButton
+                android:id="@+id/edit_folder"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:background="#027A97"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_edit">
-            </ImageView>
+            </ImageButton>
     </LinearLayout>
 
     <!-- Bottom View End-->
@@ -112,6 +112,18 @@
             android:textSize="18sp">
 
         </TextView>
+
+        <ImageView
+            android:id="@+id/pinned"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="2.5dp"
+            android:layout_marginBottom="2.5dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_pin_blue"
+            android:visibility="gone"/>
     </LinearLayout>
     <!-- Surface View End -->
 </com.daimajia.swipe.SwipeLayout>

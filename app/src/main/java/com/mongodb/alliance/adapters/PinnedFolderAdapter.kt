@@ -4,7 +4,10 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
@@ -12,6 +15,7 @@ import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.FolderPinDenyEvent
 import com.mongodb.alliance.events.FolderPinEvent
+import com.mongodb.alliance.events.FolderUnpinEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -20,9 +24,8 @@ import org.greenrobot.eventbus.EventBus
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-
-internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher,
-    ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope {
+internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publisher, CoroutineScope,
+    RecyclerSwipeAdapter<PinnedFolderAdapter.FolderViewHolder>(){
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -39,7 +42,6 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
         return R.id.swipe_layout
     }
 
-
     internal inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
         var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
@@ -51,9 +53,8 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
     }
 
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
-        val obj: FolderRealm? = getItem(position)
-        holder.data = obj
-        holder.name.text = obj?.name
+        holder.data = folder
+        holder.name.text = folder.name
 
         holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 
@@ -62,16 +63,16 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
         holder.swipeLayout.isRightSwipeEnabled = false
 
         if(holder.data != null) {
-            /*if ((holder.data as FolderRealm).isPinned) {
+            if ((holder.data as FolderRealm).isPinned) {
                 //mItemManger.bindView(holder.itemView, 0)
-                //mItemManger.bindView(holder.itemView, position)
+                mItemManger.bindView(holder.itemView, position)
                 holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
                 var pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
                 pinButton.setImageResource(R.drawable.ic_pin_blue_left)
                 pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))
-            } else {*/
+            } else {
                 mItemManger.bindView(holder.itemView, position)
-            //}
+            }
         }
         holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
             override fun onClose(layout: SwipeLayout?) {
@@ -106,82 +107,17 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
         holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder).setOnClickListener {
             mItemManger.closeAllItems()
             if(holder.data != null) {
+                holder.data?.let { it1 -> setPinned(it1, false) }
+                EventBus.getDefault().post(FolderUnpinEvent())
+                holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.GONE
 
-
-
-                val isP = (holder.data as FolderRealm).isPinned
-                if (!isP) {
-                    val temp = findPinned()
-                    if(temp != null){
-                        EventBus.getDefault().post(FolderPinDenyEvent())
-                    }
-                    else {
-                        //runBlocking {
-                            holder.data?.let { it1 -> setPinned(it1, true) }
-                        //}
-                        EventBus.getDefault().post(FolderPinEvent("", holder.data!!))
-                        holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility =
-                            View.VISIBLE
-                        val pinButton =
-                            holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
-                        pinButton.setImageResource(R.drawable.ic_pin_blue_left)
-                        pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))
-                    }
-                } /*else {
-
-                    holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility =
-                        View.GONE
-                    holder.data?.let { it1 -> setPinned(it1, false) }
-                    val pinButton =
-                        holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
-                    pinButton.setImageResource(R.drawable.ic_pin)
-                    pinButton.setBackgroundColor(Color.parseColor("#03CCFC"))
-                }*/
-            }
-        }
-    }
-
-    fun getItem(position: Int) : FolderRealm?{
-        return data[position]
-    }
-
-
-    override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
-
-        mItemManger.closeAllItems()
-        if (fromPosition < toPosition) {
-            for (i in fromPosition until toPosition) {
-                Collections.swap(data, i, i + 1)
-            }
-        } else {
-            for (i in fromPosition downTo toPosition + 1) {
-                Collections.swap(data, i, i - 1)
+                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
+                pinButton.setImageResource(R.drawable.ic_pin)
+                pinButton.setBackgroundColor(Color.parseColor("#03CCFC"))
             }
         }
 
-        notifyItemMoved(fromPosition, toPosition)
-        updateOrders()
 
-        return true
-    }
-
-    private fun updateOrders(){
-        val bgRealm = Realm.getDefaultInstance()
-        for (i in 0 until data.size) {
-            launch {
-                val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", data[i]._id)
-                    .findFirst() as FolderRealm
-                if(tempFolder.order != i) {
-                    bgRealm.executeTransaction { realm ->
-                        tempFolder.order = i
-                    }
-                }
-                else{
-                    cancel()
-                }
-            }
-        }
-        bgRealm.close()
     }
 
     private fun setPinned(folder : FolderRealm, pinned : Boolean) {
@@ -198,29 +134,8 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
         bgRealm.close()
     }
 
-    private fun findPinned() : FolderRealm?{
-        val bgRealm = Realm.getDefaultInstance()
-
-
-        val result = bgRealm.where<FolderRealm>().equalTo("isPinned", true)
-                .findFirst()
-        //}
-
-        bgRealm.close()
-        return result
-    }
-
     override fun getItemCount(): Int {
-        return data.count()
+        return 1
     }
-
-    override fun getItemViewType(position: Int): Int {
-        return if (data[position].isPinned) {
-            0
-        } else {
-            1
-        }
-    }
-
 
 }
