@@ -4,10 +4,7 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
@@ -16,15 +13,19 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.events.FolderPinDenyEvent
 import com.mongodb.alliance.events.FolderPinEvent
 import com.mongodb.alliance.events.FolderUnpinEvent
+import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publisher, CoroutineScope,
+internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publisher,
+    GlobalBroker.Subscriber, CoroutineScope,
     RecyclerSwipeAdapter<PinnedFolderAdapter.FolderViewHolder>(){
 
     private var job: Job = Job()
@@ -122,7 +123,17 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
 
     }
 
-    private fun setPinned(folder : FolderRealm, pinned : Boolean) {
+    fun findPinned() : FolderRealm?{
+        val bgRealm = Realm.getDefaultInstance()
+
+        val result = bgRealm.where<FolderRealm>().equalTo("isPinned", true)
+            .findFirst()
+
+        bgRealm.close()
+        return result
+    }
+
+    fun setPinned(folder : FolderRealm, pinned : Boolean) {
         val bgRealm = Realm.getDefaultInstance()
 
         runBlocking {

@@ -79,6 +79,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderPinDenyEvent) {
         val builder =
@@ -89,7 +90,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         builder.setPositiveButton(
             "Открепить чат"
         ) { dialog, _ ->
-            //todo unpin folder
+            pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
+            event.folder?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_folder)?.performClick()
+            setUpRecyclerPinned(null)
+            refreshRecyclerView()
             dialog.dismiss()
         }
         builder.setNegativeButton(

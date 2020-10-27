@@ -27,7 +27,7 @@ import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 
-internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, GlobalBroker.Subscriber,
+class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, GlobalBroker.Subscriber,
     ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope {
 
     private var job: Job = Job()
@@ -44,7 +44,7 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
         return R.id.swipe_layout
     }
 
-    internal inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
         var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
         var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.bottom_wrapper)
@@ -106,17 +106,11 @@ internal class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.
                 if (!isP) {
                     val temp = findPinned()
                     if(temp != null){
-                        EventBus.getDefault().post(FolderPinDenyEvent())
+                        EventBus.getDefault().post(FolderPinDenyEvent("", holder))
                     }
                     else {
                         holder.data?.let { it1 -> setPinned(it1, true) }
                         EventBus.getDefault().post(FolderPinEvent("", holder.data!!))
-                        /*holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility =
-                            View.VISIBLE
-                        val pinButton =
-                            holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
-                        pinButton.setImageResource(R.drawable.ic_pin_blue_left)
-                        pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))*/
                     }
                 }
             }
