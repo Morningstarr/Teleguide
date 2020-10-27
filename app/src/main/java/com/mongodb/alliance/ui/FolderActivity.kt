@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -87,13 +88,13 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         builder.setPositiveButton(
             "Открепить чат"
-        ) { dialog, which ->
+        ) { dialog, _ ->
             //todo unpin folder
             dialog.dismiss()
         }
         builder.setNegativeButton(
             "Назад"
-        ) { dialog, which -> // Do nothing
+        ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }
 
@@ -105,14 +106,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderPinEvent){
         setUpRecyclerPinned(event.pinnedFolder)
-        setUpRecyclerView(realm)
+        refreshRecyclerView()
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderUnpinEvent){
         setUpRecyclerPinned(null)
-        setUpRecyclerView(realm)
+        refreshRecyclerView()
     }
 
 
@@ -311,7 +312,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setUpRecyclerView(realm: Realm) {
         val mutableFolders = realm.where<FolderRealm>().sort("order")
@@ -319,9 +319,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         mutableFolders.removeIf {
             it.isPinned
         }
+
         adapter = FolderAdapter(
             mutableFolders
         )
+
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
@@ -329,6 +331,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
         val touchHelper = ItemTouchHelper(callback)
         touchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun refreshRecyclerView(){
+        val mutableFolders = realm.where<FolderRealm>().sort("order")
+            .findAll().toMutableList()
+        mutableFolders.removeIf {
+            it.isPinned
+        }
+        adapter.setDataList(mutableFolders)
     }
 
     private fun setUpRecyclerPinned(pinned: FolderRealm?){
@@ -340,24 +352,30 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 pinnedAdapter = PinnedFolderAdapter(found)
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter
-                recyclerView.setHasFixedSize(true)
+                pinnedRecyclerView.setHasFixedSize(true)
                 pinnedRecyclerView.visibility = View.VISIBLE
+                val param = recyclerView.layoutParams as ViewGroup.MarginLayoutParams
+                param.setMargins(0,200,0,0)
+                recyclerView.layoutParams = param
             }
             else{
                 pinnedRecyclerView.adapter = null
                 pinnedRecyclerView.visibility = View.GONE
+                val param = recyclerView.layoutParams as ViewGroup.MarginLayoutParams
+                param.setMargins(0,0,0,0)
+                recyclerView.layoutParams = param
             }
         }
         else {
             pinnedAdapter = PinnedFolderAdapter(pinned)
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter
-            recyclerView.setHasFixedSize(true)
+            pinnedRecyclerView.setHasFixedSize(true)
             pinnedRecyclerView.visibility = View.VISIBLE
+            val param = recyclerView.layoutParams as ViewGroup.MarginLayoutParams
+            param.setMargins(0,200,0,0)
+            recyclerView.layoutParams = param
         }
-
-
-
     }
 
     override fun onDestroy() {

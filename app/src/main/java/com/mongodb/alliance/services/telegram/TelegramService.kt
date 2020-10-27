@@ -49,6 +49,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     }
 
 
+    @ExperimentalCoroutinesApi
     suspend fun returnClientState(): ClientState{
         try {
             when (client.getAuthorizationState()) {

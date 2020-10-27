@@ -34,7 +34,6 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
             .inflate(R.layout.new_folder_view_layout, parent, false)
-        //data.remove(data.find { it.isPinned } )
         return FolderViewHolder(itemView)
     }
 
@@ -64,10 +63,9 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
 
         if(holder.data != null) {
             if ((holder.data as FolderRealm).isPinned) {
-                //mItemManger.bindView(holder.itemView, 0)
                 mItemManger.bindView(holder.itemView, position)
                 holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
-                var pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
+                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
                 pinButton.setImageResource(R.drawable.ic_pin_blue_left)
                 pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))
             } else {
@@ -108,7 +106,11 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
             mItemManger.closeAllItems()
             if(holder.data != null) {
                 holder.data?.let { it1 -> setPinned(it1, false) }
-                EventBus.getDefault().post(FolderUnpinEvent())
+                EventBus.getDefault().post(holder.data?.let { it1 ->
+                    FolderUnpinEvent("",
+                        it1
+                    )
+                })
                 holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.GONE
 
                 val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)

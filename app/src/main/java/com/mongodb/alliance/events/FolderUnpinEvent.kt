@@ -1,4 +1,6 @@
 package com.mongodb.alliance.events
 
-data class FolderUnpinEvent(var message : String = "") {
+import com.mongodb.alliance.model.FolderRealm
+
+data class FolderUnpinEvent(var message : String = "", var folder : FolderRealm) {
 }
