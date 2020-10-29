@@ -63,6 +63,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var fab: FloatingActionButton
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
+    private var isSelecting : Boolean = false
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -77,6 +78,46 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: NullObjectAccessEvent) {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: SelectFolderEvent) {
+        val actionbar = supportActionBar
+        isSelecting = true
+        if (actionbar != null) {
+            if(actionbar.customView.findViewById<TextView>(R.id.actionBar_folders_count) == null) {
+                actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+                actionbar.setDisplayShowCustomEnabled(true)
+                actionbar.setCustomView(R.layout.action_bar_options_drawable)
+                customActionBarView = actionbar.customView
+            }
+            else{
+                customActionBarView = actionbar.customView
+            }
+            val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_folders_count)
+            if(event.isAdd) {
+                countText.text = (countText.text.toString().toInt() + 1).toString()
+            }
+            else{
+                if(countText.text.toString().toInt() == 1){
+                    setDefaultActionBar()
+                }
+                else {
+                    countText.text = (countText.text.toString().toInt() - 1).toString()
+                }
+            }
+
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_button_cancel).setOnClickListener {
+                setDefaultActionBar()
+                isSelecting = false
+                setUpRecyclerView(realm)
+            }
+
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_button_delete).setOnClickListener {
+                //todo delete all selected folders
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -120,6 +161,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         refreshRecyclerView()
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: EditFolderEvent){
+        val folderEditFragment = EditFolderFragment(event.folder)
+        folderEditFragment.show(
+            this.supportFragmentManager,
+            folderEditFragment.tag
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,97 +181,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         EventBus.getDefault().register(this)
 
-        val actionbar = supportActionBar
-        if (actionbar != null) {
-            actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-            actionbar.setDisplayShowCustomEnabled(true)
-            actionbar.setCustomView(R.layout.action_bar_drawable)
-            customActionBarView = actionbar.customView
-            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).visibility = View.GONE
-            val nameText = customActionBarView.findViewById<TextView>(R.id.name)
-            nameText.text = "TeleGuide"
-            nameText.gravity = Gravity.START
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                weight = 1.0f
-                gravity = Gravity.CENTER
-            }
-            nameText.layoutParams = params
-            val scale = resources.displayMetrics.density
-            val dpAsPixels = (16 * scale + 0.5f)
-            nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
-            nameText.textSize = 24F
-        }
-
-        customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
-            rootLayout = binding.coordinatorFolder
-            val anchor = binding.anchorFolders
-            val wrapper = ContextThemeWrapper(this,
-                R.style.MyPopupMenu
-            )
-            val popup = PopupMenu(wrapper, anchor, Gravity.END)
-
-            try {
-                val fields: Array<Field> = popup.javaClass.declaredFields
-                for (field in fields) {
-                    if ("mPopup" == field.name) {
-                        field.isAccessible = true
-                        val menuPopupHelper: Any = field.get(popup)
-                        val classPopupHelper =
-                            Class.forName(menuPopupHelper.javaClass.name)
-                        val setForceIcons: Method = classPopupHelper.getMethod(
-                            "setForceShowIcon",
-                            Boolean::class.javaPrimitiveType
-                        )
-                        setForceIcons.invoke(menuPopupHelper, true)
-                        break
-                    }
-                }
-            } catch (e: Exception) {
-                Timber.e(e.message)
-            }
-
-            popup.menuInflater.inflate(R.menu.menu, popup.menu)
-            popup.show()
-
-            popup.setOnMenuItemClickListener { item ->
-                when(item.itemId){
-                    R.id.action_profile -> {
-                        startActivity(Intent(this, ProfileActivity::class.java))
-                    }
-                    R.id.action_logout -> {
-                        try {
-                            lifecycleScope.launch {
-                                binding.foldersProgress.visibility = View.VISIBLE
-
-                                user?.logOutAsync {
-                                    if (it.isSuccess) {
-                                        realm = Realm.getDefaultInstance()
-                                        realm.close()
-
-                                        user = null
-                                    } else {
-                                        Timber.e("log out failed! Error: ${it.error}")
-                                        return@logOutAsync
-                                    }
-                                }
-
-                                Timber.d("user logged out")
-
-                                binding.foldersProgress.visibility = View.GONE
-                                startActivity(Intent(baseContext, LoginActivity::class.java))
-                            }
-                        }
-                        catch(e: Exception){
-                            Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-                true
-            }
-        }
+        setDefaultActionBar()
 
         binding = ActivityFolderBinding.inflate(layoutInflater)
         val view = binding.root
@@ -235,35 +194,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         fab = binding.fldrFab
 
         fab.setOnClickListener {
-            val input = EditText(this)
-            val dialogBuilder = AlertDialog.Builder(this)
-            dialogBuilder.setMessage("Enter folder name:")
-                .setCancelable(true)
-                .setPositiveButton("Add") { dialog, _ -> run {
-                    dialog.dismiss()
-                    try {
-                        val name = input.text.toString()
-                        val partition = user?.id ?: "" // FIXME: show error if nil
-                        val folder = FolderRealm(
-                            name,
-                            partition
-                        )
-                        realm.executeTransactionAsync { realm ->
-                            realm.insert(folder)
-                        }
-                    }
-                    catch(exception: Exception){
-                        Toast.makeText(baseContext, exception.message, Toast.LENGTH_SHORT).show()
-                    }
-                }
-                }
-                .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel()
-                }
-
-            val dialog = dialogBuilder.create()
-            dialog.setView(input)
-            dialog.setTitle("Add New Folder")
-            dialog.show()
+            val folderAddDialog = AddFolderFragment()
+            folderAddDialog.show(
+                this.supportFragmentManager,
+                folderAddDialog.tag
+            )
         }
     }
 
@@ -317,7 +252,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun setUpRecyclerView(realm: Realm) {
+    fun setUpRecyclerView(realm: Realm) {
         val mutableFolders = realm.where<FolderRealm>().sort("order")
             .findAll().toMutableList()
         mutableFolders.removeIf {
@@ -338,7 +273,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun refreshRecyclerView(){
+    open fun refreshRecyclerView(){
         val mutableFolders = realm.where<FolderRealm>().sort("order")
             .findAll().toMutableList()
         mutableFolders.removeIf {
@@ -394,6 +329,120 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
         else{
             binding.foldersProgress.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setDefaultActionBar() {
+        val actionbar = supportActionBar
+        if (actionbar != null) {
+            actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+            actionbar.setDisplayShowCustomEnabled(true)
+            actionbar.setCustomView(R.layout.action_bar_drawable)
+            customActionBarView = actionbar.customView
+            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).visibility =
+                View.GONE
+            val nameText = customActionBarView.findViewById<TextView>(R.id.name)
+            nameText.text = "TeleGuide"
+            nameText.gravity = Gravity.START
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                weight = 1.0f
+                gravity = Gravity.CENTER
+            }
+            nameText.layoutParams = params
+            val scale = resources.displayMetrics.density
+            val dpAsPixels = (16 * scale + 0.5f)
+            nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
+            nameText.textSize = 24F
+
+            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
+                rootLayout = binding.coordinatorFolder
+                val anchor = binding.anchorFolders
+                val wrapper = ContextThemeWrapper(
+                    this,
+                    R.style.MyPopupMenu
+                )
+                val popup = PopupMenu(wrapper, anchor, Gravity.END)
+
+                try {
+                    val fields: Array<Field> = popup.javaClass.declaredFields
+                    for (field in fields) {
+                        if ("mPopup" == field.name) {
+                            field.isAccessible = true
+                            val menuPopupHelper: Any = field.get(popup)
+                            val classPopupHelper =
+                                Class.forName(menuPopupHelper.javaClass.name)
+                            val setForceIcons: Method = classPopupHelper.getMethod(
+                                "setForceShowIcon",
+                                Boolean::class.javaPrimitiveType
+                            )
+                            setForceIcons.invoke(menuPopupHelper, true)
+                            break
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e.message)
+                }
+
+                popup.menuInflater.inflate(R.menu.menu, popup.menu)
+                popup.show()
+
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.action_profile -> {
+                            startActivity(Intent(this, ProfileActivity::class.java))
+                        }
+                        R.id.action_logout -> {
+                            try {
+                                lifecycleScope.launch {
+                                    binding.foldersProgress.visibility = View.VISIBLE
+
+                                    user?.logOutAsync {
+                                        if (it.isSuccess) {
+                                            realm = Realm.getDefaultInstance()
+                                            realm.close()
+
+                                            user = null
+                                        } else {
+                                            Timber.e("log out failed! Error: ${it.error}")
+                                            return@logOutAsync
+                                        }
+                                    }
+
+                                    Timber.d("user logged out")
+
+                                    binding.foldersProgress.visibility = View.GONE
+                                    startActivity(
+                                        Intent(
+                                            baseContext,
+                                            LoginActivity::class.java
+                                        )
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                    }
+                    true
+                }
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onBackPressed() {
+        //super.onBackPressed()
+        if(isSelecting) {
+            setDefaultActionBar()
+            isSelecting = false
+            setUpRecyclerView(realm)
+        }
+        else{
+            super.onBackPressed()
         }
     }
 

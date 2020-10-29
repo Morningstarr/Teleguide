@@ -35,8 +35,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:contentDescription="@string/new_folder"
-        app:srcCompat="@mipmap/ic_plus"/>
+        android:src="@drawable/ic_action_button"
+        app:maxImageSize="56dp" />
 
     <ProgressBar
         android:id="@+id/folders_progress"

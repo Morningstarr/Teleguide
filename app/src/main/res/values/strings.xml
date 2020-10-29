@@ -39,4 +39,9 @@
     <string name="choose_number">Выберите страну и введите номер телефона</string>
     <string name="pick_single">Выберите изображение</string>
     <string name="enter">Войти</string>
+    <string name="add_folder">Создайте новую папку</string>
+    <string name="folder_hint">Введите название новой папки</string>
+    <string name="create">Создать</string>
+    <string name="enter_new_folder_name">Введите новое название</string>
+    <string name="change">Изменить</string>
 </resources>

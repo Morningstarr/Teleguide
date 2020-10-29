@@ -5,15 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
-import com.mongodb.alliance.events.FolderPinDenyEvent
-import com.mongodb.alliance.events.FolderPinEvent
-import com.mongodb.alliance.events.FolderUnpinEvent
-import com.mongodb.alliance.events.NullObjectAccessEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -120,7 +118,10 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
             }
         }
 
-
+        holder.bottomWrapper.findViewById<ImageButton>(R.id.edit_folder).setOnClickListener{
+            mItemManger.closeAllItems()
+            EventBus.getDefault().post(holder.data?.let { it1 -> EditFolderEvent(it1) })
+        }
     }
 
     fun findPinned() : FolderRealm?{

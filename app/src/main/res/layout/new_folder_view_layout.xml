@@ -49,81 +49,114 @@
     <LinearLayout
         android:id="@+id/item_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:layout_marginTop="2.5dp"
-        android:layout_marginBottom="2.5dp"
-        android:background="@drawable/rectangle_7"
-        android:visibility="visible">
+        android:layout_marginBottom="2.5dp">
 
-        <LinearLayout
-            android:id="@+id/pictures_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginTop="20dp"
-            android:orientation="horizontal">
+        <androidx.constraintlayout.widget.ConstraintLayout
 
-            <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+
+            android:background="@drawable/rectangle_7"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:id="@+id/pictures_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_shape"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/ic_arrow_back" />
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="-5dp"
-                android:background="@drawable/round_shape"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/ic_camera" />
+                android:layout_marginStart="40dp"
+                android:layout_marginTop="20dp"
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="-5dp"
-                android:background="@drawable/round_shape"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/ic_logout" />
+                android:gravity="end"
+                android:orientation="horizontal"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_shape"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_arrow_back" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="-5dp"
+                    android:background="@drawable/round_shape"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_camera" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="-5dp"
+                    android:background="@drawable/round_shape"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_logout" />
+
+                <TextView
+                    android:id="@+id/additional_count"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="-5dp"
+                    android:background="@drawable/round_shape"
+                    android:gravity="center"
+                    android:text="+17"
+                    android:textSize="8dp" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/additional_count"
+                android:id="@+id/folder_name"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+
+                android:layout_marginTop="18dp"
+
+                android:fontFamily="@font/roboto_medium"
+                android:gravity="center|start"
+                android:lineSpacingExtra="3sp"
+                android:paddingStart="15dp"
+                android:text="Уральские парни"
+                android:textColor="#1A1A1A"
+                android:textSize="18sp"
+                app:layout_constraintStart_toEndOf="@+id/pictures_layout"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </TextView>
+
+            <ImageView
+                android:id="@+id/pinned"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_marginStart="-5dp"
-                android:background="@drawable/round_shape"
-                android:gravity="center"
-                android:text="+17"
-                android:textSize="8dp" />
-        </LinearLayout>
+                android:layout_gravity="center"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="20dp"
 
-        <TextView
-            android:id="@+id/folder_name"
-            android:layout_width="wrap_content"
-            android:layout_height="24dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
-            android:fontFamily="@font/roboto_medium"
-            android:gravity="center"
-            android:lineSpacingExtra="3sp"
-            android:text="Уральские парни"
-            android:textColor="#1A1A1A"
-            android:textSize="18sp">
+                android:scaleType="centerInside"
 
-        </TextView>
+                android:src="@drawable/ic_pin_blue"
+                android:visibility="gone"
+                app:layout_constraintStart_toEndOf="@+id/folder_name"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/pinned"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="2.5dp"
-            android:layout_marginBottom="2.5dp"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_pin_blue"
-            android:visibility="gone"/>
+            <ImageView
+                android:id="@+id/check_folder"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="25dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_check"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
     <!-- Surface View End -->
 </com.daimajia.swipe.SwipeLayout>

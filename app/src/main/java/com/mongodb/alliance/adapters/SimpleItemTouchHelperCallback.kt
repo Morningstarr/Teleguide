@@ -29,4 +29,6 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
 
     }
+
+
 }
