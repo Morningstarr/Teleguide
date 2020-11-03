@@ -111,11 +111,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             customActionBarView.findViewById<ImageView>(R.id.actionBar_button_cancel).setOnClickListener {
                 setDefaultActionBar()
                 isSelecting = false
-                setUpRecyclerView(realm)
+                adapter.cancelSelection()
             }
 
             customActionBarView.findViewById<ImageView>(R.id.actionBar_button_delete).setOnClickListener {
-                //todo delete all selected folders
+                deleteFolders()
             }
         }
     }
@@ -126,10 +126,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         val builder =
             AlertDialog.Builder(this)
 
-        builder.setMessage("Нельзя закрепить более одного чата.")
+        builder.setMessage("Нельзя закрепить более одной папки.")
 
         builder.setPositiveButton(
-            "Открепить чат"
+            "Открепить папку"
         ) { dialog, _ ->
             pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
             event.folder?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_folder)?.performClick()
@@ -169,6 +169,13 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             folderEditFragment.tag
         )
     }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: AddFolderEvent){
+        refreshRecyclerView()
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -439,11 +446,44 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         if(isSelecting) {
             setDefaultActionBar()
             isSelecting = false
-            setUpRecyclerView(realm)
+            //setUpRecyclerView(realm)
+            adapter.cancelSelection()
         }
         else{
             super.onBackPressed()
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun deleteFolders(){
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("Вы хотите удалить выбранные папки?")
+
+        builder.setPositiveButton(
+            "Удалить"
+        ) { dialog, _ ->
+            /*val folders = adapter.selectedFolders
+            for(folder in folders) {
+                realm.executeTransaction {
+                    val res = it.where<FolderRealm>().equalTo("_id", folder._id).findAll()
+                    res.deleteAllFromRealm()
+                }
+            }*/
+            adapter.deleteSelected()
+            setDefaultActionBar()
+            refreshRecyclerView()
+            dialog.dismiss()
+        }
+        builder.setNegativeButton(
+            "Нет, спасибо"
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert = builder.create()
+        alert.show()
     }
 
 }

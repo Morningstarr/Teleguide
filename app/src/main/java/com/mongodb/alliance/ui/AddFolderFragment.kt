@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.FragmentAddFolderBinding
+import com.mongodb.alliance.events.AddFolderEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -47,6 +48,7 @@ class AddFolderFragment : BottomSheetDialogFragment() {
             try {
                 validateFolderName(nameEdit.text.toString())
                 createFolder(nameEdit.text.toString())
+                EventBus.getDefault().post(AddFolderEvent())
                 dismiss()
             }
             catch(e:Exception){
@@ -75,15 +77,15 @@ class AddFolderFragment : BottomSheetDialogFragment() {
         if (order != null) {
             folder.order = order.toInt() + 1
         }
-        lifecycleScope.launch {
-            val task = async {
+        //lifecycleScope.launch {
+            //val task = async {
                 bgRealm.executeTransaction { realm ->
                     realm.insert(folder)
                 }
-            }
-            task.await()
-            (activity as FolderActivity).setUpRecyclerView(bgRealm)
-        }
+            //}
+            //task.await()
+            //(activity as FolderActivity).setUpRecyclerView(bgRealm)
+        //}
 
         bgRealm.close()
     }

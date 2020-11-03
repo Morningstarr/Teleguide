@@ -23,8 +23,10 @@ import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.ui.AddFolderFragment
 import com.mongodb.alliance.ui.EditFolderFragment
 import io.realm.Realm
+import io.realm.kotlin.delete
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.select
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -35,8 +37,7 @@ import kotlin.coroutines.CoroutineContext
 class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, GlobalBroker.Subscriber,
     ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope {
 
-    private var isSelecting : Boolean = false
-    private var selectedFolders : MutableList<FolderRealm> = ArrayList()
+    var selectedFolders : MutableList<FolderRealm> = ArrayList()
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -56,108 +57,132 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
         var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
         var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
         var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.bottom_wrapper)
+        var checkLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.check_layout)
         var name: TextView = view.findViewById(R.id.folder_name)
         var data: FolderRealm? = null
         var additional: TextView = view.findViewById(R.id.additional_count)
-
+        var isSelecting : Boolean = false
     }
 
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
-        val obj: FolderRealm? = getItem(position)
-        holder.data = obj
-        holder.name.text = obj?.name
+        if (data.get(position).isValid()) {
+            val obj: FolderRealm? = getItem(position)
+            holder.data = obj
+            holder.name.text = obj?.name
 
-        holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
+            holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 
-        holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
+            holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
 
-        holder.swipeLayout.isRightSwipeEnabled = false
+            holder.swipeLayout.isRightSwipeEnabled = false
 
-        if(holder.data != null) {
-            mItemManger.bindView(holder.itemView, position)
-        }
-
-        holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
-            override fun onClose(layout: SwipeLayout?) {
-                //when the SurfaceView totally cover the BottomView.
+            if (holder.data != null) {
+                mItemManger.bindView(holder.itemView, position)
             }
 
-            override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
-
-            }
-
-            override fun onStartOpen(layout: SwipeLayout?) {
-                mItemManger.closeAllExcept(layout)
-            }
-
-            override fun onOpen(layout: SwipeLayout?) {
-                //when the BottomView totally show.
-            }
-
-            override fun onStartClose(layout: SwipeLayout?) {
-
-            }
-
-            override fun onHandRelease(
-                layout: SwipeLayout?,
-                xvel: Float,
-                yvel: Float
-            ) {
-
-            }
-        })
-
-        holder.itemLayout.setOnLongClickListener {
-            if(!isSelecting) {
-                EventBus.getDefault().post(SelectFolderEvent(true))
-                holder.itemLayout.findViewById<ImageView>(R.id.check_folder).visibility = View.VISIBLE
-                isSelecting = true
-                holder.data?.let { it1 -> selectedFolders.add(it1) }
-                return@setOnLongClickListener true
-            }
-            else{
-                return@setOnLongClickListener false
-            }
-        }
-
-        holder.itemLayout.setOnClickListener {
-            if(isSelecting){
-                if(!selectedFolders.contains(holder.data)) {
-                    EventBus.getDefault().post(SelectFolderEvent(true))
-                    holder.data?.let { it1 -> selectedFolders.add(it1) }
-                    holder.itemLayout.findViewById<ImageView>(R.id.check_folder).visibility = View.VISIBLE
+            holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
+                override fun onClose(layout: SwipeLayout?) {
+                    //when the SurfaceView totally cover the BottomView.
                 }
-                else{
+
+                override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
+
+                }
+
+                override fun onStartOpen(layout: SwipeLayout?) {
+                    mItemManger.closeAllExcept(layout)
+                }
+
+                override fun onOpen(layout: SwipeLayout?) {
+                    //when the BottomView totally show.
+                }
+
+                override fun onStartClose(layout: SwipeLayout?) {
+
+                }
+
+                override fun onHandRelease(
+                    layout: SwipeLayout?,
+                    xvel: Float,
+                    yvel: Float
+                ) {
+
+                }
+            })
+
+            holder.checkLayout.setOnLongClickListener {
+                if (!holder.isSelecting) {
+                    EventBus.getDefault().post(SelectFolderEvent(true))
+                    holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                        View.VISIBLE
+                    holder.isSelecting = true
+                    holder.data?.let { it1 -> selectedFolders.add(it1) }
+                    return@setOnLongClickListener true
+                } else {
+                    return@setOnLongClickListener false
+                }
+            }
+
+            holder.checkLayout.setOnClickListener {
+                if (!holder.isSelecting) {
+                    EventBus.getDefault().post(SelectFolderEvent(true))
+                    holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                        View.VISIBLE
+                    holder.isSelecting = true
+                    holder.data?.let { it1 -> selectedFolders.add(it1) }
+
+                } else {
                     EventBus.getDefault().post(SelectFolderEvent(false))
                     holder.data?.let { it1 -> selectedFolders.remove(it1) }
-                    holder.itemLayout.findViewById<ImageView>(R.id.check_folder).visibility = View.GONE
+                    holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                        View.GONE
+                    holder.isSelecting = false
                 }
             }
-            else{
-                //todo open folder
-            }
-        }
 
-        holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder).setOnClickListener {
-            mItemManger.closeAllItems()
-            if(holder.data != null) {
-                val isP = (holder.data as FolderRealm).isPinned
-                if (!isP) {
-                    val temp = findPinned()
-                    if(temp != null){
-                        EventBus.getDefault().post(FolderPinDenyEvent("", holder))
+            holder.itemLayout.setOnClickListener {
+                if (holder.isSelecting) {
+                    if (!selectedFolders.contains(holder.data)) {
+                        EventBus.getDefault().post(SelectFolderEvent(true))
+                        holder.data?.let { it1 -> selectedFolders.add(it1) }
+                        holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                            View.VISIBLE
+                    } else {
+                        EventBus.getDefault().post(SelectFolderEvent(false))
+                        holder.data?.let { it1 -> selectedFolders.remove(it1) }
+                        holder.isSelecting = false
+                        holder.itemLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                            View.GONE
                     }
-                    else {
-                        holder.data?.let { it1 -> setPinned(it1, true) }
-                        EventBus.getDefault().post(FolderPinEvent("", holder.data!!))
+                } else {
+                    //todo open folder
+                }
+            }
+
+            holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder).setOnClickListener {
+                mItemManger.closeAllItems()
+                if (holder.data != null) {
+                    val isP = (holder.data as FolderRealm).isPinned
+                    if (!isP) {
+                        val temp = findPinned()
+                        if (temp != null) {
+                            EventBus.getDefault().post(FolderPinDenyEvent("", holder))
+                        } else {
+                            holder.data?.let { it1 -> setPinned(it1, true) }
+                            EventBus.getDefault().post(FolderPinEvent("", holder.data!!))
+                        }
                     }
                 }
             }
-        }
 
-        holder.bottomWrapper.findViewById<ImageButton>(R.id.edit_folder).setOnClickListener{
-            mItemManger.closeAllItems()
-            EventBus.getDefault().post(holder.data?.let { it1 -> EditFolderEvent(it1) })
+            holder.bottomWrapper.findViewById<ImageButton>(R.id.edit_folder).setOnClickListener {
+                mItemManger.closeAllItems()
+                EventBus.getDefault().post(holder.data?.let { it1 -> EditFolderEvent(it1) })
+            }
+
+            if (!holder.isSelecting) {
+                holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility = View.GONE
+            }
         }
     }
 
@@ -237,10 +262,32 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (data[position].isPinned) {
-            0
-        } else {
-            1
+        return 0
+    }
+
+    open fun cancelSelection(){
+        for(i in 0..data.size){
+            notifyItemChanged(i)
         }
+        selectedFolders.clear()
+    }
+
+    open fun deleteSelected(){
+        val bgRealm = Realm.getDefaultInstance()
+        //launch {
+            for (folder in selectedFolders) {
+                //val task = async {
+                    bgRealm.executeTransaction { realm ->
+                        val results = realm.where<FolderRealm>().equalTo("_id", folder._id).findFirst()
+
+                        results?.deleteFromRealm()
+                    }
+                }
+                //task.await()
+
+            selectedFolders.clear()
+            //notifyDataSetChanged()
+        //}
+        bgRealm.close()
     }
 }

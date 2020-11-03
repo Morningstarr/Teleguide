@@ -2,6 +2,7 @@
 <com.daimajia.swipe.SwipeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/swipe_layout"
     android:layout_width="match_parent"
     android:layout_height="60dp"
@@ -51,14 +52,15 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_marginTop="2.5dp"
-        android:layout_marginBottom="2.5dp">
+        android:layout_marginBottom="2.5dp"
+        android:orientation="horizontal"
+        android:weightSum="1">
 
         <androidx.constraintlayout.widget.ConstraintLayout
 
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-
-
+            android:layout_weight="0.97"
             android:background="@drawable/rectangle_7"
             android:visibility="visible">
 
@@ -136,12 +138,27 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="20dp"
 
+                android:layout_marginEnd="55dp"
                 android:scaleType="centerInside"
-
                 android:src="@drawable/ic_pin_blue"
-                android:visibility="gone"
+
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/folder_name"
                 app:layout_constraintTop_toTopOf="parent" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/check_layout"
+            android:layout_weight="0.03"
+            android:layout_width="30dp"
+            android:layout_height="60dp"
+            android:layout_gravity="end"
+            android:background="#FFFFFF"
+            android:gravity="end"
+            tools:visibility="visible">
 
             <ImageView
                 android:id="@+id/check_folder"
@@ -150,14 +167,18 @@
                 android:layout_gravity="center"
 
                 android:layout_marginTop="20dp"
-                android:layout_marginEnd="25dp"
+                android:layout_marginEnd="5dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_check"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
+
     </LinearLayout>
+
     <!-- Surface View End -->
 </com.daimajia.swipe.SwipeLayout>
 

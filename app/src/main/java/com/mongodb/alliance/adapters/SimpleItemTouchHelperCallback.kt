@@ -22,8 +22,13 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
-        return true
+        if(!(viewHolder as FolderAdapter.FolderViewHolder).isSelecting) {
+            adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
+            return true
+        }
+        else{
+            return false
+        }
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
