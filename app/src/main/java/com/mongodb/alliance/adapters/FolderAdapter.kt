@@ -15,6 +15,7 @@ import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
+import com.mongodb.alliance.databinding.NewFolderViewLayoutBinding
 import com.mongodb.alliance.events.EditFolderEvent
 import com.mongodb.alliance.events.FolderPinDenyEvent
 import com.mongodb.alliance.events.FolderPinEvent
@@ -142,7 +143,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
             holder.itemLayout.setOnClickListener {
                 if (holder.isSelecting) {
-                    if (!selectedFolders.contains(holder.data)) {
+                    /*if (!selectedFolders.contains(holder.data)) {
                         EventBus.getDefault().post(SelectFolderEvent(true))
                         holder.data?.let { it1 -> selectedFolders.add(it1) }
                         holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
@@ -153,7 +154,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                         holder.isSelecting = false
                         holder.itemLayout.findViewById<ImageView>(R.id.check_folder).visibility =
                             View.GONE
-                    }
+                    }*/
                 } else {
                     //todo open folder
                 }
@@ -180,8 +181,13 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                 EventBus.getDefault().post(holder.data?.let { it1 -> EditFolderEvent(it1) })
             }
 
-            if (!holder.isSelecting) {
-                holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility = View.GONE
+            if(holder.isSelecting && !selectedFolders.contains(holder.data)){
+                holder.isSelecting = false
+            }
+
+            val checkButton = holder.checkLayout.findViewById<ImageView>(R.id.check_folder)
+            if (!holder.isSelecting && checkButton.visibility == View.VISIBLE) {
+                checkButton.visibility = View.GONE
             }
         }
     }
@@ -192,6 +198,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
     fun setDataList(folders: MutableList<FolderRealm>) {
         data = folders
+        //cancelSelection()
         notifyDataSetChanged()
     }
 
@@ -274,20 +281,21 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
     open fun deleteSelected(){
         val bgRealm = Realm.getDefaultInstance()
-        //launch {
-            for (folder in selectedFolders) {
-                //val task = async {
-                    bgRealm.executeTransaction { realm ->
-                        val results = realm.where<FolderRealm>().equalTo("_id", folder._id).findFirst()
 
-                        results?.deleteFromRealm()
-                    }
-                }
-                //task.await()
+        for (folder in selectedFolders) {
+            bgRealm.executeTransaction { realm ->
+                val results = realm.where<FolderRealm>().equalTo("_id", folder._id).findFirst()
 
-            selectedFolders.clear()
-            //notifyDataSetChanged()
-        //}
+                results?.deleteFromRealm()
+
+            }
+
+
+        }
+
+        selectedFolders.clear()
+
         bgRealm.close()
     }
+
 }

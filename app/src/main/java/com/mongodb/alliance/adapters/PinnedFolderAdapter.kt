@@ -47,7 +47,8 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         var name: TextView = view.findViewById(R.id.folder_name)
         var data: FolderRealm? = null
         var additional: TextView = view.findViewById(R.id.additional_count)
-
+        var checkLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.check_layout)
+        var isSelecting : Boolean = false
     }
 
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
@@ -110,7 +111,7 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
                         it1
                     )
                 })
-                holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.GONE
+                holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.INVISIBLE
 
                 val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
                 pinButton.setImageResource(R.drawable.ic_pin)
