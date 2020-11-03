@@ -207,6 +207,18 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 folderAddDialog.tag
             )
         }
+
+        /*binding.searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                adapter.filter.filter(newText)
+                return false
+            }
+
+        })*/
     }
 
     override fun onStart() {
@@ -300,16 +312,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 pinnedRecyclerView.adapter = pinnedAdapter
                 pinnedRecyclerView.setHasFixedSize(true)
                 pinnedRecyclerView.visibility = View.VISIBLE
-                val param = recyclerView.layoutParams as ViewGroup.MarginLayoutParams
-                param.setMargins(0,200,0,0)
-                recyclerView.layoutParams = param
             }
             else{
                 pinnedRecyclerView.adapter = null
                 pinnedRecyclerView.visibility = View.GONE
-                val param = recyclerView.layoutParams as ViewGroup.MarginLayoutParams
-                param.setMargins(0,0,0,0)
-                recyclerView.layoutParams = param
             }
         }
         else {
@@ -318,9 +324,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             pinnedRecyclerView.adapter = pinnedAdapter
             pinnedRecyclerView.setHasFixedSize(true)
             pinnedRecyclerView.visibility = View.VISIBLE
-            val param = recyclerView.layoutParams as ViewGroup.MarginLayoutParams
-            param.setMargins(0,200,0,0)
-            recyclerView.layoutParams = param
         }
     }
 

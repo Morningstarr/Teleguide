@@ -5,10 +5,7 @@ import android.util.EventLog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
@@ -36,9 +33,16 @@ import kotlin.coroutines.CoroutineContext
 
 
 class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, GlobalBroker.Subscriber,
-    ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope {
+    ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope,
+    Filterable {
 
     var selectedFolders : MutableList<FolderRealm> = ArrayList()
+
+    var foldersFilterList : MutableList<FolderRealm> = ArrayList()
+
+    init {
+        foldersFilterList = data
+    }
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -66,7 +70,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
-        if (data.get(position).isValid()) {
+        if (/*data*/foldersFilterList.get(position).isValid()) {
             val obj: FolderRealm? = getItem(position)
             holder.data = obj
             holder.name.text = obj?.name
@@ -193,11 +197,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     private fun getItem(position: Int) : FolderRealm?{
-        return data[position]
+        return /*data*/foldersFilterList[position]
     }
 
     fun setDataList(folders: MutableList<FolderRealm>) {
-        data = folders
+        /*data*/ foldersFilterList = folders
         //cancelSelection()
         notifyDataSetChanged()
     }
@@ -207,11 +211,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
-                Collections.swap(data, i, i + 1)
+                Collections.swap(/*data*/foldersFilterList, i, i + 1)
             }
         } else {
             for (i in fromPosition downTo toPosition + 1) {
-                Collections.swap(data, i, i - 1)
+                Collections.swap(/*data*/foldersFilterList, i, i - 1)
             }
         }
 
@@ -223,9 +227,9 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
     private fun updateOrders(){
         val bgRealm = Realm.getDefaultInstance()
-        for (i in 0 until data.size) {
+        for (i in 0 until foldersFilterList/*data*/.size) {
             launch {
-                val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", data[i]._id)
+                val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", /*data*/foldersFilterList[i]._id)
                     .findFirst() as FolderRealm
                 if(tempFolder.order != i) {
                     bgRealm.executeTransaction { realm ->
@@ -265,7 +269,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     override fun getItemCount(): Int {
-        return data.count()
+        return foldersFilterList.count()
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -273,7 +277,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     open fun cancelSelection(){
-        for(i in 0..data.size){
+        for(i in 0../*data*/foldersFilterList.size){
             notifyItemChanged(i)
         }
         selectedFolders.clear()
@@ -296,6 +300,36 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
         selectedFolders.clear()
 
         bgRealm.close()
+    }
+
+    override fun getFilter(): Filter {
+        return object : Filter() {
+            override fun performFiltering(constraint: CharSequence?): FilterResults {
+                val charSearch = constraint.toString()
+                if (charSearch.isEmpty()) {
+                    foldersFilterList = data
+                } else {
+                    val resultList : MutableList<FolderRealm> = ArrayList()
+                    for (row in data) {
+                        if (row.name.toLowerCase(Locale.ROOT).contains(charSearch.toLowerCase(Locale.ROOT))) {
+                            resultList.add(row)
+                        }
+                    }
+                    foldersFilterList = resultList
+                }
+                val filterResults = FilterResults()
+                filterResults.values = foldersFilterList
+                return filterResults
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                if(results?.values != null) {
+                    foldersFilterList = results.values as MutableList<FolderRealm>
+                    notifyDataSetChanged()
+                }
+            }
+        }
     }
 
 }
