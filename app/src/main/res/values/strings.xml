@@ -44,4 +44,6 @@
     <string name="create">Создать</string>
     <string name="enter_new_folder_name">Введите новое название</string>
     <string name="change">Изменить</string>
+    <string name="search_hint"><font size="14">Поиск</font></string>
+    <string name="search_hint_black"><font size="14"><font color="#4D4D4D">Поиск</font></font></string>
 </resources>

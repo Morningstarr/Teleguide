@@ -170,6 +170,12 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
             if (!holder.isSelecting && checkButton.visibility == View.VISIBLE) {
                 checkButton.visibility = View.GONE
             }
+            if(holder.isSelecting && checkButton.visibility == View.GONE){
+                checkButton.visibility = View.VISIBLE
+            }
+            if(selectedFolders.contains(holder.data) && checkButton.visibility == View.GONE){
+                checkButton.visibility = View.VISIBLE
+            }
         }
     }
 

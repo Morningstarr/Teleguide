@@ -26,18 +26,25 @@
             android:layout_height="60dp"
             android:background="#FFFFFF"
             android:orientation="horizontal">
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_view"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:background="@drawable/rectangle_3"
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/rectangle_3"
 
 
-            app:defaultQueryHint="Поиск"/>
+                android:paddingStart="10dp"
+                app:closeIcon="@drawable/ic_search_cancel"
+                app:defaultQueryHint="@string/search_hint_black"
+                app:iconifiedByDefault="false"
+                app:queryBackground="@null"
+                app:queryHint="@string/search_hint"
+                app:searchHintIcon="@null" />
         </LinearLayout>
 
 
