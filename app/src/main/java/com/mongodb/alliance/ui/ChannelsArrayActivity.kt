@@ -1,12 +1,12 @@
 package com.mongodb.alliance.ui
 
+import android.app.ActionBar
 import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.widget.Toast
+import android.view.*
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -38,6 +38,8 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -54,6 +56,8 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     private var folder: FolderRealm? = null
     private var ChannelsArray : ArrayList<ChannelRealm> = ArrayList()
     private var folderId : String? = null
+    private lateinit var customActionBarView : View
+    private lateinit var rootLayout : CoordinatorLayout
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -76,9 +80,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         folderId = intent.getStringExtra("folderId")
         folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
 
-        val actionbar = supportActionBar
-        actionbar?.setDisplayHomeAsUpEnabled(true)
-        actionbar?.setDisplayHomeAsUpEnabled(true)
+        //setDefaultActionBar()
 
         subscribe<ChannelSaveEvent>(lifecycleScope){ event ->
             if(event.parameter == 1){
@@ -138,9 +140,13 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
             recyclerView.layoutManager = LinearLayoutManager(this)
             recyclerView.adapter = adapter
             recyclerView.setHasFixedSize(true)
-            recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
-        }
-        else{
+            recyclerView.addItemDecoration(
+                DividerItemDecoration(
+                    this,
+                    DividerItemDecoration.VERTICAL
+                )
+            )
+        } else {
             Toast.makeText(baseContext, "Folder data error!", Toast.LENGTH_SHORT).show()
         }
     }
@@ -245,4 +251,105 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
             }
         }
     }
+
+    /*private fun setDefaultActionBar() {
+        val actionbar = supportActionBar
+        if (actionbar != null) {
+            actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+            actionbar.setDisplayShowCustomEnabled(true)
+            actionbar.setCustomView(R.layout.action_bar_drawable)
+            customActionBarView = actionbar.customView
+            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).visibility =
+                View.GONE
+            val nameText = customActionBarView.findViewById<TextView>(R.id.name)
+            nameText.text = "TeleGuide"
+            nameText.gravity = Gravity.START
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                weight = 1.0f
+                gravity = Gravity.CENTER
+            }
+            nameText.layoutParams = params
+            val scale = resources.displayMetrics.density
+            val dpAsPixels = (16 * scale + 0.5f)
+            nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
+            nameText.textSize = 24F
+
+            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
+                rootLayout = binding.coordinatorChannelsArray
+                val anchor = binding.anchorChannelsArray
+                val wrapper = ContextThemeWrapper(
+                    this,
+                    R.style.MyPopupMenu
+                )
+                val popup = PopupMenu(wrapper, anchor, Gravity.END)
+
+                try {
+                    val fields: Array<Field> = popup.javaClass.declaredFields
+                    for (field in fields) {
+                        if ("mPopup" == field.name) {
+                            field.isAccessible = true
+                            val menuPopupHelper: Any = field.get(popup)
+                            val classPopupHelper =
+                                Class.forName(menuPopupHelper.javaClass.name)
+                            val setForceIcons: Method = classPopupHelper.getMethod(
+                                "setForceShowIcon",
+                                Boolean::class.javaPrimitiveType
+                            )
+                            setForceIcons.invoke(menuPopupHelper, true)
+                            break
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e.message)
+                }
+
+                popup.menuInflater.inflate(R.menu.menu, popup.menu)
+                popup.show()
+
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.action_profile -> {
+                            startActivity(Intent(this, ProfileActivity::class.java))
+                        }
+                        R.id.action_logout -> {
+                            try {
+                                lifecycleScope.launch {
+                                    binding.mainProgress.visibility = View.VISIBLE
+
+                                    user?.logOutAsync {
+                                        if (it.isSuccess) {
+                                            realm = Realm.getDefaultInstance()
+                                            realm.close()
+
+                                            user = null
+                                        } else {
+                                            Timber.e("log out failed! Error: ${it.error}")
+                                            return@logOutAsync
+                                        }
+                                    }
+
+                                    Timber.d("user logged out")
+
+                                    binding.mainProgress.visibility = View.GONE
+                                    startActivity(
+                                        Intent(
+                                            baseContext,
+                                            LoginActivity::class.java
+                                        )
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                    }
+                    true
+                }
+            }
+        }
+    }*/
 }

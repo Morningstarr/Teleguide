@@ -11,10 +11,7 @@ import cafe.adriel.broker.GlobalBroker
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
-import com.mongodb.alliance.events.EditFolderEvent
-import com.mongodb.alliance.events.FolderPinDenyEvent
-import com.mongodb.alliance.events.FolderPinEvent
-import com.mongodb.alliance.events.SelectFolderEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -145,7 +142,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
             holder.itemLayout.setOnClickListener {
                 if (!holder.isSelecting) {
-                    //todo open folder
+                    EventBus.getDefault().post(OpenFolderEvent(holder.data?._id.toString()))
                 }
             }
 

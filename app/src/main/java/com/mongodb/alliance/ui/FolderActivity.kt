@@ -81,6 +81,13 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: OpenFolderEvent) {
+        val intent = Intent(this, ChannelsRealmActivity::class.java)
+        intent.putExtra("folderId", event.folderId)
+        startActivity(intent)
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SelectFolderEvent) {
