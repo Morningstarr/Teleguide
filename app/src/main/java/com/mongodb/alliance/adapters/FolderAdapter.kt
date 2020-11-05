@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
@@ -49,6 +50,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        var cardView : CardView = view.findViewById<CardView>(R.id.card_view)
         var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
         var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
         var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.bottom_wrapper)
@@ -112,6 +114,8 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                         View.VISIBLE
                     holder.isSelecting = true
                     holder.data?.let { it1 -> selectedFolders.add(it1) }
+
+                    holder.cardView.cardElevation = 10f
                     return@setOnLongClickListener true
                 } else {
                     return@setOnLongClickListener false
@@ -126,12 +130,16 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                     holder.isSelecting = true
                     holder.data?.let { it1 -> selectedFolders.add(it1) }
 
+                    holder.cardView.cardElevation = 10f
+
                 } else {
                     EventBus.getDefault().post(SelectFolderEvent(false))
                     holder.data?.let { it1 -> selectedFolders.remove(it1) }
                     holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
                         View.GONE
                     holder.isSelecting = false
+
+                    holder.cardView.cardElevation = 0f
                 }
             }
 
@@ -169,12 +177,15 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
             val checkButton = holder.checkLayout.findViewById<ImageView>(R.id.check_folder)
             if (!holder.isSelecting && checkButton.visibility == View.VISIBLE) {
                 checkButton.visibility = View.GONE
+                holder.cardView.cardElevation = 0f
             }
             if(holder.isSelecting && checkButton.visibility == View.GONE){
                 checkButton.visibility = View.VISIBLE
+                holder.cardView.cardElevation = 10f
             }
             if(selectedFolders.contains(holder.data) && checkButton.visibility == View.GONE){
                 checkButton.visibility = View.VISIBLE
+                holder.cardView.cardElevation = 10f
             }
         }
     }

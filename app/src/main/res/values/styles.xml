@@ -8,6 +8,7 @@
         <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogTheme</item>
         <item name="actionBarStyle">@style/AppThemeActionBar</item>
         <item name="popupMenuStyle">@style/MyPopupMenu</item>
+        <item name="draggedItemElevation">10dp</item>
     </style>
 
     <style name="ProfileScreenTheme" parent="Theme.AppCompat.Light.DarkActionBar">
