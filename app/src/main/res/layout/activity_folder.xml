@@ -55,6 +55,7 @@
             android:background="@null"
             android:visibility="gone" />
 
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/folders_list"
             android:layout_width="match_parent"

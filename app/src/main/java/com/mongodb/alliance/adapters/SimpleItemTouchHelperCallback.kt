@@ -22,7 +22,12 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         view.translationX = dX
         view.translationY = dY
         if (isCurrentlyActive) {
-            view.findViewById<CardView>(R.id.card_view).cardElevation = 10f
+            if(view.findViewById<CardView>(R.id.chat_card_view) != null) {
+                view.findViewById<CardView>(R.id.chat_card_view).cardElevation = 10f
+            }
+            if(view.findViewById<CardView>(R.id.card_view) != null) {
+                view.findViewById<CardView>(R.id.card_view).cardElevation = 10f
+            }
         }
     }
 
@@ -30,7 +35,12 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         val view = viewHolder.itemView
         view.translationX = 0f
         view.translationY = 0f
-        view.findViewById<CardView>(R.id.card_view).cardElevation = 0f
+        if(view.findViewById<CardView>(R.id.chat_card_view) != null) {
+            view.findViewById<CardView>(R.id.chat_card_view).cardElevation = 0f
+        }
+        if(view.findViewById<CardView>(R.id.card_view) != null) {
+            view.findViewById<CardView>(R.id.card_view).cardElevation = 0f
+        }
     }
 
     override fun getMovementFlags(
@@ -49,12 +59,28 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        if(!(viewHolder as FolderAdapter.FolderViewHolder).isSelecting) {
-            adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
-            return true
+        if(viewHolder is FolderAdapter.FolderViewHolder){
+            if(!viewHolder.isSelecting) {
+                adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
+                return true
+            }
+            else{
+                return false
+            }
         }
         else{
-            return false
+            if(viewHolder is ChannelRealmAdapter.ChannelViewHolder){
+                if(!viewHolder.isSelecting) {
+                    adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
+                    return true
+                }
+                else{
+                    return false
+                }
+            }
+            else {
+                return false
+            }
         }
     }
 

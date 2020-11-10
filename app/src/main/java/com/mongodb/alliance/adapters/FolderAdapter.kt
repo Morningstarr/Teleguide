@@ -21,8 +21,8 @@ import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 
-class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, GlobalBroker.Subscriber,
-    ItemTouchHelperAdapter, RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope, Filterable {
+class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, ItemTouchHelperAdapter,
+    RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope, Filterable {
 
     var selectedFolders : MutableList<FolderRealm> = ArrayList()
 
@@ -121,13 +121,15 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
             holder.checkLayout.setOnClickListener {
                 if (!holder.isSelecting) {
-                    EventBus.getDefault().post(SelectFolderEvent(true))
-                    holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                        View.VISIBLE
-                    holder.isSelecting = true
-                    holder.data?.let { it1 -> selectedFolders.add(it1) }
+                    if(selectedFolders.size > 0) {
+                        EventBus.getDefault().post(SelectFolderEvent(true))
+                        holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                            View.VISIBLE
+                        holder.isSelecting = true
+                        holder.data?.let { it1 -> selectedFolders.add(it1) }
 
-                    holder.cardView.cardElevation = 10f
+                        holder.cardView.cardElevation = 10f
+                    }
 
                 } else {
                     EventBus.getDefault().post(SelectFolderEvent(false))
@@ -271,6 +273,14 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
             notifyItemChanged(i)
         }
         selectedFolders.clear()
+    }
+
+    fun updateItems(){
+        for(i in 0../*data*/foldersFilterList.size){
+            notifyItemChanged(i)
+        }
+
+        notifyDataSetChanged()
     }
 
     fun deleteSelected(){

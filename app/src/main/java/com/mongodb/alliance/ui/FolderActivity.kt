@@ -217,7 +217,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         binding.searchView.onActionViewExpanded()
-        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 300)
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
 
         binding.searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -230,6 +230,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
 
         })
+
+
 
     }
 
@@ -273,6 +275,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                             this@FolderActivity.realm = realm
                             setUpRecyclerView(realm)
                             setUpRecyclerPinned(null)
+                            adapter.updateItems()
                             showLoading(false)
                         }
                     })
@@ -280,6 +283,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 Timber.e(e.message)
             }
         }
+
+
     }
 
     @RequiresApi(Build.VERSION_CODES.N)

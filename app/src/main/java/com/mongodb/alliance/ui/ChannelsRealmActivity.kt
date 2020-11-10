@@ -1,29 +1,34 @@
 package com.mongodb.alliance.ui
 
+import android.app.AlertDialog
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
+import com.mongodb.alliance.adapters.*
+import com.mongodb.alliance.adapters.PinnedChannelAdapter
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.model.*
-import com.mongodb.alliance.adapters.ChannelRealmAdapter
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityChannelsRealmBinding
-import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.events.OpenChannelEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -51,7 +56,9 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
+    private lateinit var pinnedRecyclerView: RecyclerView
     private lateinit var adapter: ChannelRealmAdapter
+    private lateinit var pinnedAdapter: PinnedChannelAdapter
     private lateinit var fab: FloatingActionButton
     private var folder: FolderRealm? = null
     private lateinit var binding: ActivityChannelsRealmBinding
@@ -68,6 +75,47 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: ChannelPinDenyEvent) {
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("Нельзя закрепить более одного чата.")
+
+        builder.setPositiveButton(
+            "Открепить чат"
+        ) { dialog, _ ->
+            pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
+            event.channel?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_folder)?.performClick()
+            setUpRecyclerPinned(null)
+            refreshRecyclerView()
+            dialog.dismiss()
+        }
+        builder.setNegativeButton(
+            "Назад"
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert = builder.create()
+        alert.show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: ChannelPinEvent){
+        setUpRecyclerPinned(event.pinnedChannel)
+        refreshRecyclerView()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: ChannelUnpinEvent){
+        setUpRecyclerPinned(null)
+        refreshRecyclerView()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -80,6 +128,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         fab = binding.channelsFab
         recyclerView = binding.channelsInFolderList
+        pinnedRecyclerView = binding.channelPinned
+        pinnedRecyclerView.visibility = View.GONE
 
         fab.setOnClickListener {
             lifecycleScope.launch {
@@ -101,6 +151,29 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 }
             }
         }
+
+        binding.channelsSearchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+
+        binding.channelsSearchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                try {
+                    adapter.filter.filter(newText)
+                    return false
+                }
+                catch(e:Exception){
+                    if(e.message != "lateinit property adapter has not been initialized"){
+                        Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                    return true
+                }
+            }
+
+        })
 
         subscribe<OpenChannelEvent>(lifecycleScope){ event ->
             startActivity(event.intent)
@@ -130,10 +203,12 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
             try {
                 Realm.getInstanceAsync(config, object: Realm.Callback() {
+                    @RequiresApi(Build.VERSION_CODES.N)
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
                         this@ChannelsRealmActivity.realm = realm
                         setUpRecyclerView(realm)
+                        setUpRecyclerPinned(null)
                     }
                 })
             }
@@ -143,25 +218,66 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun setUpRecyclerView(realm: Realm) {
-        val query = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).findAll().sort("_id")
+        val query = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).findAll().sort("order").toMutableList()
+        query.removeIf {
+            it.isPinned
+        }
         if(query.size != 0) {
             binding.textLayout.visibility = View.INVISIBLE
             adapter = ChannelRealmAdapter(
                 query
             )
+
             recyclerView.layoutManager = LinearLayoutManager(this)
             recyclerView.adapter = adapter
             recyclerView.setHasFixedSize(true)
-            recyclerView.addItemDecoration(
-                DividerItemDecoration(
-                    this,
-                    DividerItemDecoration.VERTICAL
-                )
-            )
+
+            val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+            val touchHelper = ItemTouchHelper(callback)
+            touchHelper.attachToRecyclerView(recyclerView)
+
         }
         else{
             binding.textLayout.visibility = View.VISIBLE
+        }
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    open fun refreshRecyclerView(){
+        val mutableChannels = realm.where<ChannelRealm>().sort("order")
+            .findAll().toMutableList()
+        mutableChannels.removeIf {
+            it.isPinned
+        }
+        adapter.setDataList(mutableChannels)
+    }
+
+    private fun setUpRecyclerPinned(pinned: ChannelRealm?){
+        val found : ChannelRealm?
+        if(pinned == null){
+            realm = Realm.getDefaultInstance()
+            found = realm.where<ChannelRealm>().equalTo("isPinned", true).findFirst()
+            if(found != null){
+                pinnedAdapter = PinnedChannelAdapter(found)
+                pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
+                pinnedRecyclerView.adapter = pinnedAdapter
+                pinnedRecyclerView.setHasFixedSize(true)
+                pinnedRecyclerView.visibility = View.VISIBLE
+            }
+            else{
+                pinnedRecyclerView.adapter = null
+                pinnedRecyclerView.visibility = View.GONE
+            }
+        }
+        else {
+            pinnedAdapter = PinnedChannelAdapter(pinned)
+            pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
+            pinnedRecyclerView.adapter = pinnedAdapter
+            pinnedRecyclerView.setHasFixedSize(true)
+            pinnedRecyclerView.visibility = View.VISIBLE
         }
     }
 

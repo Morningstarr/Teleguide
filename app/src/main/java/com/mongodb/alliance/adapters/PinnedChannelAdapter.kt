@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
@@ -12,6 +13,7 @@ import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
+import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -22,38 +24,38 @@ import org.greenrobot.eventbus.ThreadMode
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publisher,
+internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Publisher,
     GlobalBroker.Subscriber, CoroutineScope,
-    RecyclerSwipeAdapter<PinnedFolderAdapter.FolderViewHolder>(){
+    RecyclerSwipeAdapter<PinnedChannelAdapter.ChannelViewHolder>(){
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
-            .inflate(R.layout.new_folder_view_layout, parent, false)
-        return FolderViewHolder(itemView)
+            .inflate(R.layout.new_channels_realm_view, parent, false)
+        return ChannelViewHolder(itemView)
     }
 
     override fun getSwipeLayoutResourceId(position: Int): Int {
-        return R.id.swipe_layout
+        return R.id.chat_swipe_layout
     }
 
-    internal inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
-        var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
-        var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.bottom_wrapper)
-        var name: TextView = view.findViewById(R.id.folder_name)
-        var data: FolderRealm? = null
-        var additional: TextView = view.findViewById(R.id.additional_count)
-        var checkLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.check_layout)
-        var isSelecting : Boolean = false
+    inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        var name: TextView = view.findViewById(R.id.chat_realm_name)
+        var cardView : CardView = view.findViewById<CardView>(R.id.chat_card_view)
+        var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.chat_swipe_layout)
+        var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.chat_item_layout)
+        var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.chat_bottom_wrapper)
+        var timeLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.time_layout)
+
+        var data: ChannelRealm? = null
     }
 
-    override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
-        holder.data = folder
-        holder.name.text = folder.name
+    override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
+        holder.data = channel
+        holder.name.text = channel.name
 
         holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 
@@ -62,12 +64,14 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         holder.swipeLayout.isRightSwipeEnabled = false
 
         if(holder.data != null) {
-            if ((holder.data as FolderRealm).isPinned) {
+            if ((holder.data as ChannelRealm).isPinned) {
                 mItemManger.bindView(holder.itemView, position)
-                holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
-                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
+
+                holder.itemLayout.findViewById<ImageView>(R.id.chat_pinned).visibility = View.VISIBLE
+                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_chat)
                 pinButton.setImageResource(R.drawable.ic_pin_blue_left)
-                pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))
+                pinButton.setBackgroundResource(R.drawable.pin_channel_shape_white)
+
             } else {
                 mItemManger.bindView(holder.itemView, position)
             }
@@ -102,51 +106,41 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
             }
         })
 
-        holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder).setOnClickListener {
+        holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_chat).setOnClickListener {
             mItemManger.closeAllItems()
             if(holder.data != null) {
                 holder.data?.let { it1 -> setPinned(it1, false) }
                 EventBus.getDefault().post(holder.data?.let { it1 ->
-                    FolderUnpinEvent("",
+                    ChannelUnpinEvent("",
                         it1
                     )
                 })
-                holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.INVISIBLE
 
-                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
+                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_chat)
                 pinButton.setImageResource(R.drawable.ic_pin)
-                pinButton.setBackgroundColor(Color.parseColor("#03CCFC"))
+                pinButton.setBackgroundResource(R.drawable.pin_channel_shape)
             }
-        }
-
-        holder.bottomWrapper.findViewById<ImageButton>(R.id.edit_folder).setOnClickListener{
-            mItemManger.closeAllItems()
-            EventBus.getDefault().post(holder.data?.let { it1 -> EditFolderEvent(it1) })
-        }
-
-        holder.itemLayout.setOnClickListener {
-            EventBus.getDefault().post(OpenFolderEvent(holder.data?._id.toString()))
         }
     }
 
-    fun findPinned() : FolderRealm?{
+    fun findPinned() : ChannelRealm?{
         val bgRealm = Realm.getDefaultInstance()
 
-        val result = bgRealm.where<FolderRealm>().equalTo("isPinned", true)
+        val result = bgRealm.where<ChannelRealm>().equalTo("isPinned", true)
             .findFirst()
 
         bgRealm.close()
         return result
     }
 
-    fun setPinned(folder : FolderRealm, pinned : Boolean) {
+    fun setPinned(channel : ChannelRealm, pinned : Boolean) {
         val bgRealm = Realm.getDefaultInstance()
 
         runBlocking {
-            val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", folder._id)
-                .findFirst() as FolderRealm
+            val tempChannel = bgRealm.where<ChannelRealm>().equalTo("_id", channel._id)
+                .findFirst() as ChannelRealm
             bgRealm.executeTransaction { realm ->
-                tempFolder.isPinned = pinned
+                tempChannel.isPinned = pinned
             }
         }
 

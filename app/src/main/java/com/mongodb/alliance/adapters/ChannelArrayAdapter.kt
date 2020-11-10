@@ -3,10 +3,14 @@ package com.mongodb.alliance.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
+import com.daimajia.swipe.SwipeLayout
 import com.mongodb.alliance.R
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.events.ChannelSaveEvent
@@ -38,7 +42,6 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
         val obj: ChannelRealm? = getItem(position)
         holder.data = obj
         holder.name.text = obj?.name
-        holder.type.text = obj?.typeEnum?.displayName
 
         holder.itemView.setOnClickListener {
             holder.data?.name?.let { it1 -> addToFolder(it1, folderName) }
@@ -78,8 +81,11 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
 
     internal inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.array_view_channel_name)
-        var type: TextView = view.findViewById(R.id.array_view_channel_type)
+        //var message: TextView = view.findViewById(R.id.chat_last_message)
+
+
         var data: ChannelRealm? = null
+
 
     }
 }

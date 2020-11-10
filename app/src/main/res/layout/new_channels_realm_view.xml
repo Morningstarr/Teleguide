@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/chat_card_view"
+android:layout_width="match_parent"
+android:layout_height="90dp"
+android:layout_marginTop="5dp"
+android:layout_marginBottom="5dp"
+android:layout_marginStart="10dp"
+android:layout_marginEnd="10dp"
+app:cardCornerRadius="30dp"
+android:elevation="0dp"
+app:cardElevation="0dp">
+
+<com.daimajia.swipe.SwipeLayout
+    android:id="@+id/chat_swipe_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    android:background="@drawable/channel_shape"
+
+    >
+
+    <LinearLayout
+        android:id="@+id/chat_bottom_wrapper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/channel_swipe_shape">
+
+        <ImageButton
+            android:id="@+id/pin_chat"
+            android:layout_width="60dp"
+            android:layout_height="90dp"
+            android:background="@drawable/pin_channel_shape"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_pin">
+
+        </ImageButton>
+    </LinearLayout>
+
+    <!-- Bottom View End-->
+
+    <!-- Surface View Start -->
+    <LinearLayout
+        android:id="@+id/chat_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:layout_marginTop="2.5dp"
+        android:layout_marginBottom="2.5dp"
+        android:background="#FFFFFF"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.97">
+
+            <ImageView
+                android:id="@+id/chat_image"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/round_shape"
+                android:scaleType="centerInside"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_arrow_back" />
+
+            <LinearLayout
+                android:layout_width="230dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/chat_image"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:orientation="horizontal">
+
+
+                    <TextView
+                        android:id="@+id/chat_realm_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="24dp"
+
+                        android:fontFamily="@font/roboto"
+
+                        android:gravity="top"
+                        android:lineSpacingExtra="5sp"
+                        android:maxWidth="200dp"
+                        android:paddingStart="15dp"
+                        android:text="Kirill Kovrik"
+                        android:textColor="#1A1A1A"
+                        android:textSize="18sp"
+                        android:translationY="-2.62sp"
+                        app:layout_constraintStart_toEndOf="@+id/pictures_layout"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/chat_pinned"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="15dp"
+
+                        android:layout_marginEnd="55dp"
+
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_pin_blue"
+                        android:translationY="-2.62sp"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/folder_name"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/chat_last_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="34dp"
+
+                    android:ellipsize="end"
+                    android:fontFamily="@font/roboto"
+                    android:gravity="center|start"
+                    android:maxLines="2"
+                    android:minLines="1"
+                    android:paddingStart="15dp"
+                    android:text="Привет, что ты хотел от меня вчера вsjdhskjdhflsjhdflsjhdflsjhdlfsjhdlfjksh dlfjhsldjечером..?"
+                    android:textColor="#808080"
+                    android:textSize="14sp"
+                    app:layout_constraintStart_toEndOf="@+id/pictures_layout"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                </TextView>
+
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/time_layout"
+            android:layout_width="30dp"
+            android:layout_height="90dp"
+            android:layout_gravity="end"
+            android:layout_marginEnd="15dp"
+            android:layout_weight="0.03"
+            android:background="#FFFFFF"
+            android:orientation="vertical"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/message_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp"
+                android:fontFamily="@font/roboto"
+                android:gravity="center|start"
+                android:lineSpacingExtra="3sp"
+                android:text="22:12"
+                android:textColor="#6E6E6E"
+                android:textSize="14sp"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </TextView>
+
+            <ImageView
+                android:id="@+id/check_chat"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+
+                android:layout_marginEnd="5dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_check"
+                android:visibility="invisible" />
+
+            <TextView
+                android:id="@+id/messages_count"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:background="@drawable/messages_count_shape"
+                android:fontFamily="@font/roboto"
+                android:gravity="center"
+                android:lineSpacingExtra="3sp"
+                android:text="1082"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                app:layout_constraintStart_toEndOf="@+id/pictures_layout"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </TextView>
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+    <!-- Surface View End -->
+</com.daimajia.swipe.SwipeLayout>
+</androidx.cardview.widget.CardView>
