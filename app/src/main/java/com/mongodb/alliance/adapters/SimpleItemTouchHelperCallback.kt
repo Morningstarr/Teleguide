@@ -2,6 +2,8 @@ package com.mongodb.alliance.adapters
 
 import android.app.Application
 import android.graphics.Canvas
+import android.view.View
+import android.widget.ImageView
 import androidx.appcompat.widget.TintTypedArray.obtainStyledAttributes
 import androidx.cardview.widget.CardView
 import androidx.core.content.res.use
@@ -36,10 +38,14 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         view.translationX = 0f
         view.translationY = 0f
         if(view.findViewById<CardView>(R.id.chat_card_view) != null) {
-            view.findViewById<CardView>(R.id.chat_card_view).cardElevation = 0f
+            if(view.findViewById<ImageView>(R.id.check_chat).visibility != View.VISIBLE) {
+                view.findViewById<CardView>(R.id.chat_card_view).cardElevation = 0f
+            }
         }
         if(view.findViewById<CardView>(R.id.card_view) != null) {
-            view.findViewById<CardView>(R.id.card_view).cardElevation = 0f
+            if(view.findViewById<ImageView>(R.id.check_folder).visibility != View.VISIBLE) {
+                view.findViewById<CardView>(R.id.card_view).cardElevation = 0f
+            }
         }
     }
 
@@ -65,6 +71,7 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
                 return true
             }
             else{
+                viewHolder.cardView.cardElevation = 10f
                 return false
             }
         }
@@ -75,6 +82,7 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
                     return true
                 }
                 else{
+                    viewHolder.cardView.cardElevation = 10f
                     return false
                 }
             }

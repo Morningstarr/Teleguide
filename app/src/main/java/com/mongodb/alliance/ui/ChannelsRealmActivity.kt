@@ -14,7 +14,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -65,6 +64,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private var folderId : String? = null
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
+    private var isSelecting : Boolean = false
 
     @TelegramServ
     @Inject
@@ -114,6 +114,50 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     fun onMessageEvent(event: ChannelUnpinEvent){
         setUpRecyclerPinned(null)
         refreshRecyclerView()
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: SelectChatEvent){
+        val actionbar = supportActionBar
+        isSelecting = true
+        if (actionbar != null) {
+            if(actionbar.customView.findViewById<TextView>(R.id.actionBar_chats_count) == null) {
+                actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+                actionbar.setDisplayShowCustomEnabled(true)
+                actionbar.setCustomView(R.layout.action_bar_chat_options_drawable)
+                customActionBarView = actionbar.customView
+            }
+            else{
+                customActionBarView = actionbar.customView
+            }
+            val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_count)
+            if(event.isAdd) {
+                countText.text = (countText.text.toString().toInt() + 1).toString()
+            }
+            else{
+                if(countText.text.toString().toInt() == 1){
+                    setDefaultActionBar()
+                }
+                else {
+                    countText.text = (countText.text.toString().toInt() - 1).toString()
+                }
+            }
+            customActionBarView.findViewById<TextView>(R.id.actionBar_folder_name).text = folder?.name
+
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_chat_button_cancel).setOnClickListener {
+                setDefaultActionBar()
+                isSelecting = false
+                adapter.cancelSelection()
+            }
+
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_chat_button_delete).setOnClickListener {
+                //deleteChats()
+            }
+
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_chat_button_move).setOnClickListener {
+                //deleteFolders()
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -215,6 +259,18 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             catch(e: Exception){
                 Timber.e(e.message)
             }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onBackPressed() {
+        if(isSelecting) {
+            setDefaultActionBar()
+            isSelecting = false
+            adapter.cancelSelection()
+        }
+        else{
+            super.onBackPressed()
         }
     }
 

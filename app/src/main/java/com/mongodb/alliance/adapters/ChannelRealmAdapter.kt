@@ -28,8 +28,7 @@ import kotlin.coroutines.CoroutineContext
 
 
 class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
-    GlobalBroker.Publisher, /*RealmRecyclerViewAdapter<ChannelRealm, ChannelRealmAdapter.ChannelViewHolder?>(data, true),*/
-        RecyclerSwipeAdapter<ChannelRealmAdapter.ChannelViewHolder>(),
+    GlobalBroker.Publisher, RecyclerSwipeAdapter<ChannelRealmAdapter.ChannelViewHolder>(),
         ItemTouchHelperAdapter, Filterable, CoroutineScope
 {
 
@@ -50,7 +49,7 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
     }
 
     private fun getItem(position: Int) : ChannelRealm? {
-        return channelsFilterList/*data*/[position]
+        return channelsFilterList[position]
     }
 
     override fun getSwipeLayoutResourceId(position: Int): Int {
@@ -58,96 +57,118 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
     }
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
-        val obj: ChannelRealm? = getItem(position)
-        holder.data = obj
-        holder.name.text = obj?.name
+        if(channelsFilterList[position].isValid) {
+            val obj: ChannelRealm? = getItem(position)
+            holder.data = obj
+            holder.name.text = obj?.name
 
-        val openCode : Int = 22
+            holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 
-        holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
+            holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
 
-        holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
+            holder.swipeLayout.isRightSwipeEnabled = false
 
-        holder.swipeLayout.isRightSwipeEnabled = false
-
-        if (holder.data != null) {
-            mItemManger.bindView(holder.itemView, position)
-        }
-
-        holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
-            override fun onClose(layout: SwipeLayout?) {
-                //when the SurfaceView totally cover the BottomView.
+            if (holder.data != null) {
+                mItemManger.bindView(holder.itemView, position)
             }
 
-            override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
+            holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
+                override fun onClose(layout: SwipeLayout?) {
+
+                }
+
+                override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
+
+                }
+
+                override fun onStartOpen(layout: SwipeLayout?) {
+                    mItemManger.closeAllExcept(layout)
+                }
+
+                override fun onOpen(layout: SwipeLayout?) {
+
+                }
+
+                override fun onStartClose(layout: SwipeLayout?) {
+
+                }
+
+                override fun onHandRelease(
+                    layout: SwipeLayout?,
+                    xvel: Float,
+                    yvel: Float
+                ) {
+
+                }
+            })
+
+            holder.itemView.setOnClickListener {
 
             }
 
-            override fun onStartOpen(layout: SwipeLayout?) {
-                mItemManger.closeAllExcept(layout)
-            }
-
-            override fun onOpen(layout: SwipeLayout?) {
-                //when the BottomView totally show.
-            }
-
-            override fun onStartClose(layout: SwipeLayout?) {
-
-            }
-
-            override fun onHandRelease(
-                layout: SwipeLayout?,
-                xvel: Float,
-                yvel: Float
-            ) {
-
-            }
-        })
-
-        holder.itemView.setOnClickListener {
-            /*run {
-                val popup = PopupMenu(holder.itemView.context, holder.menu)
-                val menu = popup.menu
-
-                val deleteCode = -1
-                menu.add(0, openCode, Menu.NONE, "Open Channel")
-                menu.add(0, deleteCode, Menu.NONE, "Delete Channel")
-
-                popup.setOnMenuItemClickListener { item: MenuItem? ->
-                    var type: ChannelType? = null
-                    if (item != null) {
-                        when (item.itemId) {
-                            deleteCode -> {
-                                holder.data?._id?.let { it1 -> removeAt(it1) }
-                            }
-                            openCode ->{
-                                holder.data?.name?.let { it1 -> openChannel(it1) }
-                            }
+            holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_chat).setOnClickListener {
+                mItemManger.closeAllItems()
+                if (holder.data != null) {
+                    val isP = (holder.data as ChannelRealm).isPinned
+                    if (!isP) {
+                        val temp = findPinned()
+                        if (temp != null) {
+                            EventBus.getDefault().post(ChannelPinDenyEvent("", holder))
+                        } else {
+                            holder.data?.let { it1 -> setPinned(it1, true) }
+                            EventBus.getDefault().post(ChannelPinEvent("", holder.data!!))
                         }
                     }
-                    else{
-                        EventBus.getDefault().post(NullObjectAccessEvent("The item is null!"))
-                    }
-
-                    true
                 }
-                popup.show()
-            }*/
-        }
+            }
 
-        holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_chat).setOnClickListener {
-            mItemManger.closeAllItems()
-            if (holder.data != null) {
-                val isP = (holder.data as ChannelRealm).isPinned
-                if (!isP) {
-                    val temp = findPinned()
-                    if (temp != null) {
-                        EventBus.getDefault().post(ChannelPinDenyEvent("", holder))
+            holder.timeLayout.setOnLongClickListener {
+                if (!holder.isSelecting) {
+                    holder.isSelecting = true
+                    EventBus.getDefault().post(SelectChatEvent(true))
+                    holder.cardView.cardElevation = 10f
+                    showCheck(true, holder)
+                    holder.data?.let { it1 -> selectedChannels.add(it1) }
+                    return@setOnLongClickListener true
+                } else {
+                    return@setOnLongClickListener false
+                }
+            }
+
+            holder.timeLayout.setOnClickListener {
+                if (selectedChannels.size > 0) {
+                    if (holder.isSelecting) {
+                        holder.isSelecting = false
+                        EventBus.getDefault().post(SelectChatEvent(false))
+                        showCheck(false, holder)
+                        holder.cardView.cardElevation = 0f
+                        selectedChannels.remove(holder.data)
                     } else {
-                        holder.data?.let { it1 -> setPinned(it1, true) }
-                        EventBus.getDefault().post(ChannelPinEvent("", holder.data!!))
+                        holder.isSelecting = true
+                        EventBus.getDefault().post(SelectChatEvent(true))
+                        showCheck(true, holder)
+                        holder.cardView.cardElevation = 10f
+                        holder.data?.let { it1 -> selectedChannels.add(it1) }
                     }
                 }
+            }
+
+            if (holder.isSelecting && !selectedChannels.contains(holder.data)) {
+                holder.isSelecting = false
+            }
+
+            val checkButton = holder.timeLayout.findViewById<ImageView>(R.id.check_chat)
+            if (!holder.isSelecting && checkButton.visibility == View.VISIBLE) {
+                showCheck(false, holder)
+                holder.cardView.cardElevation = 0f
+            }
+            if (holder.isSelecting && checkButton.visibility == View.INVISIBLE) {
+                showCheck(true, holder)
+                holder.cardView.cardElevation = 10f
+            }
+            if (selectedChannels.contains(holder.data) && checkButton.visibility == View.INVISIBLE) {
+                showCheck(true, holder)
+                holder.cardView.cardElevation = 10f
             }
         }
     }
@@ -177,9 +198,15 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
     }
 
     fun setDataList(newData : MutableList<ChannelRealm>){
-        //data = newData
         channelsFilterList = newData
         notifyDataSetChanged()
+    }
+
+    fun cancelSelection(){
+        for(i in 0..channelsFilterList.size){
+            notifyItemChanged(i)
+        }
+        selectedChannels.clear()
     }
 
     private fun openChannel(username: String) {
@@ -225,11 +252,11 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
 
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
-                Collections.swap(/*data*/channelsFilterList, i, i + 1)
+                Collections.swap(channelsFilterList, i, i + 1)
             }
         } else {
             for (i in fromPosition downTo toPosition + 1) {
-                Collections.swap(/*data*/channelsFilterList, i, i - 1)
+                Collections.swap(channelsFilterList, i, i - 1)
             }
         }
 
@@ -241,9 +268,9 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
 
     private fun updateOrders(){
         val bgRealm = Realm.getDefaultInstance()
-        for (i in 0 until channelsFilterList/*data*/.size) {
+        for (i in 0 until channelsFilterList.size) {
             launch {
-                val tempChannel = bgRealm.where<ChannelRealm>().equalTo("_id", /*data*/channelsFilterList[i]._id)
+                val tempChannel = bgRealm.where<ChannelRealm>().equalTo("_id", channelsFilterList[i]._id)
                     .findFirst() as ChannelRealm
                 if(tempChannel.order != i) {
                     bgRealm.executeTransaction { realm ->
@@ -259,7 +286,7 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
     }
 
     override fun getItemCount(): Int {
-        return channelsFilterList/*data*/.size
+        return channelsFilterList.size
     }
 
     override fun getFilter(): Filter {
@@ -293,5 +320,24 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
             channelsFilterList = resultList
         }
         setDataList(channelsFilterList)
+    }
+
+    private fun showCheck(show : Boolean, holder : ChannelViewHolder){
+        if(show) {
+            holder.timeLayout.findViewById<TextView>(R.id.message_time).visibility =
+                View.INVISIBLE
+            holder.timeLayout.findViewById<TextView>(R.id.messages_count).visibility =
+                View.INVISIBLE
+            holder.timeLayout.findViewById<ImageView>(R.id.check_chat).visibility =
+                View.VISIBLE
+        }
+        else{
+            holder.timeLayout.findViewById<TextView>(R.id.message_time).visibility =
+                View.VISIBLE
+            holder.timeLayout.findViewById<TextView>(R.id.messages_count).visibility =
+                View.VISIBLE
+            holder.timeLayout.findViewById<ImageView>(R.id.check_chat).visibility =
+                View.INVISIBLE
+        }
     }
 }

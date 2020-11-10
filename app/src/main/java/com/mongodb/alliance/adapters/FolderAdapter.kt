@@ -59,7 +59,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
-        if (/*data*/foldersFilterList.get(position).isValid()) {
+        if (foldersFilterList[position].isValid) {
             val obj: FolderRealm? = getItem(position)
             holder.data = obj
             holder.name.text = obj?.name
@@ -76,7 +76,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
             holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
                 override fun onClose(layout: SwipeLayout?) {
-                    //when the SurfaceView totally cover the BottomView.
+
                 }
 
                 override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
@@ -88,7 +88,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                 }
 
                 override fun onOpen(layout: SwipeLayout?) {
-                    //when the BottomView totally show.
+
                 }
 
                 override fun onStartClose(layout: SwipeLayout?) {
@@ -190,11 +190,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     private fun getItem(position: Int) : FolderRealm?{
-        return /*data*/foldersFilterList[position]
+        return foldersFilterList[position]
     }
 
     fun setDataList(folders: MutableList<FolderRealm>) {
-        /*data*/ foldersFilterList = folders
+        foldersFilterList = folders
         notifyDataSetChanged()
     }
 
@@ -203,11 +203,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
-                Collections.swap(/*data*/foldersFilterList, i, i + 1)
+                Collections.swap(foldersFilterList, i, i + 1)
             }
         } else {
             for (i in fromPosition downTo toPosition + 1) {
-                Collections.swap(/*data*/foldersFilterList, i, i - 1)
+                Collections.swap(foldersFilterList, i, i - 1)
             }
         }
 
@@ -219,9 +219,9 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
     private fun updateOrders(){
         val bgRealm = Realm.getDefaultInstance()
-        for (i in 0 until foldersFilterList/*data*/.size) {
+        for (i in 0 until foldersFilterList.size) {
             launch {
-                val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", /*data*/foldersFilterList[i]._id)
+                val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", foldersFilterList[i]._id)
                     .findFirst() as FolderRealm
                 if(tempFolder.order != i) {
                     bgRealm.executeTransaction { realm ->
@@ -269,14 +269,14 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     fun cancelSelection(){
-        for(i in 0../*data*/foldersFilterList.size){
+        for(i in 0..foldersFilterList.size){
             notifyItemChanged(i)
         }
         selectedFolders.clear()
     }
 
     fun updateItems(){
-        for(i in 0../*data*/foldersFilterList.size){
+        for(i in 0..foldersFilterList.size){
             notifyItemChanged(i)
         }
 
@@ -289,16 +289,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
         for (folder in selectedFolders) {
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<FolderRealm>().equalTo("_id", folder._id).findFirst()
-
                 results?.deleteFromRealm()
-
             }
-
-
         }
 
         selectedFolders.clear()
-
         bgRealm.close()
     }
 
@@ -332,7 +327,6 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
         ) {
             adapter.filterResults(constraint.toString())
         }
-
     }
 
 }

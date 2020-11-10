@@ -97,7 +97,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             if(actionbar.customView.findViewById<TextView>(R.id.actionBar_folders_count) == null) {
                 actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
                 actionbar.setDisplayShowCustomEnabled(true)
-                actionbar.setCustomView(R.layout.action_bar_options_drawable)
+                actionbar.setCustomView(R.layout.action_bar_folder_options_drawable)
                 customActionBarView = actionbar.customView
             }
             else{

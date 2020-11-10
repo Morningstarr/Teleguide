@@ -165,7 +165,7 @@ app:cardElevation="0dp">
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="15dp"
                 android:fontFamily="@font/roboto"
                 android:gravity="center|start"
                 android:lineSpacingExtra="3sp"
@@ -182,7 +182,7 @@ app:cardElevation="0dp">
                 android:layout_height="20dp"
                 android:layout_gravity="center"
 
-                android:layout_marginEnd="5dp"
+                android:layout_marginStart="8dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_check"
                 android:visibility="invisible" />
