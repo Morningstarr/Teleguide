@@ -248,6 +248,8 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
                         }
                     }
                 }
+
+                channel.displayName = nm[i].title
             }
         }
     }

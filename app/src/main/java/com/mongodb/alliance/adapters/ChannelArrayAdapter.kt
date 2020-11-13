@@ -41,7 +41,7 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         val obj: ChannelRealm? = getItem(position)
         holder.data = obj
-        holder.name.text = obj?.name
+        holder.name.text = obj?.displayName
 
         holder.itemView.setOnClickListener {
             holder.data?.name?.let { it1 -> addToFolder(it1, folderName) }

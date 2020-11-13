@@ -8,6 +8,7 @@ import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
@@ -27,6 +28,10 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     var selectedFolders : MutableList<FolderRealm> = ArrayList()
 
     var foldersFilterList : MutableList<FolderRealm> = ArrayList()
+
+    var selectedToPast : FolderRealm? = null
+
+    var isPaste : Boolean = false
 
     init {
         foldersFilterList = data
@@ -56,6 +61,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
         var data: FolderRealm? = null
         var additional: TextView = view.findViewById(R.id.additional_count)
         var isSelecting : Boolean = false
+        var isSelectedPaste : Boolean = false
     }
 
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
@@ -63,65 +69,50 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
             val obj: FolderRealm? = getItem(position)
             holder.data = obj
             holder.name.text = obj?.name
-
-            holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
-
-            holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
-
             holder.swipeLayout.isRightSwipeEnabled = false
 
-            if (holder.data != null) {
-                mItemManger.bindView(holder.itemView, position)
+            if(!isPaste) {
+                holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
+                holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
+
+                if (holder.data != null) {
+                    mItemManger.bindView(holder.itemView, position)
+                }
+
+                holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
+                    override fun onClose(layout: SwipeLayout?) {
+
+                    }
+
+                    override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
+
+                    }
+
+                    override fun onStartOpen(layout: SwipeLayout?) {
+                        mItemManger.closeAllExcept(layout)
+                    }
+
+                    override fun onOpen(layout: SwipeLayout?) {
+
+                    }
+
+                    override fun onStartClose(layout: SwipeLayout?) {
+
+                    }
+
+                    override fun onHandRelease(
+                        layout: SwipeLayout?,
+                        xvel: Float,
+                        yvel: Float
+                    ) {
+
+                    }
+                })
             }
-
-            holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
-                override fun onClose(layout: SwipeLayout?) {
-
-                }
-
-                override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
-
-                }
-
-                override fun onStartOpen(layout: SwipeLayout?) {
-                    mItemManger.closeAllExcept(layout)
-                }
-
-                override fun onOpen(layout: SwipeLayout?) {
-
-                }
-
-                override fun onStartClose(layout: SwipeLayout?) {
-
-                }
-
-                override fun onHandRelease(
-                    layout: SwipeLayout?,
-                    xvel: Float,
-                    yvel: Float
-                ) {
-
-                }
-            })
 
             holder.checkLayout.setOnLongClickListener {
-                if (!holder.isSelecting) {
-                    EventBus.getDefault().post(SelectFolderEvent(true))
-                    holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                        View.VISIBLE
-                    holder.isSelecting = true
-                    holder.data?.let { it1 -> selectedFolders.add(it1) }
-
-                    holder.cardView.cardElevation = 10f
-                    return@setOnLongClickListener true
-                } else {
-                    return@setOnLongClickListener false
-                }
-            }
-
-            holder.checkLayout.setOnClickListener {
-                if (!holder.isSelecting) {
-                    if(selectedFolders.size > 0) {
+                if(!isPaste) {
+                    if (!holder.isSelecting) {
                         EventBus.getDefault().post(SelectFolderEvent(true))
                         holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
                             View.VISIBLE
@@ -129,22 +120,66 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                         holder.data?.let { it1 -> selectedFolders.add(it1) }
 
                         holder.cardView.cardElevation = 10f
+                        return@setOnLongClickListener true
+                    } else {
+                        return@setOnLongClickListener false
                     }
+                }
+                else{
+                    return@setOnLongClickListener false
+                }
+            }
 
-                } else {
-                    EventBus.getDefault().post(SelectFolderEvent(false))
-                    holder.data?.let { it1 -> selectedFolders.remove(it1) }
-                    holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                        View.GONE
-                    holder.isSelecting = false
+            holder.checkLayout.setOnClickListener {
+                if(!isPaste) {
+                    if (!holder.isSelecting) {
+                        if (selectedFolders.size > 0) {
+                            EventBus.getDefault().post(SelectFolderEvent(true))
+                            holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                                View.VISIBLE
+                            holder.isSelecting = true
+                            holder.data?.let { it1 -> selectedFolders.add(it1) }
 
-                    holder.cardView.cardElevation = 0f
+                            holder.cardView.cardElevation = 10f
+                        }
+
+                    } else {
+                        EventBus.getDefault().post(SelectFolderEvent(false))
+                        holder.data?.let { it1 -> selectedFolders.remove(it1) }
+                        holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                            View.GONE
+                        holder.isSelecting = false
+
+                        holder.cardView.cardElevation = 0f
+                    }
                 }
             }
 
             holder.itemLayout.setOnClickListener {
-                if (!holder.isSelecting) {
-                    EventBus.getDefault().post(OpenFolderEvent(holder.data?._id.toString()))
+                if(!isPaste) {
+                    if (!holder.isSelecting) {
+                        publish(OpenFolderEvent(holder.data?._id.toString()))
+                    }
+                }
+                else{
+                    if(selectedToPast != holder.data) {
+                        holder.cardView.cardElevation = 10f
+                        holder.isSelectedPaste = true
+                        selectedToPast = holder.data
+                        notifyDataSetChanged()
+                        EventBus.getDefault().post(holder.data?._id?.let { it1 ->
+                            SelectFolderToMoveEvent(
+                                it1
+                            )
+                        })
+                    }
+                    else{
+                        holder.cardView.cardElevation = 0f
+                        holder.isSelectedPaste = false
+                        selectedToPast = null
+                        notifyDataSetChanged()
+                        EventBus.getDefault().post(SelectFolderToMoveEvent(null))
+                    }
                 }
             }
 
@@ -185,6 +220,18 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
             if(selectedFolders.contains(holder.data) && checkButton.visibility == View.GONE){
                 checkButton.visibility = View.VISIBLE
                 holder.cardView.cardElevation = 10f
+            }
+
+            if(selectedToPast != null){
+                if(selectedToPast != holder.data) {
+                    holder.cardView.cardElevation = 0f
+                }
+                else{
+                    holder.cardView.cardElevation = 10f
+                }
+            }
+            else{
+                holder.cardView.cardElevation = 0f
             }
         }
     }
@@ -295,6 +342,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
         selectedFolders.clear()
         bgRealm.close()
+    }
+
+    fun setPasteMode(flag : Boolean){
+        isPaste = flag
+        notifyDataSetChanged()
     }
 
     fun filterResults(text : String) {

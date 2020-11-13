@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Build
@@ -51,12 +52,13 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 @InternalCoroutinesApi
 @AndroidEntryPoint
+@RequiresApi(Build.VERSION_CODES.N)
 class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private var realm: Realm = Realm.getDefaultInstance()
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var pinnedRecyclerView: RecyclerView
-    private lateinit var adapter: ChannelRealmAdapter
+    lateinit var adapter: ChannelRealmAdapter
     private lateinit var pinnedAdapter: PinnedChannelAdapter
     private lateinit var fab: FloatingActionButton
     private var folder: FolderRealm? = null
@@ -75,7 +77,11 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: FinishEvent) {
+        finish()
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelPinDenyEvent) {
         val builder =
@@ -87,7 +93,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             "Открепить чат"
         ) { dialog, _ ->
             pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
-            event.channel?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_folder)?.performClick()
+            event.channel?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_chat)?.performClick()
             setUpRecyclerPinned(null)
             refreshRecyclerView()
             dialog.dismiss()
@@ -102,19 +108,28 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         alert.show()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelPinEvent){
         setUpRecyclerPinned(event.pinnedChannel)
         refreshRecyclerView()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelUnpinEvent){
         setUpRecyclerPinned(null)
         refreshRecyclerView()
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: MoveCancelEvent){
+        setDefaultActionBar()
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: MoveConfirmEvent){
+        adapter.moveChannels(event.folder)
+    }
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SelectChatEvent){
@@ -151,11 +166,13 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             }
 
             customActionBarView.findViewById<ImageView>(R.id.actionBar_chat_button_delete).setOnClickListener {
-                //deleteChats()
+                deleteChats()
             }
 
             customActionBarView.findViewById<ImageView>(R.id.actionBar_chat_button_move).setOnClickListener {
-                //deleteFolders()
+                val intent = Intent(this, FolderActivity::class.java)
+                intent.putExtra("count", countText.text.toString().toInt())
+                startActivity(intent)
             }
         }
     }
@@ -224,11 +241,12 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         EventBus.getDefault().register(this)
 
-        setDefaultActionBar()
+
     }
 
     override fun onStart() {
         super.onStart()
+        setDefaultActionBar()
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
@@ -262,7 +280,6 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     override fun onBackPressed() {
         if(isSelecting) {
             setDefaultActionBar()
@@ -274,7 +291,31 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
+    private fun deleteChats(){
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("Вы хотите удалить выбранные чаты?")
+
+        builder.setPositiveButton(
+            "Удалить"
+        ) { dialog, _ ->
+            adapter.deleteSelected()
+            setDefaultActionBar()
+            refreshRecyclerView()
+            dialog.dismiss()
+        }
+        builder.setNegativeButton(
+            "Нет, спасибо"
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert = builder.create()
+        alert.show()
+    }
+
+
     private fun setUpRecyclerView(realm: Realm) {
         val query = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).findAll().sort("order").toMutableList()
         query.removeIf {
@@ -288,6 +329,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
             recyclerView.layoutManager = LinearLayoutManager(this)
             recyclerView.adapter = adapter
+            folderId?.let { adapter.setFolderId(it) }
             recyclerView.setHasFixedSize(true)
 
             val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
@@ -301,23 +343,25 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     open fun refreshRecyclerView(){
-        val mutableChannels = realm.where<ChannelRealm>().sort("order")
-            .findAll().toMutableList()
+        val mutableChannels = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).findAll().sort("order").toMutableList()
         mutableChannels.removeIf {
             it.isPinned
         }
         adapter.setDataList(mutableChannels)
+        if(mutableChannels.size <= 0){
+            binding.textLayout.visibility = View.VISIBLE
+        }
     }
 
     private fun setUpRecyclerPinned(pinned: ChannelRealm?){
         val found : ChannelRealm?
         if(pinned == null){
             realm = Realm.getDefaultInstance()
-            found = realm.where<ChannelRealm>().equalTo("isPinned", true).findFirst()
+            found = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).equalTo("isPinned", true).findFirst()
             if(found != null){
                 pinnedAdapter = PinnedChannelAdapter(found)
+                folderId?.let { pinnedAdapter.setFolderId(it) }
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter
                 pinnedRecyclerView.setHasFixedSize(true)
@@ -330,6 +374,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         else {
             pinnedAdapter = PinnedChannelAdapter(pinned)
+            folderId?.let { pinnedAdapter.setFolderId(it) }
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter
             pinnedRecyclerView.setHasFixedSize(true)
@@ -346,10 +391,6 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
-    }
 
     private fun setDefaultActionBar() {
         val actionbar = supportActionBar
@@ -360,19 +401,6 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             customActionBarView = actionbar.customView
             val nameText = customActionBarView.findViewById<TextView>(R.id.name)
             nameText.text = folder?.name
-
-            /*val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                weight = 1.0f
-                gravity = Gravity.CENTER
-            }
-            nameText.layoutParams = params
-            val scale = resources.displayMetrics.density
-            val dpAsPixels = (16 * scale + 0.5f)
-            nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
-            nameText.textSize = 24F*/
 
             customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).setOnClickListener {
                 finish()

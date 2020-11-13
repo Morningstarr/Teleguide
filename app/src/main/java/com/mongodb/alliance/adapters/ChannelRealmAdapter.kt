@@ -43,6 +43,8 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
         channelsFilterList = data
     }
 
+    private var folderId : String? = null
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.new_channels_realm_view, parent, false)
         return ChannelViewHolder(itemView)
@@ -60,7 +62,7 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
         if(channelsFilterList[position].isValid) {
             val obj: ChannelRealm? = getItem(position)
             holder.data = obj
-            holder.name.text = obj?.name
+            holder.name.text = obj?.displayName
 
             holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 
@@ -176,20 +178,25 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
     private fun findPinned() : ChannelRealm?{
         val bgRealm = Realm.getDefaultInstance()
 
-        val result = bgRealm.where<ChannelRealm>().equalTo("isPinned", true)
+        val result = bgRealm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).equalTo("isPinned", true)
             .findFirst()
 
         bgRealm.close()
         return result
     }
 
+    fun setFolderId(id : String){
+        folderId = id
+    }
+
     private fun setPinned(channel : ChannelRealm, pinned : Boolean) {
         val bgRealm = Realm.getDefaultInstance()
 
         runBlocking {
-            val tempChannel = bgRealm.where<ChannelRealm>().equalTo("_id", channel._id)
-                .findFirst() as ChannelRealm
             bgRealm.executeTransaction { realm ->
+                val tempChannel = realm.where<ChannelRealm>().equalTo("_id", channel._id)
+                    .findFirst() as ChannelRealm
+
                 tempChannel.isPinned = pinned
             }
         }
@@ -207,6 +214,34 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
             notifyItemChanged(i)
         }
         selectedChannels.clear()
+    }
+
+    fun deleteSelected(){
+        val bgRealm = Realm.getDefaultInstance()
+
+        for (channel in selectedChannels) {
+            bgRealm.executeTransaction { realm ->
+                val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
+                results?.deleteFromRealm()
+            }
+        }
+
+        selectedChannels.clear()
+        bgRealm.close()
+    }
+
+    fun moveChannels(newFolder : FolderRealm){
+        val bgRealm = Realm.getDefaultInstance()
+
+        for (channel in selectedChannels) {
+            bgRealm.executeTransaction { realm ->
+                val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
+                results?.folder = newFolder
+            }
+        }
+
+        selectedChannels.clear()
+        bgRealm.close()
     }
 
     private fun openChannel(username: String) {
@@ -313,7 +348,7 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
         } else {
             val resultList : MutableList<ChannelRealm> = ArrayList()
             for (row in data) {
-                if (row.name.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT))) {
+                if (row.displayName.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT))) {
                     resultList.add(row)
                 }
             }

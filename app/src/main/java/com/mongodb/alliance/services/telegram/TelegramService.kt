@@ -193,7 +193,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
 
     suspend fun callNumberConfirm(input : String): TelegramObject? {
         try {
-            var res = client.exec(TdApi.SetAuthenticationPhoneNumber(input, null))
+            val res = client.exec(TdApi.SetAuthenticationPhoneNumber(input, null))
             removeRetained<StateChangedEvent>()
             return res
         }
@@ -210,7 +210,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     }
 
     suspend fun getChatIds() : LongArray {
-        val getChats = TdApi.GetChats(TdApi.ChatListMain(), Long.MAX_VALUE, 0, Int.MAX_VALUE)   //TODO возмножно стоить изменить max_value на что-то другое
+        val getChats = TdApi.GetChats(TdApi.ChatListMain(), Long.MAX_VALUE, 0, Int.MAX_VALUE)
         val chats : TdApi.Chats = client.exec(getChats) as TdApi.Chats
         return chats.chatIds
     }

@@ -8,6 +8,7 @@ import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
@@ -125,7 +126,8 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         }
 
         holder.itemLayout.setOnClickListener {
-            EventBus.getDefault().post(OpenFolderEvent(holder.data?._id.toString()))
+            /*EventBus.getDefault().post(OpenFolderEvent(holder.data?._id.toString()))*/
+            publish(OpenFolderEvent(holder.data?._id.toString()))
         }
     }
 

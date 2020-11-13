@@ -39,6 +39,7 @@
         android:fontFamily="@font/roboto_medium"
         android:textSize="20sp"
         android:textColor="#1A1A1A"
+        android:textStyle="bold"
 />
 
     <ImageButton

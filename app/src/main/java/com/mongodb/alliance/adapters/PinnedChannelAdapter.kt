@@ -18,6 +18,7 @@ import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
+import org.bson.types.ObjectId
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -31,6 +32,8 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
+
+    private var folderId : String? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
@@ -55,7 +58,7 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         holder.data = channel
-        holder.name.text = channel.name
+        holder.name.text = channel.displayName
 
         holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 
@@ -126,11 +129,15 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
     fun findPinned() : ChannelRealm?{
         val bgRealm = Realm.getDefaultInstance()
 
-        val result = bgRealm.where<ChannelRealm>().equalTo("isPinned", true)
+        val result = bgRealm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).equalTo("isPinned", true)
             .findFirst()
 
         bgRealm.close()
         return result
+    }
+
+    fun setFolderId(id : String){
+        folderId = id
     }
 
     fun setPinned(channel : ChannelRealm, pinned : Boolean) {

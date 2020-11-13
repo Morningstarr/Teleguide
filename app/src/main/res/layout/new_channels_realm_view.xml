@@ -65,7 +65,7 @@ app:cardElevation="0dp">
                 android:id="@+id/chat_image"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="20dp"
+                android:layout_marginStart="15dp"
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/round_shape"
                 android:scaleType="centerInside"
@@ -77,6 +77,7 @@ app:cardElevation="0dp">
             <LinearLayout
                 android:layout_width="230dp"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -84,9 +85,10 @@ app:cardElevation="0dp">
                 app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="24dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:weightSum="1">
 
 
                     <TextView
@@ -94,13 +96,17 @@ app:cardElevation="0dp">
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
 
-                        android:fontFamily="@font/roboto"
+                        android:layout_weight="0.73"
 
+                        android:ellipsize="end"
+                        android:fontFamily="@font/roboto"
                         android:gravity="top"
                         android:lineSpacingExtra="5sp"
                         android:maxWidth="200dp"
+                        android:maxLines="1"
+                        android:minLines="1"
                         android:paddingStart="15dp"
-                        android:text="Kirill Kovrik"
+                        android:text="Типичный программист"
                         android:textColor="#1A1A1A"
                         android:textSize="18sp"
                         android:translationY="-2.62sp"
@@ -109,13 +115,11 @@ app:cardElevation="0dp">
 
                     <ImageView
                         android:id="@+id/chat_pinned"
-                        android:layout_width="20dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:layout_marginStart="15dp"
 
-                        android:layout_marginEnd="55dp"
-
+                        android:layout_weight="0.27"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_pin_blue"
                         android:translationY="-2.62sp"

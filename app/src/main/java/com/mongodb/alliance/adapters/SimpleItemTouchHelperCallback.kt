@@ -53,7 +53,10 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         recyclerView: RecyclerView,
         viewHolder: RecyclerView.ViewHolder
     ): Int {
-        val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
+        var dragFlags = 0
+        if(recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste) {
+            dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
+        }
         return makeMovementFlags(
             dragFlags,
             0
@@ -65,12 +68,11 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        if(viewHolder is FolderAdapter.FolderViewHolder){
-            if(!viewHolder.isSelecting) {
+        if(viewHolder is FolderAdapter.FolderViewHolder) {
+            if (!viewHolder.isSelecting) {
                 adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
                 return true
-            }
-            else{
+            } else {
                 viewHolder.cardView.cardElevation = 10f
                 return false
             }
