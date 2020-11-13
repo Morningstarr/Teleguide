@@ -167,6 +167,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                         holder.isSelectedPaste = true
                         selectedToPast = holder.data
                         notifyDataSetChanged()
+                        EventBus.getDefault().post(CancelPasteSelectionEvent(false))
                         EventBus.getDefault().post(holder.data?._id?.let { it1 ->
                             SelectFolderToMoveEvent(
                                 it1
@@ -242,6 +243,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
     fun setDataList(folders: MutableList<FolderRealm>) {
         foldersFilterList = folders
+        notifyDataSetChanged()
+    }
+
+    fun cancelPasteSelection(){
+        selectedToPast = null
         notifyDataSetChanged()
     }
 

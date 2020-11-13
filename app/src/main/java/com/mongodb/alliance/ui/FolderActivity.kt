@@ -89,6 +89,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: CancelPasteSelectionEvent) {
+        if(event.flag) {
+            adapter.cancelPasteSelection()
+        }
+        else {
+            pinnedAdapter.cancelPasteSelection()
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SelectFolderToMoveEvent) {
         folderId = event.folderId
     }
@@ -279,6 +289,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
                         if(count != -1){
                             adapter.setPasteMode(true)
+                            pinnedAdapter.setPasteMode(true)
                             val actionbar = supportActionBar
                             if(actionbar != null) {
                                 actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
@@ -304,6 +315,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
                                 customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel).setOnClickListener {
                                     adapter.setPasteMode(false)
+                                    pinnedAdapter.setPasteMode(false)
                                     EventBus.getDefault().post(MoveCancelEvent())
                                     finish()
                                 }
@@ -538,13 +550,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         builder.setPositiveButton(
             "Переместить"
         ) { dialog, _ ->
-            //adapter.deleteSelected()
-            //refreshRecyclerView()
-            //val newFolder = realm.where<FolderRealm>().equalTo("_id", folderId).findFirst()
             if (newFolder != null) {
                 EventBus.getDefault().post(MoveConfirmEvent(newFolder))
             }
             adapter.setPasteMode(false)
+            pinnedAdapter.setPasteMode(false)
             dialog.dismiss()
             EventBus.getDefault().post(FinishEvent())
             finish()
@@ -558,6 +568,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             "Нет, спасибо"
         ) { dialog, _ -> // Do nothing
             adapter.setPasteMode(false)
+            pinnedAdapter.setPasteMode(false)
             adapter.updateItems()
             dialog.dismiss()
             finish()

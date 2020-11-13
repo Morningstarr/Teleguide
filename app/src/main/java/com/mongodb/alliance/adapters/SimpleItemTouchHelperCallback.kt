@@ -54,7 +54,8 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder
     ): Int {
         var dragFlags = 0
-        if(recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste) {
+        if((recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste) ||
+            (recyclerView.adapter is PinnedFolderAdapter && !(recyclerView.adapter as PinnedFolderAdapter).returnPasteMode())) {
             dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
         }
         return makeMovementFlags(

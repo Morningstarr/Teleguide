@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
@@ -27,6 +28,10 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
     GlobalBroker.Subscriber, CoroutineScope,
     RecyclerSwipeAdapter<PinnedFolderAdapter.FolderViewHolder>(){
 
+    private var isPaste : Boolean = false
+
+    private var selectedToPaste : FolderRealm? = null
+
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
@@ -45,8 +50,10 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
         var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
         var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.bottom_wrapper)
+        var cardView : CardView = view.findViewById<CardView>(R.id.card_view)
         var name: TextView = view.findViewById(R.id.folder_name)
         var data: FolderRealm? = null
+        var isPasteSelected : Boolean = false
         var additional: TextView = view.findViewById(R.id.additional_count)
         var checkLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.check_layout)
         var isSelecting : Boolean = false
@@ -55,53 +62,54 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
         holder.data = folder
         holder.name.text = folder.name
-
-        holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
-
-        holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
-
         holder.swipeLayout.isRightSwipeEnabled = false
 
-        if(holder.data != null) {
-            if ((holder.data as FolderRealm).isPinned) {
-                mItemManger.bindView(holder.itemView, position)
-                holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
-                val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
-                pinButton.setImageResource(R.drawable.ic_pin_blue_left)
-                pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))
-            } else {
-                mItemManger.bindView(holder.itemView, position)
+        if(!isPaste) {
+            holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
+
+            holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
+
+            if (holder.data != null) {
+                if ((holder.data as FolderRealm).isPinned) {
+                    mItemManger.bindView(holder.itemView, position)
+                    holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
+                    val pinButton = holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder)
+                    pinButton.setImageResource(R.drawable.ic_pin_blue_left)
+                    pinButton.setBackgroundColor(Color.parseColor("#FFFFFF"))
+                } else {
+                    mItemManger.bindView(holder.itemView, position)
+                }
             }
+            holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
+                override fun onClose(layout: SwipeLayout?) {
+                    //when the SurfaceView totally cover the BottomView.
+                }
+
+                override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
+
+                }
+
+                override fun onStartOpen(layout: SwipeLayout?) {
+                    mItemManger.closeAllExcept(layout)
+                }
+
+                override fun onOpen(layout: SwipeLayout?) {
+                    //when the BottomView totally show.
+                }
+
+                override fun onStartClose(layout: SwipeLayout?) {
+
+                }
+
+                override fun onHandRelease(
+                    layout: SwipeLayout?,
+                    xvel: Float,
+                    yvel: Float
+                ) {
+
+                }
+            })
         }
-        holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
-            override fun onClose(layout: SwipeLayout?) {
-                //when the SurfaceView totally cover the BottomView.
-            }
-
-            override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
-
-            }
-
-            override fun onStartOpen(layout: SwipeLayout?) {
-                mItemManger.closeAllExcept(layout)
-            }
-
-            override fun onOpen(layout: SwipeLayout?) {
-                //when the BottomView totally show.
-            }
-
-            override fun onStartClose(layout: SwipeLayout?) {
-
-            }
-
-            override fun onHandRelease(
-                layout: SwipeLayout?,
-                xvel: Float,
-                yvel: Float
-            ) {
-
-            }
-        })
 
         holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_folder).setOnClickListener {
             mItemManger.closeAllItems()
@@ -126,9 +134,41 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         }
 
         holder.itemLayout.setOnClickListener {
-            /*EventBus.getDefault().post(OpenFolderEvent(holder.data?._id.toString()))*/
-            publish(OpenFolderEvent(holder.data?._id.toString()))
+            if(!isPaste) {
+                publish(OpenFolderEvent(holder.data?._id.toString()))
+            }
+            else{
+                if(!holder.isPasteSelected) {
+                    holder.cardView.cardElevation = 10f
+                    holder.isPasteSelected = true
+                    selectedToPaste = holder.data
+                    EventBus.getDefault().post(CancelPasteSelectionEvent(true))
+                    EventBus.getDefault().post(holder.data?._id?.let { it1 ->
+                        SelectFolderToMoveEvent(
+                            it1
+                        )
+                    })
+                }
+                else{
+                    holder.cardView.cardElevation = 0f
+                    holder.isPasteSelected = false
+                    selectedToPaste = null
+                    EventBus.getDefault().post(SelectFolderToMoveEvent(null))
+                }
+            }
         }
+
+        if(selectedToPaste == null){
+            holder.isPasteSelected = false
+            holder.cardView.cardElevation = 0f
+        }
+
+        holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
+    }
+
+    fun cancelPasteSelection(){
+        selectedToPaste = null
+        notifyDataSetChanged()
     }
 
     fun findPinned() : FolderRealm?{
@@ -139,6 +179,14 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
 
         bgRealm.close()
         return result
+    }
+
+    fun setPasteMode(flag : Boolean){
+        isPaste = flag
+    }
+
+    fun returnPasteMode() : Boolean {
+        return isPaste
     }
 
     fun setPinned(folder : FolderRealm, pinned : Boolean) {
