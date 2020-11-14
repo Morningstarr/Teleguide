@@ -68,7 +68,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
     private var count : Int = -1
-    private var isSelecting : Boolean = false
+    var isSelecting : Boolean = false
     private var folderId : ObjectId? = null
     private var channelAdapter: ChannelRealmAdapter? = null
 
@@ -82,6 +82,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     @TelegramServ
     @Inject
     lateinit var t_service: Service
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: SelectPinnedFolderEvent) {
+        Toast.makeText(baseContext, "Открепите папку для дальнейшего взаимодействия!", Toast.LENGTH_LONG).show()
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: NullObjectAccessEvent) {
@@ -367,6 +372,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             found = realm.where<FolderRealm>().equalTo("isPinned", true).findFirst()
             if(found != null){
                 pinnedAdapter = PinnedFolderAdapter(found)
+                pinnedAdapter.addContext(this)
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter
                 pinnedRecyclerView.setHasFixedSize(true)

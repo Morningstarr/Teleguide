@@ -66,11 +66,12 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private var folderId : String? = null
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
-    private var isSelecting : Boolean = false
+    var isSelecting : Boolean = false
 
     @TelegramServ
     @Inject
     lateinit var t_service: Service
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: NullObjectAccessEvent) {
@@ -239,6 +240,10 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         subscribe<OpenChannelEvent>(lifecycleScope){ event ->
             startActivity(event.intent)
         }
+
+        subscribe<SelectPinnedChatEvent>(lifecycleScope){ event ->
+            Toast.makeText(baseContext, "Открепите чат для дальнейшего взаимодействия!", Toast.LENGTH_LONG).show()
+        }
         EventBus.getDefault().register(this)
 
 
@@ -361,6 +366,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             found = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).equalTo("isPinned", true).findFirst()
             if(found != null){
                 pinnedAdapter = PinnedChannelAdapter(found)
+                pinnedAdapter.addContext(this)
                 folderId?.let { pinnedAdapter.setFolderId(it) }
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter

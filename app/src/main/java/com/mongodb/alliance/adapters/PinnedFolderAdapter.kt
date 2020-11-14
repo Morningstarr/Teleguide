@@ -1,6 +1,7 @@
 package com.mongodb.alliance.adapters
 
 import android.graphics.Color
+import android.util.EventLog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,7 @@ import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.ui.FolderActivity
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
@@ -23,7 +25,10 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.util.*
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
 
+@InternalCoroutinesApi
+@ExperimentalTime
 internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publisher,
     GlobalBroker.Subscriber, CoroutineScope,
     RecyclerSwipeAdapter<PinnedFolderAdapter.FolderViewHolder>(){
@@ -31,6 +36,8 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
     private var isPaste : Boolean = false
 
     private var selectedToPaste : FolderRealm? = null
+
+    var context : FolderActivity? = null
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -134,11 +141,10 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         }
 
         holder.itemLayout.setOnClickListener {
-            if(!isPaste) {
+            if (!isPaste) {
                 publish(OpenFolderEvent(holder.data?._id.toString()))
-            }
-            else{
-                if(!holder.isPasteSelected) {
+            } else {
+                if (!holder.isPasteSelected) {
                     holder.cardView.cardElevation = 10f
                     holder.isPasteSelected = true
                     selectedToPaste = holder.data
@@ -148,14 +154,36 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
                             it1
                         )
                     })
-                }
-                else{
+                } else {
                     holder.cardView.cardElevation = 0f
                     holder.isPasteSelected = false
                     selectedToPaste = null
                     EventBus.getDefault().post(SelectFolderToMoveEvent(null))
                 }
             }
+
+
+        }
+
+        holder.checkLayout.setOnClickListener {
+            if(!isPaste) {
+                if(context?.isSelecting!!) {
+                    EventBus.getDefault().post(SelectPinnedFolderEvent())
+                }
+                else{
+                    holder.itemLayout.performClick()
+                }
+            }
+            else{
+                holder.itemLayout.performClick()
+            }
+        }
+
+        holder.checkLayout.setOnLongClickListener {
+            if(!isPaste) {
+                EventBus.getDefault().post(SelectPinnedFolderEvent())
+            }
+            return@setOnLongClickListener true
         }
 
         if(selectedToPaste == null){
@@ -164,6 +192,10 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         }
 
         holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
+    }
+
+    fun addContext(activity : FolderActivity){
+        context = activity
     }
 
     fun cancelPasteSelection(){

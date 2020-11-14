@@ -237,6 +237,14 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
                 results?.folder = newFolder
+                val maxOrderValue =
+                    realm.where<ChannelRealm>().equalTo("folder._id", newFolder._id).findAll().max("order")
+                if(maxOrderValue != null) {
+                    results?.order = maxOrderValue.toInt() + 1
+                }
+                else{
+                    results?.order = 1
+                }
             }
         }
 

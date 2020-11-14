@@ -14,14 +14,18 @@ import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.ui.FolderActivity
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import java.util.*
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
 
 
+@InternalCoroutinesApi
+@ExperimentalTime
 class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, ItemTouchHelperAdapter,
     RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope, Filterable {
 
@@ -141,6 +145,9 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                             holder.data?.let { it1 -> selectedFolders.add(it1) }
 
                             holder.cardView.cardElevation = 10f
+                        }
+                        else{
+                            holder.itemLayout.performClick()
                         }
 
                     } else {

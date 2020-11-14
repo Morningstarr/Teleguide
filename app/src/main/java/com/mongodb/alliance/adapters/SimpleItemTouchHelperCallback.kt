@@ -13,8 +13,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mongodb.alliance.ChannelProj
 import com.mongodb.alliance.R
 import com.mongodb.alliance.channelApp
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlin.time.ExperimentalTime
 
-
+@ExperimentalTime
+@InternalCoroutinesApi
 class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemTouchHelper.Callback() {
 
 
