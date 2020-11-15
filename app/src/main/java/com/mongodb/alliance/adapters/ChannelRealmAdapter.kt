@@ -1,6 +1,8 @@
 package com.mongodb.alliance.adapters
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.*
 import android.widget.*
@@ -12,10 +14,16 @@ import cafe.adriel.broker.publish
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
+import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.ChannelType
 import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
+import com.squareup.picasso.Callback
+import com.squareup.picasso.Picasso
+import dagger.hilt.android.AndroidEntryPoint
 import io.realm.OrderedRealmCollection
 import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
@@ -23,14 +31,22 @@ import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
 import org.greenrobot.eventbus.EventBus
+import java.io.File
+import java.lang.Exception
 import java.util.*
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
 
 
+@InternalCoroutinesApi
+@ExperimentalTime
 class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
     GlobalBroker.Publisher, RecyclerSwipeAdapter<ChannelRealmAdapter.ChannelViewHolder>(),
-        ItemTouchHelperAdapter, Filterable, CoroutineScope
+        ItemTouchHelperAdapter, Filterable, CoroutineScope, Callback
 {
+
+    lateinit var t_service: Service
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -54,9 +70,14 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
         return channelsFilterList[position]
     }
 
+    fun initializeTService(t : TelegramService){
+        t_service = t
+    }
+
     override fun getSwipeLayoutResourceId(position: Int): Int {
         return R.id.chat_swipe_layout
     }
+
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         if(channelsFilterList[position].isValid) {
@@ -69,6 +90,45 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
             holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Left, holder.bottomWrapper)
 
             holder.swipeLayout.isRightSwipeEnabled = false
+
+            holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).text = holder.data?.displayName?.get(0)
+                .toString()
+
+            launch {
+                val task = async {
+                    holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).text =
+                        holder.data?.name?.let { (t_service as TelegramService).getRecentMessage(it) }
+                }
+                task.await()
+
+                Picasso.get().load(File(holder.data?.name?.let {
+                    (t_service as TelegramService).downloadImageFile(
+                        it)
+                })).into(holder.itemLayout.findViewById<ImageView>(R.id.chat_image),
+                object : Callback {
+                    override fun onSuccess() {
+                        holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility = View.INVISIBLE
+                        holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility = View.VISIBLE
+                    }
+
+                    override fun onError(e: Exception?) {
+                        holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility = View.VISIBLE
+                        holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility = View.INVISIBLE
+                    }
+                })
+
+
+                val task2 = async {
+                    holder.data?.name?.let { (t_service as TelegramService).getUnreadCount(it) }
+                }
+                val count = task2.await()
+                if(count!! > 0) {
+                    holder.itemLayout.findViewById<TextView>(R.id.messages_count).text = count.toString()
+                }
+                else{
+                    holder.itemLayout.findViewById<TextView>(R.id.messages_count).visibility = View.INVISIBLE
+                }
+            }
 
             if (holder.data != null) {
                 mItemManger.bindView(holder.itemView, position)
@@ -382,5 +442,13 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
             holder.timeLayout.findViewById<ImageView>(R.id.check_chat).visibility =
                 View.INVISIBLE
         }
+    }
+
+    override fun onSuccess() {
+
+    }
+
+    override fun onError(e: Exception?) {
+        TODO("Not yet implemented")
     }
 }

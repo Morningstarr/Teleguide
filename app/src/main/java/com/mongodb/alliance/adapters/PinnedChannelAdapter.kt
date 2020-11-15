@@ -16,6 +16,8 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.ChannelsRealmActivity
 import com.mongodb.alliance.ui.FolderActivity
 import io.realm.Realm
@@ -40,6 +42,8 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
         get() = Dispatchers.Main + job
 
     private var folderId : String? = null
+
+    lateinit var t_service: Service
 
     var context : ChannelsRealmActivity? = null
 
@@ -87,6 +91,16 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
                 mItemManger.bindView(holder.itemView, position)
             }
         }
+
+        launch {
+            val task = async {
+                holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).text =
+                    holder.data?.name?.let { (t_service as TelegramService).getRecentMessage(it) }
+            }
+            task.await()
+
+        }
+
         holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
             override fun onClose(layout: SwipeLayout?) {
                 //when the SurfaceView totally cover the BottomView.
@@ -150,6 +164,10 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
         }
 
 
+    }
+
+    fun initializeTService(t : TelegramService){
+        t_service = t
     }
 
     fun addContext(activity : ChannelsRealmActivity){

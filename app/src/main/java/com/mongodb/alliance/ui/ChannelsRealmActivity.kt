@@ -332,6 +332,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 query
             )
 
+            adapter.initializeTService(t_service as TelegramService)
             recyclerView.layoutManager = LinearLayoutManager(this)
             recyclerView.adapter = adapter
             folderId?.let { adapter.setFolderId(it) }
@@ -366,6 +367,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             found = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).equalTo("isPinned", true).findFirst()
             if(found != null){
                 pinnedAdapter = PinnedChannelAdapter(found)
+                pinnedAdapter.initializeTService(t_service as TelegramService)
                 pinnedAdapter.addContext(this)
                 folderId?.let { pinnedAdapter.setFolderId(it) }
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -380,6 +382,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         else {
             pinnedAdapter = PinnedChannelAdapter(pinned)
+            pinnedAdapter.initializeTService(t_service as TelegramService)
             folderId?.let { pinnedAdapter.setFolderId(it) }
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter

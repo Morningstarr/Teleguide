@@ -11,4 +11,5 @@ open class FolderRealm (_name: String = "Folder_name", user_id: String = "user_i
     var name: String = _name
     var order: Int = 1
     var isPinned: Boolean = false
+    var nestedCount: Int = 0
 }
