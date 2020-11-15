@@ -20,6 +20,8 @@ import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.ChannelsRealmActivity
 import com.mongodb.alliance.ui.FolderActivity
+import com.squareup.picasso.Callback
+import com.squareup.picasso.Picasso
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
@@ -27,6 +29,8 @@ import org.bson.types.ObjectId
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import java.io.File
+import java.lang.Exception
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -99,6 +103,33 @@ internal class PinnedChannelAdapter(var channel: ChannelRealm) : GlobalBroker.Pu
             }
             task.await()
 
+            Picasso.get().load(File(holder.data?.name?.let {
+                (t_service as TelegramService).downloadImageFile(
+                    it)
+            })).into(holder.itemLayout.findViewById<ImageView>(R.id.chat_image),
+                object : Callback {
+                    override fun onSuccess() {
+                        holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility = View.INVISIBLE
+                        holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility = View.VISIBLE
+                    }
+
+                    override fun onError(e: Exception?) {
+                        holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility = View.VISIBLE
+                        holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility = View.INVISIBLE
+                    }
+                })
+
+
+            val task2 = async {
+                holder.data?.name?.let { (t_service as TelegramService).getUnreadCount(it) }
+            }
+            val count = task2.await()
+            if(count!! > 0) {
+                holder.itemLayout.findViewById<TextView>(R.id.messages_count).text = count.toString()
+            }
+            else{
+                holder.itemLayout.findViewById<TextView>(R.id.messages_count).visibility = View.INVISIBLE
+            }
         }
 
         holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {

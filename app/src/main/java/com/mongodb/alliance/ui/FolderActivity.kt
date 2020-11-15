@@ -199,6 +199,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         refreshRecyclerView()
     }
 
+    override fun onRestart() {
+        super.onRestart()
+        //adapter.
+
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

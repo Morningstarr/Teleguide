@@ -71,6 +71,30 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         holder.name.text = folder.name
         holder.swipeLayout.isRightSwipeEnabled = false
 
+        val count = holder.data?.nestedCount
+        when (count){
+            0 -> {
+                holder.itemLayout.findViewById<LinearLayout>(R.id.pictures_layout).visibility = View.INVISIBLE
+            }
+            1 -> {
+                holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+            }
+            2 -> {
+                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+            }
+            3 -> {
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+            }
+            else -> {
+                if (count != null) {
+                    holder.itemLayout.findViewById<TextView>(R.id.additional_count).text = "+" + (count - 3).toString()
+                }
+            }
+        }
+
         if(!isPaste) {
             holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
 

@@ -85,6 +85,7 @@
                     app:layout_constraintTop_toTopOf="parent">
 
                     <ImageView
+                        android:id="@+id/first_nested"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/round_shape"
@@ -92,6 +93,7 @@
                         app:srcCompat="@drawable/ic_arrow_back" />
 
                     <ImageView
+                        android:id="@+id/second_nested"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_marginStart="-5dp"
@@ -100,6 +102,7 @@
                         app:srcCompat="@drawable/ic_camera" />
 
                     <ImageView
+                        android:id="@+id/third_nested"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_marginStart="-5dp"

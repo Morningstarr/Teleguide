@@ -72,6 +72,7 @@ internal class ChannelArrayAdapter(var data: ArrayList<ChannelRealm>, var folder
         var folder : FolderRealm? = null
         bgRealm.executeTransaction {
             folder = it.where<FolderRealm>().equalTo("name", name).findFirst()
+            folder?.nestedCount = folder?.nestedCount?.plus(1)!!
         }
 
         bgRealm.close()

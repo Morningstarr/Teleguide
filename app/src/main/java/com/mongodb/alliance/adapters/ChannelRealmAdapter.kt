@@ -282,6 +282,11 @@ class ChannelRealmAdapter(var data: MutableList<ChannelRealm>) :
         for (channel in selectedChannels) {
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
+                val folder = results?.folder
+                val foundFolder = realm.where<FolderRealm>().equalTo("_id", folder?._id).findFirst()
+                if (foundFolder != null) {
+                    foundFolder.nestedCount = foundFolder.nestedCount - 1
+                }
                 results?.deleteFromRealm()
             }
         }
