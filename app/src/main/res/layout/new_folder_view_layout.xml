@@ -84,31 +84,86 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <ImageView
-                        android:id="@+id/first_nested"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/round_shape"
-                        android:scaleType="centerInside"
-                        app:srcCompat="@drawable/ic_arrow_back" />
-
-                    <ImageView
-                        android:id="@+id/second_nested"
+                    <androidx.cardview.widget.CardView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:layout_marginStart="-5dp"
-                        android:background="@drawable/round_shape"
-                        android:scaleType="centerInside"
-                        app:srcCompat="@drawable/ic_camera" />
+                        app:cardCornerRadius="10dp"
+                        android:elevation="0dp"
+                        app:cardElevation="0dp">
+                        <ImageView
+                            android:id="@+id/first_nested"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/round_shape"
+                            android:scaleType="centerCrop"
+                            app:srcCompat="@drawable/ic_arrow_back"
+                            android:visibility="invisible"/>
 
-                    <ImageView
-                        android:id="@+id/third_nested"
+                        <TextView
+                            android:id="@+id/first_nested_placeholder"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textSize="12sp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="K"
+                            android:background="#CDF5FE" />
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
+                        app:cardCornerRadius="10dp"
                         android:layout_marginStart="-5dp"
-                        android:background="@drawable/round_shape"
-                        android:scaleType="centerInside"
-                        app:srcCompat="@drawable/ic_logout" />
+                        android:elevation="0dp"
+                        app:cardElevation="0dp">
+                        <ImageView
+                            android:id="@+id/second_nested"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/round_shape"
+                            android:scaleType="centerCrop"
+                            app:srcCompat="@drawable/ic_arrow_back"
+                            android:visibility="invisible" />
+
+                        <TextView
+                            android:id="@+id/second_nested_placeholder"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textSize="12sp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="K"
+                            android:background="#CDF5FE" />
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        app:cardCornerRadius="10dp"
+                        android:layout_marginStart="-5dp"
+                        android:elevation="0dp"
+                        app:cardElevation="0dp"
+                        >
+                        <ImageView
+                            android:id="@+id/third_nested"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/round_shape"
+                            android:scaleType="centerCrop"
+                            app:srcCompat="@drawable/ic_arrow_back"
+                            android:visibility="invisible"/>
+
+                        <TextView
+                            android:id="@+id/third_nested_placeholder"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textSize="12sp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="K"
+                            android:background="#CDF5FE" />
+                    </androidx.cardview.widget.CardView>
 
                     <TextView
                         android:id="@+id/additional_count"

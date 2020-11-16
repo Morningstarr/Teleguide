@@ -353,6 +353,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             mutableFolders
         )
 
+        adapter.initializeTService(t_service as TelegramService)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
@@ -378,6 +379,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             found = realm.where<FolderRealm>().equalTo("isPinned", true).findFirst()
             if(found != null){
                 pinnedAdapter = PinnedFolderAdapter(found)
+                pinnedAdapter.initializeTService(t_service as TelegramService)
                 pinnedAdapter.addContext(this)
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter
@@ -391,6 +393,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
         else {
             pinnedAdapter = PinnedFolderAdapter(pinned)
+            pinnedAdapter.initializeTService(t_service as TelegramService)
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter
             pinnedRecyclerView.setHasFixedSize(true)

@@ -15,14 +15,21 @@ import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
+import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.services.telegram.Service
+import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.FolderActivity
+import com.squareup.picasso.Callback
+import com.squareup.picasso.Picasso
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import java.io.File
+import java.lang.Exception
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -34,6 +41,8 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
     RecyclerSwipeAdapter<PinnedFolderAdapter.FolderViewHolder>(){
 
     private var isPaste : Boolean = false
+
+    lateinit var t_service: Service
 
     private var selectedToPaste : FolderRealm? = null
 
@@ -66,33 +75,15 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
         var isSelecting : Boolean = false
     }
 
+    @ExperimentalCoroutinesApi
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
         holder.data = folder
         holder.name.text = folder.name
         holder.swipeLayout.isRightSwipeEnabled = false
 
         val count = holder.data?.nestedCount
-        when (count){
-            0 -> {
-                holder.itemLayout.findViewById<LinearLayout>(R.id.pictures_layout).visibility = View.INVISIBLE
-            }
-            1 -> {
-                holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
-            }
-            2 -> {
-                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
-            }
-            3 -> {
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
-            }
-            else -> {
-                if (count != null) {
-                    holder.itemLayout.findViewById<TextView>(R.id.additional_count).text = "+" + (count - 3).toString()
-                }
-            }
+        if(count != null){
+            loadMiniatureImages(count, holder)
         }
 
         if(!isPaste) {
@@ -261,6 +252,277 @@ internal class PinnedFolderAdapter(var folder: FolderRealm) : GlobalBroker.Publi
 
     override fun getItemCount(): Int {
         return 1
+    }
+
+    @ExperimentalCoroutinesApi
+    fun loadMiniatureImages(count : Int, holder : PinnedFolderAdapter.FolderViewHolder){
+        val chats = getFirstChatsNames(holder)
+        when (count){
+            0 -> {
+                holder.itemLayout.findViewById<LinearLayout>(R.id.pictures_layout).visibility = View.INVISIBLE
+            }
+            1 -> {
+                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility = View.INVISIBLE
+                launch {
+                    val task = async {
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+                    }
+                    task.await()
+                }
+                holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+            }
+            2 -> {
+                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility = View.INVISIBLE
+                launch {
+                    val task = async {
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(1))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+                    }
+                    task.await()
+                }
+                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+            }
+            3 -> {
+                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).text = chats.values.elementAt(2)[0].toString()
+                launch {
+                    val task = async {
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(2))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(1))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.first_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+                    }
+                    task.await()
+                }
+
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+            }
+            else -> {
+                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
+                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).text = chats.values.elementAt(2)[0].toString()
+                launch {
+                    val task = async {
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(2))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(1))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+
+                        Picasso.get().load(
+                            File(
+                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.first_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+                    }
+                    task.await()
+                }
+
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).text = "+" + (count - 3).toString()
+            }
+        }
+    }
+
+    fun initializeTService(t : TelegramService){
+        t_service = t
+    }
+
+    private fun getFirstChatsNames(holder: PinnedFolderAdapter.FolderViewHolder) : HashMap<String, String>{
+        val bgRealm = Realm.getDefaultInstance()
+        val firstChats : HashMap<String, String> = HashMap<String, String>()
+        bgRealm.executeTransaction { realm ->
+            val firstChatsObjects = realm.where<ChannelRealm>().equalTo("folder._id", holder.data?._id).sort("order").limit(3).findAll().toMutableList()
+            try {
+                if (firstChatsObjects[0] != null) {
+                    firstChats[firstChatsObjects[0].name] = firstChatsObjects[0].displayName
+                }
+                if (firstChatsObjects[1] != null) {
+                    firstChats[firstChatsObjects[1].name] = firstChatsObjects[1].displayName
+                }
+                if (firstChatsObjects[2] != null) {
+                    firstChats[firstChatsObjects[2].name] = firstChatsObjects[2].displayName
+                }
+            }
+            catch(e:Exception){}
+        }
+
+        bgRealm.close()
+        return firstChats
     }
 
 }

@@ -339,19 +339,32 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         //return client.exec((TdApi.GetChat(returnIdByName(chatName)) as TdApi.Chat).topMessage)
     }
 
+    @ExperimentalCoroutinesApi
     suspend fun getChatImageId(name : String): Int? {
-        val searchPublicChat = client.exec(TdApi.SearchPublicChat(name))
-        //try {
+        if(returnClientState() == ClientState.ready) {
+            val searchPublicChat = client.exec(TdApi.SearchPublicChat(name))
+            //try {
             val chat = (searchPublicChat as TdApi.Chat)
             return chat.photo?.small?.id
+        }
+        else{
+            return 0
+        }
         //} catch (e: Exception) {
             //Timber.e(e.message)
         //}
     }
 
+    @ExperimentalCoroutinesApi
     suspend fun downloadImageFile(name : String): String {
-        val file = getChatImageId(name)?.let { TdApi.DownloadFile(it, 1,0, 0, true) }?.let { client.exec(it) }
-        return (file as TdApi.File).local.path!!//.path
+        if(returnClientState() == ClientState.ready) {
+            val file = getChatImageId(name)?.let { TdApi.DownloadFile(it, 1, 0, 0, true) }
+                ?.let { client.exec(it) }
+            return (file as TdApi.File).local.path!!//.path
+        }
+        else{
+            return ""
+        }
     }
 
     suspend fun getUnreadCount(name : String): Int {
