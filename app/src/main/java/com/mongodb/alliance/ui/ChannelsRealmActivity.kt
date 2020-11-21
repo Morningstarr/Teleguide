@@ -1,6 +1,7 @@
 package com.mongodb.alliance.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Build
@@ -10,6 +11,7 @@ import android.os.Handler
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
@@ -191,6 +193,17 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         fab = binding.channelsFab
         recyclerView = binding.channelsInFolderList
+        recyclerView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            if(scrollY != oldScrollY) {
+                hideKeyboard()
+                if(oldScrollY < 0){
+                    binding.channelsFab.hide()
+                }
+            }
+            if(!recyclerView.canScrollVertically(-1)){
+                binding.channelsFab.show()
+            }
+        }
         pinnedRecyclerView = binding.channelPinned
         pinnedRecyclerView.visibility = View.GONE
 
@@ -502,6 +515,19 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 }
             }
         }
+    }
+
+    private fun hideKeyboard() {
+        val imm: InputMethodManager =
+            this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        //Find the currently focused view, so we can grab the correct window token from it.
+        var view: View? = this.currentFocus
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = View(this)
+        }
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+        Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
     }
 
 }

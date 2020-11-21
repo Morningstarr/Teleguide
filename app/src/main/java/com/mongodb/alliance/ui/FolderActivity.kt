@@ -227,6 +227,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         recyclerView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
             if(scrollY != oldScrollY) {
                 hideKeyboard()
+                if(oldScrollY < 0){
+                    binding.fldrFab.hide()
+                }
+            }
+            if(!recyclerView.canScrollVertically(-1)){
+                binding.fldrFab.show()
             }
         }
         pinnedRecyclerView = binding.recyclerPinned
@@ -608,7 +614,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-    fun hideKeyboard() {
+    private fun hideKeyboard() {
         val imm: InputMethodManager =
             this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         //Find the currently focused view, so we can grab the correct window token from it.
