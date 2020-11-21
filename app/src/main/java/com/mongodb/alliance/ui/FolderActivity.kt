@@ -46,7 +46,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
-import java.lang.Runnable
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import javax.inject.Inject
@@ -77,7 +76,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    private lateinit var binding: ActivityFolderBinding
+    lateinit var binding: ActivityFolderBinding
 
     @TelegramServ
     @Inject
@@ -122,6 +121,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 actionbar.setDisplayShowCustomEnabled(true)
                 actionbar.setCustomView(R.layout.action_bar_folder_options_drawable)
                 customActionBarView = actionbar.customView
+                if(binding.fldrFab.isOrWillBeShown) {
+                    binding.fldrFab.hide()
+                }
             }
             else{
                 customActionBarView = actionbar.customView
@@ -133,6 +135,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             else{
                 if(countText.text.toString().toInt() == 1){
                     setDefaultActionBar()
+                    binding.fldrFab.show()
                 }
                 else {
                     countText.text = (countText.text.toString().toInt() - 1).toString()
@@ -143,6 +146,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 setDefaultActionBar()
                 isSelecting = false
                 adapter.cancelSelection()
+                binding.fldrFab.show()
             }
 
             customActionBarView.findViewById<ImageView>(R.id.actionBar_button_delete).setOnClickListener {
@@ -248,7 +252,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         binding.searchView.onActionViewExpanded()
-        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+        Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
 
         binding.searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
@@ -333,6 +337,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             setDefaultActionBar()
             isSelecting = false
             adapter.cancelSelection()
+            if(binding.fldrFab.isOrWillBeHidden) {
+                binding.fldrFab.show()
+            }
         }
         else{
             super.onBackPressed()
@@ -417,7 +424,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).visibility =
                 View.GONE
             val nameText = customActionBarView.findViewById<TextView>(R.id.name)
-            nameText.text = "TeleGuide"
+            nameText.text = resources.getString(R.string.app_name)
             nameText.gravity = Gravity.START
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -458,7 +465,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         }
                     }
                 } catch (e: Exception) {
-                    Timber.e(e.message)
+                    Timber.e(e)
                 }
 
                 popup.menuInflater.inflate(R.menu.menu, popup.menu)
@@ -508,8 +515,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-
-
     private fun deleteFolders(){
         val builder =
             AlertDialog.Builder(this)
@@ -523,6 +528,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             setDefaultActionBar()
             refreshRecyclerView()
             dialog.dismiss()
+            binding.fldrFab.show()
         }
         builder.setNegativeButton(
             "Нет, спасибо"
@@ -624,7 +630,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             view = View(this)
         }
         imm.hideSoftInputFromWindow(view.windowToken, 0)
-        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+        Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
     }
 
 }

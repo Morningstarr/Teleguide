@@ -1,6 +1,5 @@
 package com.mongodb.alliance.adapters
 
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,12 +21,10 @@ import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.FolderActivity
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
-import dagger.hilt.EntryPoint
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
-import timber.log.Timber
 import java.io.File
 import java.lang.Exception
 import java.util.*
@@ -52,6 +49,8 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     var selectedToPast : FolderRealm? = null
 
     var isPaste : Boolean = false
+
+    var context : FolderActivity? = null
 
     init {
         foldersFilterList = data
@@ -97,7 +96,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 if(state == ClientState.waitParameters){
                     runBlocking {
                         (tService as TelegramService).setUpClient()
-                        state = (tService as TelegramService).returnClientState()
+                        state = tService.returnClientState()
                     }
                 }
                 loadMiniatureImages(count, holder, state)
@@ -191,8 +190,28 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
             holder.itemLayout.setOnClickListener {
                 if(!isPaste) {
-                    if (!holder.isSelecting) {
+                    if (selectedFolders.size <= 0) {
                         publish(OpenFolderEvent(holder.data?._id.toString()))
+                    }
+                    else{
+                        if(holder.isSelecting) {
+                            EventBus.getDefault().post(SelectFolderEvent(false))
+                            holder.data?.let { it1 -> selectedFolders.remove(it1) }
+                            holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                                View.GONE
+                            holder.isSelecting = false
+
+                            holder.cardView.cardElevation = 0f
+                        }
+                        else{
+                            EventBus.getDefault().post(SelectFolderEvent(true))
+                            holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
+                                View.VISIBLE
+                            holder.isSelecting = true
+                            holder.data?.let { it1 -> selectedFolders.add(it1) }
+
+                            holder.cardView.cardElevation = 10f
+                        }
                     }
                 }
                 else{
@@ -351,13 +370,13 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
                         Picasso.get().load(
                             File(
-                                (tService as TelegramService).downloadImageFile(
+                                tService.downloadImageFile(
                                     chats.keys.elementAt(
                                         0
                                     )
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                        ).into(holder.itemLayout.findViewById(R.id.second_nested),
                             object : Callback {
                                 override fun onSuccess() {
                                     holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
@@ -411,13 +430,13 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
                         Picasso.get().load(
                             File(
-                                (tService as TelegramService).downloadImageFile(
+                                tService.downloadImageFile(
                                     chats.keys.elementAt(
                                         1
                                     )
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                        ).into(holder.itemLayout.findViewById(R.id.second_nested),
                             object : Callback {
                                 override fun onSuccess() {
                                     holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
@@ -436,13 +455,13 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
                         Picasso.get().load(
                             File(
-                                (tService as TelegramService).downloadImageFile(
+                                tService.downloadImageFile(
                                     chats.keys.elementAt(
                                         0
                                     )
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.first_nested),
+                        ).into(holder.itemLayout.findViewById(R.id.first_nested),
                             object : Callback {
                                 override fun onSuccess() {
                                     holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
@@ -495,13 +514,13 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
                         Picasso.get().load(
                             File(
-                                (tService as TelegramService).downloadImageFile(
+                                tService.downloadImageFile(
                                     chats.keys.elementAt(
                                         1
                                     )
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                        ).into(holder.itemLayout.findViewById(R.id.second_nested),
                             object : Callback {
                                 override fun onSuccess() {
                                     holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
@@ -520,13 +539,13 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
                         Picasso.get().load(
                             File(
-                                (tService as TelegramService).downloadImageFile(
+                                tService.downloadImageFile(
                                     chats.keys.elementAt(
                                         0
                                     )
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.first_nested),
+                        ).into(holder.itemLayout.findViewById(R.id.first_nested),
                             object : Callback {
                                 override fun onSuccess() {
                                     holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
@@ -610,7 +629,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", foldersFilterList[i]._id)
                     .findFirst() as FolderRealm
                 if(tempFolder.order != i) {
-                    bgRealm.executeTransaction { realm ->
+                    bgRealm.executeTransaction {
                         tempFolder.order = i
                     }
                 }
@@ -628,7 +647,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         runBlocking {
             val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", folder._id)
                 .findFirst() as FolderRealm
-            bgRealm.executeTransaction { realm ->
+            bgRealm.executeTransaction {
                 tempFolder.isPinned = pinned
             }
         }

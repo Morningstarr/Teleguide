@@ -46,6 +46,7 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
             }
         }
         if(view.findViewById<CardView>(R.id.card_view) != null) {
+            (adapter as FolderAdapter).context?.binding?.fldrFab?.show()
             if(view.findViewById<ImageView>(R.id.check_folder).visibility != View.VISIBLE) {
                 view.findViewById<CardView>(R.id.card_view).cardElevation = 0f
             }
@@ -59,6 +60,9 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         var dragFlags = 0
         if((recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste) ||
             (recyclerView.adapter is PinnedFolderAdapter && !(recyclerView.adapter as PinnedFolderAdapter).returnPasteMode())) {
+            if(recyclerView.adapter is FolderAdapter) {
+                (adapter as FolderAdapter).context?.binding?.fldrFab?.hide()
+            }
             dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
         }
         return makeMovementFlags(
@@ -75,6 +79,7 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         if(viewHolder is FolderAdapter.FolderViewHolder) {
             if (!viewHolder.isSelecting) {
                 adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
+                //(adapter as FolderAdapter).context?.binding?.fldrFab?.show()
                 return true
             } else {
                 viewHolder.cardView.cardElevation = 10f
