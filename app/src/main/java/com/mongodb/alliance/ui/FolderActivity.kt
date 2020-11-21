@@ -1,6 +1,7 @@
 package com.mongodb.alliance.ui
 
 import android.app.ActionBar
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Build
@@ -9,6 +10,7 @@ import android.os.Handler
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -21,7 +23,6 @@ import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
-import com.mongodb.alliance.adapters.ChannelRealmAdapter
 import com.mongodb.alliance.adapters.FolderAdapter
 import com.mongodb.alliance.adapters.PinnedFolderAdapter
 import com.mongodb.alliance.adapters.SimpleItemTouchHelperCallback
@@ -67,17 +68,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var fab: FloatingActionButton
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
+    private lateinit var state : ClientState
     private var count : Int = -1
     var isSelecting : Boolean = false
     private var folderId : ObjectId? = null
-    private var channelAdapter: ChannelRealmAdapter? = null
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
     private lateinit var binding: ActivityFolderBinding
-    private var inten: Intent = Intent()
 
     @TelegramServ
     @Inject
@@ -85,7 +85,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SelectPinnedFolderEvent) {
-        Toast.makeText(baseContext, "Открепите папку для дальнейшего взаимодействия!", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            baseContext,
+            "Открепите папку для дальнейшего взаимодействия!",
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -199,13 +203,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         refreshRecyclerView()
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        //adapter.
-
-    }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -227,6 +224,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         realm = Realm.getDefaultInstance()
         recyclerView = binding.foldersList
+        recyclerView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            if(scrollY != oldScrollY) {
+                hideKeyboard()
+            }
+        }
         pinnedRecyclerView = binding.recyclerPinned
         pinnedRecyclerView.visibility = View.GONE
         fab = binding.fldrFab
@@ -242,7 +244,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         binding.searchView.onActionViewExpanded()
         Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
 
-        binding.searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+        binding.searchView.setOnQueryTextListener(object :
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
             }
@@ -254,25 +257,26 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         })
     }
 
+    @ExperimentalCoroutinesApi
     override fun onStart() {
         super.onStart()
 
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
-            Timber.e(e.message)
+            Timber.e(e)
         }
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
         } else {
-            lifecycleScope.launch {
+            /*lifecycleScope.*/runBlocking {
                 showLoading(true)
                 val task = async {
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).returnClientState()
                     }
                 }
-                val state = task.await()
+                state = task.await()
                 if(state == ClientState.waitParameters) {
                     withContext(Dispatchers.IO) {
                         (t_service as TelegramService).setUpClient()
@@ -290,59 +294,46 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 Realm.getInstanceAsync(config, object : Realm.Callback() {
                     @RequiresApi(Build.VERSION_CODES.N)
                     override fun onSuccess(realm: Realm) {
-                        // since this realm should live exactly as long as this activity, assign the realm to a member variable
-                            this@FolderActivity.realm = realm
-                            setUpRecyclerView(realm)
-                            setUpRecyclerPinned(null)
-                            adapter.updateItems()
-                            showLoading(false)
-//todo разобраться с перемещением
+                        this@FolderActivity.realm = realm
+                        setUpRecyclerView(realm)
+                        setUpRecyclerPinned(null)
+                        showLoading(false)
+                        //todo скрытие/показ recyclerView
 
-                        if(count != -1){
-                            adapter.setPasteMode(true)
-                            pinnedAdapter.setPasteMode(true)
-                            val actionbar = supportActionBar
-                            if(actionbar != null) {
-                                actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-                                actionbar.setDisplayShowCustomEnabled(true)
-                                actionbar.setCustomView(R.layout.action_bar_folder_paste_options_drawable)
-                                customActionBarView = actionbar.customView
-
-                                val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
-                                countText.text = count.toString()
-
-                                customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_ok).setOnClickListener {
-                                    if(folderId != null){
-                                        folderId.let {
-                                            if (it != null) {
-                                                moveChats(it)
-                                            }
-                                        }
-                                    }
-                                    else{
-                                        Toast.makeText(baseContext, "Выберите папку для перемещения!", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-
-                                customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel).setOnClickListener {
-                                    adapter.setPasteMode(false)
-                                    pinnedAdapter.setPasteMode(false)
-                                    EventBus.getDefault().post(MoveCancelEvent())
-                                    finish()
-                                }
-                            }
-                        }
-                        }
-                    })
+                        //todo разобраться с перемещением
+                        setPasteModes()
+                    }
+                })
             } catch (e: Exception) {
-                Timber.e(e.message)
+                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                Timber.e(e)
             }
         }
-
-
     }
 
-    fun setUpRecyclerView(realm: Realm) {
+    override fun onRestart() {
+        super.onRestart()
+        //todo ошибка перетаскивания при перезапуске
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        recyclerView.adapter = null
+        realm.close()
+    }
+
+    override fun onBackPressed() {
+        if(isSelecting) {
+            setDefaultActionBar()
+            isSelecting = false
+            adapter.cancelSelection()
+        }
+        else{
+            super.onBackPressed()
+        }
+    }
+
+    private fun setUpRecyclerView(realm: Realm) {
         val mutableFolders = realm.where<FolderRealm>().sort("order")
             .findAll().toMutableList()
         mutableFolders.removeIf {
@@ -350,10 +341,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         adapter = FolderAdapter(
-            mutableFolders
+            mutableFolders, state, t_service
         )
 
-        adapter.initializeTService(t_service as TelegramService)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
@@ -361,9 +351,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
         val touchHelper = ItemTouchHelper(callback)
         touchHelper.attachToRecyclerView(recyclerView)
+
+        //recyclerView.visibility = View.VISIBLE
     }
 
-    open fun refreshRecyclerView(){
+    private fun refreshRecyclerView(){
         val mutableFolders = realm.where<FolderRealm>().sort("order")
             .findAll().toMutableList()
         mutableFolders.removeIf {
@@ -378,8 +370,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             realm = Realm.getDefaultInstance()
             found = realm.where<FolderRealm>().equalTo("isPinned", true).findFirst()
             if(found != null){
-                pinnedAdapter = PinnedFolderAdapter(found)
-                pinnedAdapter.initializeTService(t_service as TelegramService)
+                pinnedAdapter = PinnedFolderAdapter(found, state, t_service)
                 pinnedAdapter.addContext(this)
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter
@@ -392,8 +383,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
         }
         else {
-            pinnedAdapter = PinnedFolderAdapter(pinned)
-            pinnedAdapter.initializeTService(t_service as TelegramService)
+            pinnedAdapter = PinnedFolderAdapter(pinned, state, t_service)
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter
             pinnedRecyclerView.setHasFixedSize(true)
@@ -401,13 +391,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        recyclerView.adapter = null
-        realm.close()
-    }
 
-    private fun showLoading(show : Boolean){
+    private fun showLoading(show: Boolean){
         if(!show) {
             binding.foldersProgress.visibility = View.GONE
         }
@@ -517,16 +502,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-    override fun onBackPressed() {
-        if(isSelecting) {
-            setDefaultActionBar()
-            isSelecting = false
-            adapter.cancelSelection()
-        }
-        else{
-            super.onBackPressed()
-        }
-    }
+
 
     private fun deleteFolders(){
         val builder =
@@ -552,7 +528,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         alert.show()
     }
 
-    private fun moveChats(folderId : ObjectId){
+    private fun moveChats(folderId: ObjectId){
         val builder =
             AlertDialog.Builder(this)
 
@@ -576,8 +552,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             val intent = Intent(this, ChannelsRealmActivity::class.java)
             intent.putExtra("folderId", folderId.toString())
             startActivity(intent)
-            //setDefaultActionBar()
-
         }
         builder.setNegativeButton(
             "Нет, спасибо"
@@ -591,6 +565,60 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         val alert = builder.create()
         alert.show()
+    }
+
+    private fun setPasteModes(){
+        if(count != -1){
+            adapter.setPasteMode(true)
+            pinnedAdapter.setPasteMode(true)
+            val actionbar = supportActionBar
+            if(actionbar != null) {
+                actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+                actionbar.setDisplayShowCustomEnabled(true)
+                actionbar.setCustomView(R.layout.action_bar_folder_paste_options_drawable)
+                customActionBarView = actionbar.customView
+
+                val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
+                countText.text = count.toString()
+
+                customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_ok).setOnClickListener {
+                    if(folderId != null){
+                        folderId.let {
+                            if (it != null) {
+                                moveChats(it)
+                            }
+                        }
+                    }
+                    else{
+                        Toast.makeText(
+                            baseContext,
+                            "Выберите папку для перемещения!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel).setOnClickListener {
+                    adapter.setPasteMode(false)
+                    pinnedAdapter.setPasteMode(false)
+                    EventBus.getDefault().post(MoveCancelEvent())
+                    finish()
+                }
+            }
+        }
+    }
+
+    fun hideKeyboard() {
+        val imm: InputMethodManager =
+            this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        //Find the currently focused view, so we can grab the correct window token from it.
+        var view: View? = this.currentFocus
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = View(this)
+        }
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
     }
 
 }

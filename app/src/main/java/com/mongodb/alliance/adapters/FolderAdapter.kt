@@ -16,18 +16,22 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.FolderRealm
+import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.FolderActivity
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
+import dagger.hilt.EntryPoint
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
+import timber.log.Timber
 import java.io.File
 import java.lang.Exception
 import java.util.*
+import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.coroutines.CoroutineContext
@@ -36,7 +40,9 @@ import kotlin.time.ExperimentalTime
 
 @InternalCoroutinesApi
 @ExperimentalTime
-class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher, ItemTouchHelperAdapter,
+
+class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var state : ClientState,
+        private val tService : Service) : GlobalBroker.Publisher, ItemTouchHelperAdapter,
     RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope, Filterable {
 
     var selectedFolders : MutableList<FolderRealm> = ArrayList()
@@ -44,8 +50,6 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     var foldersFilterList : MutableList<FolderRealm> = ArrayList()
 
     var selectedToPast : FolderRealm? = null
-
-    lateinit var t_service: Service
 
     var isPaste : Boolean = false
 
@@ -90,7 +94,13 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
             val count = holder.data?.nestedCount
             if (count != null) {
-                loadMiniatureImages(count, holder)
+                if(state == ClientState.waitParameters){
+                    runBlocking {
+                        (tService as TelegramService).setUpClient()
+                        state = (tService as TelegramService).returnClientState()
+                    }
+                }
+                loadMiniatureImages(count, holder, state)
             }
 
             if(!isPaste) {
@@ -140,7 +150,6 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                             View.VISIBLE
                         holder.isSelecting = true
                         holder.data?.let { it1 -> selectedFolders.add(it1) }
-
                         holder.cardView.cardElevation = 10f
                         return@setOnLongClickListener true
                     } else {
@@ -263,7 +272,7 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
     }
 
     @ExperimentalCoroutinesApi
-    fun loadMiniatureImages(count : Int, holder : FolderViewHolder){
+    fun loadMiniatureImages(count : Int, holder : FolderViewHolder, state : ClientState){
         val chats = getFirstChatsNames(holder)
 
         when (count){
@@ -274,11 +283,18 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                 holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility = View.INVISIBLE
                 holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility = View.INVISIBLE
-                launch {
-                    val task = async {
+                holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+                if(state == ClientState.ready) {
+                    launch {
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        0
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
                             object : Callback {
@@ -297,75 +313,84 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                                 }
                             })
                     }
-                    task.await()
                 }
-                holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+
             }
             2 -> {
                 holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility = View.INVISIBLE
-                launch {
-                    val task = async {
-                        Picasso.get().load(
-                            File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(1))
-                            )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.VISIBLE
-                                }
-
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
-
-                        Picasso.get().load(
-                            File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
-                            )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.VISIBLE
-                                }
-
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
-                    }
-                    task.await()
-                }
                 holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
                 holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+                if(state == ClientState.ready) {
+                    launch {
+                        Picasso.get().load(
+                            File(
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        1
+                                    )
+                                )
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+
+                        Picasso.get().load(
+                            File(
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        0
+                                    )
+                                )
+                            )
+                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
+                            object : Callback {
+                                override fun onSuccess() {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.INVISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.VISIBLE
+                                }
+
+                                override fun onError(e: Exception?) {
+                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
+                                        View.VISIBLE
+                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
+                                        View.INVISIBLE
+                                }
+                            })
+                    }
+                }
+
             }
             3 -> {
-                //val chats = getFirstChatsNames(holder)
                 holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).text = chats.values.elementAt(2)[0].toString()
-                launch {
-                    val task = async {
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
+                if(state == ClientState.ready) {
+                    launch {
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(2))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        2
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
                             object : Callback {
@@ -386,7 +411,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(1))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        1
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
                             object : Callback {
@@ -407,7 +436,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        0
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.first_nested),
                             object : Callback {
@@ -425,22 +458,23 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                                         View.INVISIBLE
                                 }
                             })
-                    }
-                    task.await()
+                        }
                 }
-
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
             }
             else -> {
-                //val chats = getFirstChatsNames(holder)
                 holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
                 holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).text = chats.values.elementAt(2)[0].toString()
-                launch {
-                    val task = async {
+                holder.itemLayout.findViewById<TextView>(R.id.additional_count).text = "+" + (count - 3).toString()
+                if(state == ClientState.ready) {
+                    launch {
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(2))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        2
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
                             object : Callback {
@@ -461,7 +495,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(1))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        1
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.second_nested),
                             object : Callback {
@@ -482,7 +520,11 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
 
                         Picasso.get().load(
                             File(
-                                (t_service as TelegramService).downloadImageFile(chats.keys.elementAt(0))
+                                (tService as TelegramService).downloadImageFile(
+                                    chats.keys.elementAt(
+                                        0
+                                    )
+                                )
                             )
                         ).into(holder.itemLayout.findViewById<ImageView>(R.id.first_nested),
                             object : Callback {
@@ -501,16 +543,9 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
                                 }
                             })
                     }
-                    task.await()
                 }
-
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).text = "+" + (count - 3).toString()
             }
         }
-    }
-
-    fun initializeTService(t : TelegramService){
-        t_service = t
     }
 
     private fun getFirstChatsNames(holder: FolderViewHolder) : HashMap<String, String>{
@@ -531,9 +566,6 @@ class FolderAdapter(var data: MutableList<FolderRealm>) : GlobalBroker.Publisher
             }
             catch(e:Exception){}
         }
-        /*for (chat in firstChats){
-            namesList.add(chat.name)
-        }*/
         bgRealm.close()
         return firstChats
     }

@@ -12,8 +12,6 @@ import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
 import dev.whyoleg.ktd.api.TdApi
-import dev.whyoleg.ktd.api.TdApi.Chat
-import dev.whyoleg.ktd.api.TdApi.SearchPublicChat
 import dev.whyoleg.ktd.api.TelegramObject
 import dev.whyoleg.ktd.api.authorization.getAuthorizationState
 import dev.whyoleg.ktd.api.tdlib.setTdlibParameters
@@ -25,9 +23,11 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
-import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.HashMap
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -294,8 +294,6 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     suspend fun resetPhoneNumber(){
         TdApi.SetAuthenticationPhoneNumber()
         returnClientState()
-        //val clientState = ClientState.waitNumber
-        //publish(StateChangedEvent(clientState), retain = true)
     }
 
     @ExperimentalCoroutinesApi
@@ -309,77 +307,114 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         initService()
     }
 
-    suspend fun getRecentMessage(chatName: String) : String{
+    suspend fun getRecentMessage(chatName: String) : HashMap<String, String>{
         var message = ""
-        val searchPublicChat = client.exec(TdApi.SearchPublicChat(chatName))
+        var messageTime : String = ""
+        var resultMap : HashMap<String, String> = HashMap()
         try{
+            val searchPublicChat = client.exec(TdApi.SearchPublicChat(chatName))
             val chat = (searchPublicChat as TdApi.Chat)
-            val messageContent = chat.lastMessage?.content.toString()
-            if(messageContent.contains("video")){
-                message = "Видео, "
-            }
-            if(messageContent.contains("MessagePhoto")){
-                message = "Фотография, "
-            }
-            val textContent =  messageContent.subSequence(messageContent.indexOf("text = \"") + 8, messageContent.lastIndexOf("\"")).toString()
-
-            if(textContent != "") {
-                message += textContent/*chat.lastMessage?.content.toString()*/
+            if(isChatMember(chat.id)) {
+                val messageContent = chat.lastMessage?.content.toString()
+                val correctDate = (chat.lastMessage?.date.toString() + "000").toLong()
+                val messageDate = Date(correctDate)
+                val currentDate = Date(System.currentTimeMillis())
+                if(messageDate.day == currentDate.day){
+                    messageTime = SimpleDateFormat("hh:mm").format(Date(correctDate).time)
+                }
+                if(SimpleDateFormat("dd").format(currentDate).toInt() - SimpleDateFormat("dd").format(messageDate).toInt() == 1){
+                    messageTime = "Вчера"
+                }
+                if(SimpleDateFormat("dd").format(currentDate).toInt() - SimpleDateFormat("dd").format(messageDate).toInt() == 2){
+                    messageTime = "Позавчера"
+                }
+                if(SimpleDateFormat("dd").format(currentDate).toInt() - SimpleDateFormat("dd").format(messageDate).toInt() > 2){
+                    messageTime = SimpleDateFormat("dd.MM.yy").format(messageDate)
+                }
+                if (messageContent.contains("video")) {
+                    message = "Видео, "
+                }
+                if (messageContent.contains("MessagePhoto")) {
+                    message = "Фотография, "
+                }
+                val textContent = messageContent.subSequence(
+                    messageContent.indexOf("text = \"") + 8,
+                    messageContent.lastIndexOf("\"")
+                ).toString()
+                if (textContent != "") {
+                    message += textContent
+                } else {
+                    message = message.removeRange(message.lastIndexOf(","), message.length)
+                }
             }
             else{
-                message = message.removeRange(message.lastIndexOf(","), message.length)
+                message = "Нет доступа к содержимому чата"
             }
-
         }
         catch (e:Exception){
             Timber.e(e.message)
         }
-
-        return message
-        //return client.exec((TdApi.GetChat(returnIdByName(chatName)) as TdApi.Chat).topMessage)
+        finally {
+            resultMap[message] = messageTime
+            return resultMap
+        }
     }
 
     @ExperimentalCoroutinesApi
     suspend fun getChatImageId(name : String): Int? {
-        if(returnClientState() == ClientState.ready) {
+        var chatPhotoId : Int? = 0
+        try {
             val searchPublicChat = client.exec(TdApi.SearchPublicChat(name))
-            //try {
             val chat = (searchPublicChat as TdApi.Chat)
-            return chat.photo?.small?.id
+
+            if(isChatMember(chat.id)){
+                chatPhotoId = chat.photo?.small?.id
+            }
         }
-        else{
-            return 0
+        catch (e: Exception) {
+            Timber.e(e.message)
         }
-        //} catch (e: Exception) {
-            //Timber.e(e.message)
-        //}
+        finally {
+            return chatPhotoId
+        }
     }
 
     @ExperimentalCoroutinesApi
     suspend fun downloadImageFile(name : String): String {
-        if(returnClientState() == ClientState.ready) {
+        var imagePath : String = ""
+        //TdApi.GetChatMember()
+        try {
             val file = getChatImageId(name)?.let { TdApi.DownloadFile(it, 1, 0, 0, true) }
                 ?.let { client.exec(it) }
-            return (file as TdApi.File).local.path!!//.path
+            imagePath = (file as TdApi.File).local.path!!
         }
-        else{
-            return ""
+        catch(e:Exception){
+            Timber.e(e.message)
         }
+        finally {
+            return imagePath
+        }
+    }
+
+    private suspend fun isChatMember(chatId: Long): Boolean{
+        val member = client.exec(TdApi.GetChatMember(chatId, client.getMe().id))
+        return (member as TdApi.ChatMember).status.toString().contains("ChatMemberStatusMember")
     }
 
     suspend fun getUnreadCount(name : String): Int {
-        val searchPublicChat = client.exec(TdApi.SearchPublicChat(name))
-        //try {
+        var unreadCount : Int = 0
+        try{
+            val searchPublicChat = client.exec(TdApi.SearchPublicChat(name))
             val chat = (searchPublicChat as TdApi.Chat)
-            return chat.unreadCount
-        //}
-        //catch(e : Exception){
-
-        //}
+            if(isChatMember(chat.id)) {
+                unreadCount = chat.unreadCount
+            }
+        }
+        catch(e : Exception){
+            Timber.e(e.message)
+        }
+        finally {
+            return unreadCount
+        }
     }
-
-    /*fun returnIdByName(name: String): Int {
-        return (TdApi.SearchPublicChat(name) as TdApi.Supergroup).id
-    }*/
-
 }
