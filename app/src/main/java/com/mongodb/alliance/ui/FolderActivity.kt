@@ -271,8 +271,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                adapter.filter.filter(newText)
-                return false
+                try {
+                    adapter.filter.filter(newText)
+                    return false
+                }
+                catch(e:Exception){
+                    if(e.message != "lateinit property adapter has not been initialized"){
+                        Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                    return true
+                }
             }
         })
 
@@ -313,9 +321,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         setUpRecyclerView(realm)
                         setUpRecyclerPinned(null)
                         showLoading(false)
-                        //todo скрытие/показ recyclerView
 
-                        //todo разобраться с перемещением
                         if(count != -1) {
                             setPasteModes()
                         }
@@ -330,6 +336,29 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     override fun onRestart() {
         super.onRestart()
+        binding.searchView.onActionViewExpanded()
+        Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
+
+        binding.searchView.setOnQueryTextListener(object :
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                try {
+                    adapter.filter.filter(newText)
+                    return false
+                }
+                catch(e:Exception){
+                    if(e.message != "lateinit property adapter has not been initialized"){
+                        Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                    return true
+                }
+            }
+        })
+        
         //todo ошибка перетаскивания при перезапуске
     }
 
@@ -375,10 +404,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             val touchHelper = ItemTouchHelper(callback)
             touchHelper.attachToRecyclerView(recyclerView)
 
-            //recyclerView.visibility = View.VISIBLE
+            recyclerView.visibility = View.VISIBLE
         }
         else{
             binding.foldersTextLayout.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
         }
 
         //recyclerView.visibility = View.VISIBLE
