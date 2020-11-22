@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui
 
+import android.annotation.SuppressLint
 import android.app.ActionBar
 import android.app.Activity
 import android.app.AlertDialog
@@ -80,7 +81,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     @TelegramServ
     @Inject
-    lateinit var t_service: Service
+    lateinit var tService: Service
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SelectPinnedFolderEvent) {
@@ -111,6 +112,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         folderId = event.folderId
     }
 
+    @SuppressLint("WrongConstant")
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SelectFolderEvent) {
         val actionbar = supportActionBar
@@ -228,6 +230,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         realm = Realm.getDefaultInstance()
         recyclerView = binding.foldersList
+
         recyclerView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
             if(scrollY != oldScrollY) {
                 hideKeyboard()
@@ -251,6 +254,13 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             )
         }
 
+
+    }
+
+    @ExperimentalCoroutinesApi
+    override fun onStart() {
+        super.onStart()
+
         binding.searchView.onActionViewExpanded()
         Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
 
@@ -265,11 +275,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 return false
             }
         })
-    }
-
-    @ExperimentalCoroutinesApi
-    override fun onStart() {
-        super.onStart()
 
         try {
             user = channelApp.currentUser()
@@ -283,13 +288,13 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 showLoading(true)
                 val task = async {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).returnClientState()
+                        (tService as TelegramService).returnClientState()
                     }
                 }
                 state = task.await()
                 if(state == ClientState.waitParameters) {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).setUpClient()
+                        (tService as TelegramService).setUpClient()
                     }
                 }
             }
@@ -311,7 +316,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         //todo скрытие/показ recyclerView
 
                         //todo разобраться с перемещением
-                        setPasteModes()
+                        if(count != -1) {
+                            setPasteModes()
+                        }
                     }
                 })
             } catch (e: Exception) {
@@ -329,6 +336,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     override fun onDestroy() {
         super.onDestroy()
         recyclerView.adapter = null
+        recyclerView.visibility = View.GONE
         realm.close()
     }
 
@@ -353,17 +361,25 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             it.isPinned
         }
 
-        adapter = FolderAdapter(
-            mutableFolders, state, t_service
-        )
+        if(mutableFolders.size != 0) {
+            binding.foldersTextLayout.visibility = View.INVISIBLE
+            adapter = FolderAdapter(
+                mutableFolders, state, tService
+            )
 
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
-        recyclerView.setHasFixedSize(true)
+            recyclerView.layoutManager = LinearLayoutManager(this)
+            recyclerView.adapter = adapter
+            recyclerView.setHasFixedSize(true)
 
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-        val touchHelper = ItemTouchHelper(callback)
-        touchHelper.attachToRecyclerView(recyclerView)
+            val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+            val touchHelper = ItemTouchHelper(callback)
+            touchHelper.attachToRecyclerView(recyclerView)
+
+            //recyclerView.visibility = View.VISIBLE
+        }
+        else{
+            binding.foldersTextLayout.visibility = View.VISIBLE
+        }
 
         //recyclerView.visibility = View.VISIBLE
     }
@@ -375,6 +391,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             it.isPinned
         }
         adapter.setDataList(mutableFolders)
+        if(mutableFolders.size <= 0){
+            binding.foldersTextLayout.visibility = View.VISIBLE
+        }
+        else{
+            if(binding.foldersTextLayout.visibility == View.VISIBLE) {
+                binding.foldersTextLayout.visibility = View.INVISIBLE
+            }
+        }
     }
 
     private fun setUpRecyclerPinned(pinned: FolderRealm?){
@@ -383,7 +407,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             realm = Realm.getDefaultInstance()
             found = realm.where<FolderRealm>().equalTo("isPinned", true).findFirst()
             if(found != null){
-                pinnedAdapter = PinnedFolderAdapter(found, state, t_service)
+                pinnedAdapter = PinnedFolderAdapter(found, state, tService)
                 pinnedAdapter.addContext(this)
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
                 pinnedRecyclerView.adapter = pinnedAdapter
@@ -396,7 +420,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
         }
         else {
-            pinnedAdapter = PinnedFolderAdapter(pinned, state, t_service)
+            pinnedAdapter = PinnedFolderAdapter(pinned, state, tService)
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter
             pinnedRecyclerView.setHasFixedSize(true)
@@ -414,6 +438,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
+    @SuppressLint("WrongConstant")
     private fun setDefaultActionBar() {
         val actionbar = supportActionBar
         if (actionbar != null) {
@@ -579,43 +604,42 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         alert.show()
     }
 
+    @SuppressLint("WrongConstant")
     private fun setPasteModes(){
-        if(count != -1){
-            adapter.setPasteMode(true)
-            pinnedAdapter.setPasteMode(true)
-            val actionbar = supportActionBar
-            if(actionbar != null) {
-                actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-                actionbar.setDisplayShowCustomEnabled(true)
-                actionbar.setCustomView(R.layout.action_bar_folder_paste_options_drawable)
-                customActionBarView = actionbar.customView
+        adapter.setPasteMode(true)
+        pinnedAdapter.setPasteMode(true)
+        val actionbar = supportActionBar
+        if(actionbar != null) {
+            actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+            actionbar.setDisplayShowCustomEnabled(true)
+            actionbar.setCustomView(R.layout.action_bar_folder_paste_options_drawable)
+            customActionBarView = actionbar.customView
 
-                val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
-                countText.text = count.toString()
+            val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
+            countText.text = count.toString()
 
-                customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_ok).setOnClickListener {
-                    if(folderId != null){
-                        folderId.let {
-                            if (it != null) {
-                                moveChats(it)
-                            }
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_ok).setOnClickListener {
+                if(folderId != null){
+                    folderId.let {
+                        if (it != null) {
+                            moveChats(it)
                         }
                     }
-                    else{
-                        Toast.makeText(
-                            baseContext,
-                            "Выберите папку для перемещения!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
                 }
+                else{
+                    Toast.makeText(
+                        baseContext,
+                        "Выберите папку для перемещения!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
 
-                customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel).setOnClickListener {
-                    adapter.setPasteMode(false)
-                    pinnedAdapter.setPasteMode(false)
-                    EventBus.getDefault().post(MoveCancelEvent())
-                    finish()
-                }
+            customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel).setOnClickListener {
+                adapter.setPasteMode(false)
+                pinnedAdapter.setPasteMode(false)
+                EventBus.getDefault().post(MoveCancelEvent())
+                finish()
             }
         }
     }
@@ -623,9 +647,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private fun hideKeyboard() {
         val imm: InputMethodManager =
             this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        //Find the currently focused view, so we can grab the correct window token from it.
         var view: View? = this.currentFocus
-        //If no view currently has focus, create a new one, just so we can grab a window token from it
         if (view == null) {
             view = View(this)
         }

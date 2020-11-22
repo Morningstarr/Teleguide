@@ -223,7 +223,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     startActivity(intent)
                 }
                 else{
-                    Toast.makeText(baseContext, "Telegram account is not connected!", Toast.LENGTH_SHORT).show()
+                    connectionOffering()
                 }
             }
         }
@@ -325,6 +325,29 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
+    private fun connectionOffering(){
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("Чтобы добавить новые чаты, необходимо войти в Telegram account.")
+
+        builder.setPositiveButton(
+            "Войти"
+        ) { dialog, _ ->
+            var intent = Intent(baseContext, ProfileActivity::class.java)
+            intent.putExtra("beginConnection", true)
+            startActivity(intent)
+        }
+        builder.setNegativeButton(
+            "Нет, спасибо"
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert = builder.create()
+        alert.show()
+    }
+
     private fun deleteChats(){
         val builder =
             AlertDialog.Builder(this)
@@ -356,7 +379,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             it.isPinned
         }
         if(query.size != 0) {
-            binding.textLayout.visibility = View.INVISIBLE
+            binding.channelsTextLayout.visibility = View.INVISIBLE
             adapter = ChannelRealmAdapter(
                 query, state, t_service
             )
@@ -372,7 +395,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         }
         else{
-            binding.textLayout.visibility = View.VISIBLE
+            binding.channelsTextLayout.visibility = View.VISIBLE
         }
 
     }
@@ -384,7 +407,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         adapter.setDataList(mutableChannels)
         if(mutableChannels.size <= 0){
-            binding.textLayout.visibility = View.VISIBLE
+            binding.channelsTextLayout.visibility = View.VISIBLE
         }
     }
 

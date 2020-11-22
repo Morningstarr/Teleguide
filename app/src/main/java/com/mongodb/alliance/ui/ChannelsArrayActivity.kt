@@ -1,6 +1,7 @@
 package com.mongodb.alliance.ui
 
 import android.app.ActionBar
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
@@ -184,24 +185,6 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
                 }
                 true
             }
-            R.id.action_refresh ->{
-                lifecycleScope.launch {
-                    val task = async {
-                        withContext(Dispatchers.IO) {
-                            (t_service as TelegramService).returnClientState()
-                        }
-                    }
-                    val state = task.await()
-                    if(state == ClientState.ready) {
-                        loadChats()
-                    }
-                    else{
-                        Toast.makeText(baseContext, "Telegram account is not connected", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                setUpRecyclerView()
-                true
-            }
             else -> {
                 super.onOptionsItemSelected(item)
             }
@@ -212,7 +195,6 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         onBackPressed()
         return true
     }
-
 
     suspend fun loadChats() {
         val chats = withContext(coroutineContext) {
