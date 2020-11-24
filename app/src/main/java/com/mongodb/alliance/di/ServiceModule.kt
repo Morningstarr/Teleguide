@@ -17,6 +17,7 @@ annotation class TelegramServ
 
 @InternalCoroutinesApi
 @ExperimentalTime
+
 @InstallIn(ApplicationComponent::class)
 @Module
 abstract class ServiceModule {

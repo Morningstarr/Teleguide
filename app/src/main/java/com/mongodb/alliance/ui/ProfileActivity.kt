@@ -409,6 +409,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
     }
 
+    @ExperimentalCoroutinesApi
     override fun onStart() {
         super.onStart()
 
@@ -460,7 +461,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         setUpRecyclerView()
 
         try {
-            
             val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
             placeholder.text = appUserRealm.name.subSequence(0, 3)
             val img = (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$image`() //directly get value of some field
@@ -475,6 +475,12 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         }
         catch(e:Exception){
             placeholder.visibility = View.VISIBLE
+        }
+
+        if(intent.getBooleanExtra("beginConnection", false)){
+            lifecycleScope.launch {
+                (t_service as TelegramService).initService()
+            }
         }
 
     }

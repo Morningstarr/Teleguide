@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+
+    android:background="#FFFFFF"
+    android:orientation="horizontal">
+
+    <ImageButton
+        android:id="@+id/actionBar_button_move_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="#FFFFFF"
+        android:paddingStart="10dp"
+        android:paddingEnd="5dp"
+        android:src="@drawable/ic_cross" />
+
+    <TextView
+        android:id="@+id/actionBar_chats_move_count"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_vertical"
+        android:fontFamily="@font/roboto"
+        android:textSize="20dp"
+        android:text="0"
+        android:textColor="#03CCFC" />
+
+    <TextView
+        android:id="@+id/actionBar_move_to"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center|center_horizontal|center_vertical"
+        android:layout_weight="0.8"
+        android:fontFamily="@font/roboto"
+        android:gravity="center"
+        android:paddingStart="-15dp"
+        android:text="Переместить в.."
+        android:textColor="#1A1A1A"
+        android:textSize="20sp" />
+
+
+    <ImageButton
+        android:id="@+id/actionBar_button_move_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="#FFFFFF"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
+        android:src="@drawable/ic_confirm" />
+</LinearLayout>
+

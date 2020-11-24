@@ -10,7 +10,10 @@ open class ChannelRealm (_name: String = "Channel", partition: String = "") : Re
     @PrimaryKey var _id: ObjectId = ObjectId()
     var _partition: String = partition
     var name: String = _name
+    var displayName: String = "без названия"
     var folder: FolderRealm? = null
+    var isPinned: Boolean = false
+    var order: Int = 1
 
     @Required
     private var type: String = ChannelType.channel.displayName

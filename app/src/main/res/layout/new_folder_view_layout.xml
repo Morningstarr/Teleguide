@@ -1,118 +1,252 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.daimajia.swipe.SwipeLayout
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/swipe_layout"
-    android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_view"
     android:layout_height="60dp"
-    android:background="@drawable/folder_shape"
+    android:layout_width="match_parent"
     android:layout_marginTop="2.5dp"
     android:layout_marginBottom="2.5dp"
-    android:orientation="horizontal">
-    <!-- Bottom View Start-->
-    <ImageView
-        android:layout_width="50dp"
+
+    android:elevation="0dp"
+    app:cardElevation="0dp">
+
+    <com.daimajia.swipe.SwipeLayout
+        android:id="@+id/swipe_layout"
+        android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="#027A97" />
+        android:background="@drawable/folder_shape"
+        android:orientation="horizontal">
+        <!-- Bottom View Start-->
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="60dp"
+            android:background="#027A97" />
 
-    <LinearLayout
-        android:id="@+id/bottom_wrapper"
-        android:layout_width="wrap_content"
-        android:weightSum="1"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#027A97">
+        <LinearLayout
+            android:id="@+id/bottom_wrapper"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#027A97"
+            android:orientation="horizontal"
+            android:weightSum="1">
 
-            <ImageView
-                android:id="@+id/edit_folder"
+            <ImageButton
+                android:id="@+id/pin_folder"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:background="#03CCFC"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_pin">
 
-            </ImageView>
+            </ImageButton>
 
-            <ImageView
-                android:id="@+id/pin_folder"
+            <ImageButton
+                android:id="@+id/edit_folder"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:background="#027A97"
                 android:scaleType="centerInside"
-                android:src="@drawable/ic_edit">
-            </ImageView>
-    </LinearLayout>
-
-    <!-- Bottom View End-->
-
-    <!-- Surface View Start -->
-    <LinearLayout
-        android:id="@+id/item_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2.5dp"
-        android:layout_marginBottom="2.5dp"
-        android:background="@drawable/rectangle_7"
-        android:visibility="visible">
-
-        <LinearLayout
-            android:id="@+id/pictures_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginTop="20dp"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/round_shape"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/ic_arrow_back" />
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="-5dp"
-                android:background="@drawable/round_shape"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/ic_camera" />
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="-5dp"
-                android:background="@drawable/round_shape"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/ic_logout" />
-
-            <TextView
-                android:id="@+id/additional_count"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="-5dp"
-                android:background="@drawable/round_shape"
-                android:gravity="center"
-                android:text="+17"
-                android:textSize="8dp" />
+                android:src="@drawable/ic_edit"></ImageButton>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/folder_name"
-            android:layout_width="wrap_content"
-            android:layout_height="24dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
-            android:fontFamily="@font/roboto_medium"
-            android:gravity="center"
-            android:lineSpacingExtra="3sp"
-            android:text="Уральские парни"
-            android:textColor="#1A1A1A"
-            android:textSize="18sp">
+        <!-- Bottom View End-->
 
-        </TextView>
-    </LinearLayout>
-    <!-- Surface View End -->
-</com.daimajia.swipe.SwipeLayout>
+        <!-- Surface View Start -->
+        <LinearLayout
+            android:id="@+id/item_layout"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="2.5dp"
+            android:layout_marginBottom="2.5dp"
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.97"
+                android:background="@drawable/rectangle_7"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:id="@+id/pictures_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginStart="40dp"
+                    android:layout_marginTop="20dp"
+
+                    android:gravity="end"
+                    android:orientation="horizontal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        app:cardCornerRadius="10dp"
+                        android:elevation="0dp"
+                        app:cardElevation="0dp">
+                        <ImageView
+                            android:id="@+id/first_nested"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/round_shape"
+                            android:scaleType="centerCrop"
+                            app:srcCompat="@drawable/ic_arrow_back"
+                            android:visibility="invisible"/>
+
+                        <TextView
+                            android:id="@+id/first_nested_placeholder"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textSize="12sp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="K"
+                            android:background="#CDF5FE" />
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        app:cardCornerRadius="10dp"
+                        android:layout_marginStart="-5dp"
+                        android:elevation="0dp"
+                        app:cardElevation="0dp">
+                        <ImageView
+                            android:id="@+id/second_nested"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/round_shape"
+                            android:scaleType="centerCrop"
+                            app:srcCompat="@drawable/ic_arrow_back"
+                            android:visibility="invisible" />
+
+                        <TextView
+                            android:id="@+id/second_nested_placeholder"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textSize="12sp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="K"
+                            android:background="#CDF5FE" />
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        app:cardCornerRadius="10dp"
+                        android:layout_marginStart="-5dp"
+                        android:elevation="0dp"
+                        app:cardElevation="0dp"
+                        >
+                        <ImageView
+                            android:id="@+id/third_nested"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/round_shape"
+                            android:scaleType="centerCrop"
+                            app:srcCompat="@drawable/ic_arrow_back"
+                            android:visibility="invisible"/>
+
+                        <TextView
+                            android:id="@+id/third_nested_placeholder"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:textSize="12sp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="K"
+                            android:background="#CDF5FE" />
+                    </androidx.cardview.widget.CardView>
+
+                    <TextView
+                        android:id="@+id/additional_count"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="-5dp"
+                        android:background="@drawable/round_shape"
+                        android:gravity="center"
+                        android:text="+17"
+                        android:textSize="8dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/folder_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+
+                    android:layout_marginTop="18dp"
+
+                    android:fontFamily="@font/roboto_medium"
+                    android:gravity="center|start"
+                    android:lineSpacingExtra="3sp"
+                    android:paddingStart="15dp"
+                    android:text="Уральские парни"
+                    android:textColor="#1A1A1A"
+                    android:textSize="18sp"
+                    app:layout_constraintStart_toEndOf="@+id/pictures_layout"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                </TextView>
+
+                <ImageView
+                    android:id="@+id/pinned"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="20dp"
+
+                    android:layout_marginEnd="55dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_pin_blue"
+
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/folder_name"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/check_layout"
+                android:layout_width="30dp"
+                android:layout_height="60dp"
+                android:layout_gravity="end"
+                android:layout_weight="0.03"
+                android:background="#FFFFFF"
+                android:gravity="end"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/check_folder"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="5dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_check"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+
+        <!-- Surface View End -->
+    </com.daimajia.swipe.SwipeLayout>
+
+</androidx.cardview.widget.CardView>
+
 

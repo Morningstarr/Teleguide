@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Alliance</string>
+    <string name="app_name">TeleGuide</string>
     <string name="username">Email</string>
     <string name="password">Password</string>
     <string name="create_account">Create account</string>
@@ -39,4 +39,12 @@
     <string name="choose_number">Выберите страну и введите номер телефона</string>
     <string name="pick_single">Выберите изображение</string>
     <string name="enter">Войти</string>
+    <string name="add_folder">Создайте новую папку</string>
+    <string name="folder_hint">Введите название новой папки</string>
+    <string name="create">Создать</string>
+    <string name="enter_new_folder_name">Введите новое название</string>
+    <string name="change">Изменить</string>
+    <string name="search_hint"><font size="14">Поиск</font></string>
+    <string name="search_hint_black"><font size="14"><font color="#4D4D4D">Поиск</font></font></string>
+    <string name="plus_nested_chats"> +%1$s </string>
 </resources>
