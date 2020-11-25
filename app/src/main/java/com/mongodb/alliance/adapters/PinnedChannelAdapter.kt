@@ -1,6 +1,5 @@
 package com.mongodb.alliance.adapters
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,12 +14,10 @@ import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.ChannelRealm
-import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.ChannelsRealmActivity
-import com.mongodb.alliance.ui.FolderActivity
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
 import io.realm.Realm
@@ -28,11 +25,8 @@ import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
 import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
-import org.greenrobot.eventbus.ThreadMode
 import java.io.File
 import java.lang.Exception
-import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -53,7 +47,7 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
-            .inflate(R.layout.new_channels_realm_view, parent, false)
+            .inflate(R.layout.channel_realm_view, parent, false)
         return ChannelViewHolder(itemView)
     }
 
@@ -63,15 +57,16 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
 
     inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.chat_realm_name)
-        var cardView : CardView = view.findViewById<CardView>(R.id.chat_card_view)
-        var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.chat_swipe_layout)
-        var itemLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.chat_item_layout)
-        var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.chat_bottom_wrapper)
-        var timeLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.time_layout)
+        var cardView : CardView = view.findViewById(R.id.chat_card_view)
+        var swipeLayout : SwipeLayout = view.findViewById(R.id.chat_swipe_layout)
+        var itemLayout : ConstraintLayout = view.findViewById(R.id.chat_item_layout)
+        var bottomWrapper : LinearLayout = view.findViewById(R.id.chat_bottom_wrapper)
+        var timeLayout : LinearLayout = view.findViewById(R.id.chat_time_layout)
 
         var data: ChannelRealm? = null
     }
 
+    @ExperimentalCoroutinesApi
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         holder.data = channel
         holder.name.text = channel.displayName
@@ -170,26 +165,29 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
 
     }
 
+    @ExperimentalCoroutinesApi
     private fun loadChatData(holder : ChannelViewHolder, state: ClientState, tService: Service){
-
         if(state == ClientState.ready) {
+            val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
+            val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
+            val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
+            val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
+            val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
             launch {
                 val task = async {
                     holder.data?.name?.let {
                         (tService as TelegramService).getRecentMessage(it)
-                        /*holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).text =
-                        . }*/
                     }
                 }
                 val messageData = task.await()
                 if (messageData != null) {
-                    holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).text = messageData.keys.elementAt(0)
-                    holder.itemLayout.findViewById<TextView>(R.id.message_time).text = messageData.values.elementAt(0)
+                    lastMessageText.text = messageData.keys.elementAt(0)
+                    lastMessageTimeText.text = messageData.values.elementAt(0)
                 }
 
-                holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).visibility = View.VISIBLE
+                lastMessageText.visibility = View.VISIBLE
                 if(messageData?.values?.elementAt(0) != "") {
-                    holder.itemLayout.findViewById<TextView>(R.id.message_time).visibility =
+                    lastMessageTimeText.visibility =
                         View.VISIBLE
                 }
 
@@ -197,19 +195,19 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
                         (tService as TelegramService).downloadImageFile(
                             it
                         )
-                    })).into(holder.itemLayout.findViewById<ImageView>(R.id.chat_image),
+                    })).into(chatImage,
                         object : Callback {
                             override fun onSuccess() {
-                                holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility =
+                                imagePlaceholderText.visibility =
                                     View.INVISIBLE
-                                holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility =
+                                chatImage.visibility =
                                     View.VISIBLE
                             }
 
                             override fun onError(e: Exception?) {
-                                holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility =
+                                imagePlaceholderText.visibility =
                                     View.VISIBLE
-                                holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility =
+                                chatImage.visibility =
                                     View.INVISIBLE
                             }
                         })
@@ -219,10 +217,12 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
                 }
                 val count = task2.await()
                 if (count!! > 0) {
-                    holder.itemLayout.findViewById<TextView>(R.id.messages_count).text =
+                    unreadCountText.visibility =
+                        View.VISIBLE
+                    unreadCountText.text =
                         count.toString()
                 } else {
-                    holder.itemLayout.findViewById<TextView>(R.id.messages_count).visibility =
+                    unreadCountText.visibility =
                         View.INVISIBLE
                 }
             }

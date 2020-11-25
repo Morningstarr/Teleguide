@@ -53,17 +53,17 @@ app:cardElevation="0dp">
         android:weightSum="1">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayout"
+            android:id="@+id/chat_main_constraint_layout"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/time_layout"
+            app:layout_constraintEnd_toStartOf="@+id/chat_time_layout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginEnd="10dp">
 
             <androidx.cardview.widget.CardView
-                android:id="@+id/myCardView"
+                android:id="@+id/chat_image_card"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_centerHorizontal="true"
@@ -102,7 +102,7 @@ app:cardElevation="0dp">
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/myCardView"
+                app:layout_constraintStart_toEndOf="@+id/chat_image_card"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
@@ -110,7 +110,6 @@ app:cardElevation="0dp">
                     android:layout_height="24dp"
                     android:orientation="horizontal"
                     android:weightSum="1">
-
 
                     <TextView
                         android:id="@+id/chat_realm_name"
@@ -131,7 +130,6 @@ app:cardElevation="0dp">
                         android:textColor="#1A1A1A"
                         android:textSize="18sp"
                         android:translationY="-2.62sp"
-                        app:layout_constraintStart_toEndOf="@+id/pictures_layout"
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <ImageView
@@ -175,22 +173,22 @@ app:cardElevation="0dp">
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
-            android:id="@+id/time_layout"
+            android:id="@+id/chat_time_layout"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_gravity="end"
-            android:layout_marginEnd="10dp"
+            android:layout_marginEnd="15dp"
             android:layout_weight="0.03"
             android:background="#FFFFFF"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/constraintLayout"
+            app:layout_constraintStart_toEndOf="@+id/chat_main_constraint_layout"
             app:layout_constraintTop_toTopOf="parent"
             tools:visibility="visible">
 
             <TextView
-                android:id="@+id/message_time"
+                android:id="@+id/chat_last_message_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -210,7 +208,7 @@ app:cardElevation="0dp">
                 android:id="@+id/check_chat"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_gravity="center"
+                android:layout_gravity="end"
 
                 android:layout_marginStart="8dp"
                 android:scaleType="centerInside"
@@ -218,10 +216,10 @@ app:cardElevation="0dp">
                 android:visibility="invisible" />
 
             <TextView
-                android:id="@+id/messages_count"
+                android:id="@+id/chat_unread_count"
                 android:layout_width="wrap_content"
                 android:layout_height="20dp"
-                android:layout_gravity="center"
+                android:layout_gravity="end"
                 android:background="@drawable/messages_count_shape"
                 android:fontFamily="@font/roboto"
                 android:gravity="center"
@@ -236,8 +234,6 @@ app:cardElevation="0dp">
             </TextView>
 
         </LinearLayout>
-
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

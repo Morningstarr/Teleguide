@@ -238,7 +238,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     binding.fldrFab.hide()
                 }
             }
-            if(!recyclerView.canScrollVertically(-1)){
+            if(!recyclerView.canScrollVertically(-1) && !isSelecting){
                 binding.fldrFab.show()
             }
         }
