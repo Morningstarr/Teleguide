@@ -1,11 +1,15 @@
 package com.mongodb.alliance.ui
 
+import android.annotation.SuppressLint
 import android.app.ActionBar
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.*
-import android.widget.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
@@ -22,7 +26,10 @@ import com.mongodb.alliance.databinding.ActivityChannelsArrayBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.ChannelSaveEvent
 import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.model.*
+import com.mongodb.alliance.events.SelectChatFromArrayEvent
+import com.mongodb.alliance.model.ChannelRealm
+import com.mongodb.alliance.model.ChannelType
+import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -39,8 +46,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
-import java.lang.reflect.Field
-import java.lang.reflect.Method
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -58,6 +63,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     private var ChannelsArray : ArrayList<ChannelRealm> = ArrayList()
     private var folderId : String? = null
     private lateinit var customActionBarView : View
+    var isSelecting : Boolean = false
     private lateinit var rootLayout : CoordinatorLayout
 
     private var job: Job = Job()
@@ -68,20 +74,66 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
 
     @TelegramServ
     @Inject
-    lateinit var t_service: Service
+    lateinit var tService: Service
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: NullObjectAccessEvent) {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
 
+    @SuppressLint("WrongConstant")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: SelectChatFromArrayEvent) {
+        val actionbar = supportActionBar
+        isSelecting = true
+        if (actionbar != null) {
+            customActionBarView = actionbar.customView
+            val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
+            if(event.isAdd) {
+                countText.text = (countText.text.toString().toInt() + 1).toString()
+            }
+            else{
+                if(countText.text.toString().toInt() == 1){
+                    setDefaultActionBar()
+                }
+                else {
+                    countText.text = (countText.text.toString().toInt() - 1).toString()
+                }
+            }
+
+            val btnBack = customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_back)
+            val btnCancel = customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel)
+            val btnOk = customActionBarView.findViewById<ImageView>(R.id.actionBar_button_move_ok)
+
+            btnBack.visibility = View.GONE
+            btnCancel.visibility = View.VISIBLE
+            countText.visibility = View.VISIBLE
+            btnOk.visibility = View.VISIBLE
+
+            btnCancel.setOnClickListener {
+                setDefaultActionBar()
+                isSelecting = false
+                btnBack.visibility = View.VISIBLE
+                btnCancel.visibility = View.GONE
+                countText.visibility = View.GONE
+                adapter.cancelSelection()
+            }
+
+            btnOk.setOnClickListener {
+                adapter.addToFolder(ObjectId(folderId))
+                finish()
+            }
+
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        setDefaultActionBar()
+
         folderId = intent.getStringExtra("folderId")
         folder = realm.where<FolderRealm>().equalTo("_id", ObjectId(folderId)).findFirst()
-
-        //setDefaultActionBar()
 
         subscribe<ChannelSaveEvent>(lifecycleScope){ event ->
             if(event.parameter == 1){
@@ -98,12 +150,13 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         recyclerView = binding.channelsList
     }
 
+    @ExperimentalCoroutinesApi
     override fun onStart() {
         super.onStart()
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
-            Timber.e(e.message)
+            Timber.e(e)
         }
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
@@ -113,13 +166,13 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
                 binding.mainProgress.visibility = View.VISIBLE
                 val task = async {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).returnClientState()
+                        (tService as TelegramService).returnClientState()
                     }
                 }
                 val state = task.await()
                 if(state == ClientState.waitParameters) {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).setUpClient()
+                        (tService as TelegramService).setUpClient()
                     }
                 }
                 if(state == ClientState.ready){
@@ -159,46 +212,9 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         unsubscribe()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_connect_telegram -> {
-                lateinit var state : ClientState
-                launch {
-                    val task = async {
-                        withContext(Dispatchers.IO) {
-                            (t_service as TelegramService).returnClientState()
-                        }
-                    }
-                    state = task.await()
-
-                    if(state != ClientState.ready) {
-                        startActivity(Intent(baseContext, ConnectTelegramActivity::class.java))
-                    }
-                    else{
-                        Toast.makeText(baseContext, "Account already connected", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                true
-            }
-            else -> {
-                super.onOptionsItemSelected(item)
-            }
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
-    }
-
-    suspend fun loadChats() {
+    private suspend fun loadChats() {
         val chats = withContext(coroutineContext) {
-            (t_service as TelegramService).getChats()
+            (tService as TelegramService).getChats()
         }
 
         val nm = chats as ArrayList<TdApi.Chat>
@@ -206,7 +222,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         for (i in 0 until nm.size){
             if(nm[i].title != "") {
                 // FIXME: show error if user is null
-                val partition = user?.id.toString() ?: ""
+                val partition = user?.id.toString()
                 val channel =
                     ChannelRealm(nm[i].title, partition)
 
@@ -219,7 +235,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
                     }
                     is TdApi.ChatTypeSupergroup -> {
                         val superg =
-                            (t_service as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
+                            (tService as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
                         if (superg != "") {
                             channel.name = superg
                             channel.typeEnum = ChannelType.channel
@@ -236,104 +252,39 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         }
     }
 
-    /*private fun setDefaultActionBar() {
+    @SuppressLint("WrongConstant")
+    private fun setDefaultActionBar() {
         val actionbar = supportActionBar
         if (actionbar != null) {
             actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
             actionbar.setDisplayShowCustomEnabled(true)
-            actionbar.setCustomView(R.layout.action_bar_drawable)
-            customActionBarView = actionbar.customView
-            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_back).visibility =
-                View.GONE
-            val nameText = customActionBarView.findViewById<TextView>(R.id.name)
-            nameText.text = "TeleGuide"
-            nameText.gravity = Gravity.START
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                weight = 1.0f
-                gravity = Gravity.CENTER
+            actionbar.setCustomView(R.layout.action_bar_paste_options_drawable)
+
+            val actionBarView = actionbar.customView
+
+            val middleText = actionBarView.findViewById<TextView>(R.id.actionBar_move_to)
+            val btnBack = actionBarView.findViewById<ImageView>(R.id.actionBar_button_move_back)
+            val btnOk = actionBarView.findViewById<ImageView>(R.id.actionBar_button_move_ok)
+            val countText = actionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
+            val btnCancel = actionBarView.findViewById<ImageView>(R.id.actionBar_button_move_cancel)
+
+            lifecycleScope.launch {
+                val task = async {
+                    withContext(Dispatchers.IO){
+                        (tService as TelegramService).getProfileName()
+                    }
+                }
+                middleText.text = task.await()
             }
-            nameText.layoutParams = params
-            val scale = resources.displayMetrics.density
-            val dpAsPixels = (16 * scale + 0.5f)
-            nameText.setPadding(dpAsPixels.toInt(), 0, 0, 0)
-            nameText.textSize = 24F
 
-            customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
-                rootLayout = binding.coordinatorChannelsArray
-                val anchor = binding.anchorChannelsArray
-                val wrapper = ContextThemeWrapper(
-                    this,
-                    R.style.MyPopupMenu
-                )
-                val popup = PopupMenu(wrapper, anchor, Gravity.END)
+            btnBack.visibility = View.VISIBLE
+            countText.visibility = View.GONE
+            btnOk.visibility = View.INVISIBLE
+            btnCancel.visibility = View.GONE
 
-                try {
-                    val fields: Array<Field> = popup.javaClass.declaredFields
-                    for (field in fields) {
-                        if ("mPopup" == field.name) {
-                            field.isAccessible = true
-                            val menuPopupHelper: Any = field.get(popup)
-                            val classPopupHelper =
-                                Class.forName(menuPopupHelper.javaClass.name)
-                            val setForceIcons: Method = classPopupHelper.getMethod(
-                                "setForceShowIcon",
-                                Boolean::class.javaPrimitiveType
-                            )
-                            setForceIcons.invoke(menuPopupHelper, true)
-                            break
-                        }
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e.message)
-                }
-
-                popup.menuInflater.inflate(R.menu.menu, popup.menu)
-                popup.show()
-
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.action_profile -> {
-                            startActivity(Intent(this, ProfileActivity::class.java))
-                        }
-                        R.id.action_logout -> {
-                            try {
-                                lifecycleScope.launch {
-                                    binding.mainProgress.visibility = View.VISIBLE
-
-                                    user?.logOutAsync {
-                                        if (it.isSuccess) {
-                                            realm = Realm.getDefaultInstance()
-                                            realm.close()
-
-                                            user = null
-                                        } else {
-                                            Timber.e("log out failed! Error: ${it.error}")
-                                            return@logOutAsync
-                                        }
-                                    }
-
-                                    Timber.d("user logged out")
-
-                                    binding.mainProgress.visibility = View.GONE
-                                    startActivity(
-                                        Intent(
-                                            baseContext,
-                                            LoginActivity::class.java
-                                        )
-                                    )
-                                }
-                            } catch (e: Exception) {
-                                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-                        }
-                    }
-                    true
-                }
+            btnBack.setOnClickListener {
+                finish()
             }
         }
-    }*/
+    }
 }
