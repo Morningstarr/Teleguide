@@ -1,8 +1,6 @@
 package com.mongodb.alliance.adapters
 
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.*
 import android.widget.*
@@ -14,20 +12,15 @@ import cafe.adriel.broker.publish
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
-import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.ChannelRealm
-import com.mongodb.alliance.model.ChannelType
 import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
-import dagger.hilt.android.AndroidEntryPoint
-import io.realm.OrderedRealmCollection
 import io.realm.Realm
-import io.realm.RealmRecyclerViewAdapter
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
@@ -44,14 +37,15 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelRealm>, var state : ClientState, var tService : Service) :
     GlobalBroker.Publisher, RecyclerSwipeAdapter<ChannelRealmAdapter.ChannelViewHolder>(),
-        ItemTouchHelperAdapter, Filterable, CoroutineScope, Callback
+        ItemTouchHelperAdapter, Filterable, CoroutineScope
 {
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    var selectedChannels : MutableList<ChannelRealm> = ArrayList()
-    var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
+    private var selectedChannels : MutableList<ChannelRealm> = ArrayList()
+
+    private var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
 
     init {
         channelsFilterList = data
@@ -60,7 +54,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
     private var folderId : String? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
-        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.new_channels_realm_view, parent, false)
+        val itemView: View = LayoutInflater.from(parent.context).inflate(R.layout.channel_realm_view, parent, false)
         return ChannelViewHolder(itemView)
     }
 
@@ -131,8 +125,10 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                 }
             })
 
-            holder.itemView.setOnClickListener {
-
+            holder.itemLayout.setOnClickListener {
+                if(selectedChannels.size <= 0){
+                    holder.data?.name?.let { it1 -> openChannel(it1) }
+                }
             }
 
             holder.bottomWrapper.findViewById<ImageButton>(R.id.pin_chat).setOnClickListener {
@@ -144,7 +140,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                         if (temp != null) {
                             EventBus.getDefault().post(ChannelPinDenyEvent("", holder))
                         } else {
-                            holder.data?.let { it1 -> setPinned(it1, true) }
+                            holder.data?.let { it1 -> setPinned(it1) }
                             EventBus.getDefault().post(ChannelPinEvent("", holder.data!!))
                         }
                     }
@@ -212,25 +208,29 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         return result
     }
 
+    @ExperimentalCoroutinesApi
     private fun loadChatData(holder : ChannelViewHolder, state: ClientState, tService : Service) {
         if(state == ClientState.ready) {
+            val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
+            val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
+            val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
+            val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
+            val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
             launch {
                 val task = async {
                     holder.data?.name?.let {
                         (tService as TelegramService).getRecentMessage(it)
-                        /*holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).text =
-                        . }*/
                     }
                 }
                 val messageData = task.await()
                 if (messageData != null) {
-                    holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).text = messageData.keys.elementAt(0)
-                    holder.itemLayout.findViewById<TextView>(R.id.message_time).text = messageData.values.elementAt(0)
+                    lastMessageText.text = messageData.keys.elementAt(0)
+                    lastMessageTimeText.text = messageData.values.elementAt(0)
                 }
 
-                holder.itemLayout.findViewById<TextView>(R.id.chat_last_message).visibility = View.VISIBLE
+                lastMessageText.visibility = View.VISIBLE
                 if(messageData?.values?.elementAt(0) != "") {
-                    holder.itemLayout.findViewById<TextView>(R.id.message_time).visibility =
+                    lastMessageTimeText.visibility =
                         View.VISIBLE
                 }
 
@@ -238,19 +238,19 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     (tService as TelegramService).downloadImageFile(
                         it
                     )
-                })).into(holder.itemLayout.findViewById<ImageView>(R.id.chat_image),
+                })).into(chatImage,
                     object : Callback {
                         override fun onSuccess() {
-                            holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility =
+                            imagePlaceholderText.visibility =
                                 View.INVISIBLE
-                            holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility =
+                            chatImage.visibility =
                                 View.VISIBLE
                         }
 
                         override fun onError(e: Exception?) {
-                            holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder).visibility =
+                            imagePlaceholderText.visibility =
                                 View.VISIBLE
-                            holder.itemLayout.findViewById<ImageView>(R.id.chat_image).visibility =
+                            chatImage.visibility =
                                 View.INVISIBLE
                         }
                     })
@@ -262,9 +262,13 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                 val count = task2.await()
                 if(count != null) {
                     if (count > 0) {
-                        holder.itemLayout.findViewById<TextView>(R.id.messages_count).visibility =
+                        unreadCountText.visibility =
                             View.VISIBLE
-                        holder.itemLayout.findViewById<TextView>(R.id.messages_count).text = count.toString()
+                        unreadCountText.text = count.toString()
+                    }
+                    else{
+                        unreadCountText.visibility =
+                            View.INVISIBLE
                     }
                 }
             }
@@ -275,7 +279,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         folderId = id
     }
 
-    private fun setPinned(channel : ChannelRealm, pinned : Boolean) {
+    private fun setPinned(channel : ChannelRealm) {
         val bgRealm = Realm.getDefaultInstance()
 
         runBlocking {
@@ -283,7 +287,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                 val tempChannel = realm.where<ChannelRealm>().equalTo("_id", channel._id)
                     .findFirst() as ChannelRealm
 
-                tempChannel.isPinned = pinned
+                tempChannel.isPinned = true
             }
         }
 
@@ -349,32 +353,14 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         publish(OpenChannelEvent(intent))
     }
 
-    private fun removeAt(id: ObjectId) {
-        val bgRealm = Realm.getDefaultInstance()
-
-        if(bgRealm != null) {
-            bgRealm.executeTransaction {
-
-                val item = it.where<ChannelRealm>().equalTo("_id", id).findFirst()
-                item?.deleteFromRealm()
-            }
-
-            bgRealm.close()
-        }
-        else{
-            EventBus.getDefault().post(NullObjectAccessEvent("The realm is null!"))
-        }
-
-    }
-
     inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.chat_realm_name)
 
-        var cardView : CardView = view.findViewById<CardView>(R.id.chat_card_view)
-        var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.chat_swipe_layout)
-        var itemLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.chat_item_layout)
-        var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.chat_bottom_wrapper)
-        var timeLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.time_layout)
+        var cardView : CardView = view.findViewById(R.id.chat_card_view)
+        var swipeLayout : SwipeLayout = view.findViewById(R.id.chat_swipe_layout)
+        var itemLayout : ConstraintLayout = view.findViewById(R.id.chat_item_layout)
+        var bottomWrapper : LinearLayout = view.findViewById(R.id.chat_bottom_wrapper)
+        var timeLayout : LinearLayout = view.findViewById(R.id.chat_time_layout)
 
         var data: ChannelRealm? = null
         var isSelecting : Boolean = false
@@ -407,7 +393,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                 val tempChannel = bgRealm.where<ChannelRealm>().equalTo("_id", channelsFilterList[i]._id)
                     .findFirst() as ChannelRealm
                 if(tempChannel.order != i) {
-                    bgRealm.executeTransaction { realm ->
+                    bgRealm.executeTransaction {
                         tempChannel.order = i
                     }
                 }
@@ -458,28 +444,32 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
 
     private fun showCheck(show : Boolean, holder : ChannelViewHolder){
         if(show) {
-            holder.timeLayout.findViewById<TextView>(R.id.message_time).visibility =
+            holder.timeLayout.findViewById<TextView>(R.id.chat_last_message_time).visibility =
                 View.INVISIBLE
-            holder.timeLayout.findViewById<TextView>(R.id.messages_count).visibility =
+            holder.timeLayout.findViewById<TextView>(R.id.chat_unread_count).visibility =
                 View.INVISIBLE
             holder.timeLayout.findViewById<ImageView>(R.id.check_chat).visibility =
                 View.VISIBLE
         }
-        else{
-            holder.timeLayout.findViewById<TextView>(R.id.message_time).visibility =
+        else {
+            holder.timeLayout.findViewById<TextView>(R.id.chat_last_message_time).visibility =
                 View.VISIBLE
-            holder.timeLayout.findViewById<TextView>(R.id.messages_count).visibility =
-                View.VISIBLE
+            val count = runBlocking {
+                holder.data?.name?.let { (tService as TelegramService).getUnreadCount(it) }
+            }
+            if (count != null) {
+                if (count > 0){
+                    holder.timeLayout.findViewById<TextView>(R.id.chat_unread_count).visibility =
+                        View.VISIBLE
+                }
+                else{
+                    holder.timeLayout.findViewById<TextView>(R.id.chat_unread_count).visibility =
+                        View.INVISIBLE
+                }
+            }
             holder.timeLayout.findViewById<ImageView>(R.id.check_chat).visibility =
                 View.INVISIBLE
         }
     }
 
-    override fun onSuccess() {
-
-    }
-
-    override fun onError(e: Exception?) {
-        TODO("Not yet implemented")
-    }
 }

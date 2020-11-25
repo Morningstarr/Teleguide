@@ -73,7 +73,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     @TelegramServ
     @Inject
-    lateinit var t_service: Service
+    lateinit var tService: Service
 
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -139,6 +139,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     fun onMessageEvent(event: SelectChatEvent){
         val actionbar = supportActionBar
         isSelecting = true
+        binding.channelsFab.hide()
         if (actionbar != null) {
             if(actionbar.customView.findViewById<TextView>(R.id.actionBar_chats_count) == null) {
                 actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
@@ -156,6 +157,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             else{
                 if(countText.text.toString().toInt() == 1){
                     setDefaultActionBar()
+                    binding.channelsFab.show()
                 }
                 else {
                     countText.text = (countText.text.toString().toInt() - 1).toString()
@@ -167,6 +169,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 setDefaultActionBar()
                 isSelecting = false
                 adapter.cancelSelection()
+                binding.channelsFab.show()
             }
 
             customActionBarView.findViewById<ImageView>(R.id.actionBar_chat_button_delete).setOnClickListener {
@@ -200,7 +203,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     binding.channelsFab.hide()
                 }
             }
-            if(!recyclerView.canScrollVertically(-1)){
+            if(!recyclerView.canScrollVertically(-1) && !isSelecting){
                 binding.channelsFab.show()
             }
         }
@@ -212,7 +215,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 showLoading(true)
                 val task = async {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).returnClientState()
+                        (tService as TelegramService).returnClientState()
                     }
                 }
                 val state = task.await()
@@ -279,13 +282,13 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 showLoading(true)
                 val task = async {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).returnClientState()
+                        (tService as TelegramService).returnClientState()
                     }
                 }
                 state = task.await()
                 if(state == ClientState.waitParameters) {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).setUpClient()
+                        (tService as TelegramService).setUpClient()
                     }
                 }
                 showLoading(false)
@@ -319,6 +322,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             setDefaultActionBar()
             isSelecting = false
             adapter.cancelSelection()
+            binding.channelsFab.show()
         }
         else{
             super.onBackPressed()
@@ -381,7 +385,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         if(query.size != 0) {
             binding.channelsTextLayout.visibility = View.INVISIBLE
             adapter = ChannelRealmAdapter(
-                query, state, t_service
+                query, state, tService
             )
 
             recyclerView.layoutManager = LinearLayoutManager(this)
@@ -400,7 +404,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     }
 
-    open fun refreshRecyclerView(){
+    private fun refreshRecyclerView(){
         val mutableChannels = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).findAll().sort("order").toMutableList()
         mutableChannels.removeIf {
             it.isPinned
@@ -417,7 +421,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             realm = Realm.getDefaultInstance()
             found = realm.where<ChannelRealm>().equalTo("folder._id", ObjectId(folderId)).equalTo("isPinned", true).findFirst()
             if(found != null){
-                pinnedAdapter = PinnedChannelAdapter(found, state, t_service)
+                pinnedAdapter = PinnedChannelAdapter(found, state, tService)
                 pinnedAdapter.addContext(this)
                 folderId?.let { pinnedAdapter.setFolderId(it) }
                 pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -431,7 +435,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             }
         }
         else {
-            pinnedAdapter = PinnedChannelAdapter(pinned, state, t_service)
+            pinnedAdapter = PinnedChannelAdapter(pinned, state, tService)
             folderId?.let { pinnedAdapter.setFolderId(it) }
             pinnedRecyclerView.layoutManager = LinearLayoutManager(this)
             pinnedRecyclerView.adapter = pinnedAdapter
