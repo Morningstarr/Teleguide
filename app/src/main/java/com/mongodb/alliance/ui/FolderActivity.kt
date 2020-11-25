@@ -254,7 +254,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             )
         }
 
-
     }
 
     @ExperimentalCoroutinesApi
@@ -262,7 +261,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         super.onStart()
 
         binding.searchView.onActionViewExpanded()
-        Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
+        binding.fldrFab.requestFocus()
 
         binding.searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
@@ -337,7 +337,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     override fun onRestart() {
         super.onRestart()
         binding.searchView.onActionViewExpanded()
-        Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
+        binding.fldrFab.requestFocus()
 
         binding.searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
@@ -642,7 +643,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         if(actionbar != null) {
             actionbar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
             actionbar.setDisplayShowCustomEnabled(true)
-            actionbar.setCustomView(R.layout.action_bar_folder_paste_options_drawable)
+            actionbar.setCustomView(R.layout.action_bar_paste_options_drawable)
             customActionBarView = actionbar.customView
 
             val countText = customActionBarView.findViewById<TextView>(R.id.actionBar_chats_move_count)
@@ -682,7 +683,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             view = View(this)
         }
         imm.hideSoftInputFromWindow(view.windowToken, 0)
-        Handler().postDelayed({ binding.searchView.clearFocus() }, 0)
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
+        binding.fldrFab.requestFocus()
     }
 
 }

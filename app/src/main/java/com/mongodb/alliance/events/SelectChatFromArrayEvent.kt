@@ -1,4 +1,4 @@
 package com.mongodb.alliance.events
 
-class SelectChatFromArrayEvent {
+data class SelectChatFromArrayEvent(var isAdd : Boolean) {
 }

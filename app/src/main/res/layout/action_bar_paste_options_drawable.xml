@@ -6,46 +6,51 @@
     android:layout_height="?attr/actionBarSize"
 
     android:background="#FFFFFF"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:weightSum="1">
 
     <ImageButton
         android:id="@+id/actionBar_button_move_back"
-        android:layout_width="45dp"
+        android:layout_width="50dp"
         android:layout_height="match_parent"
+        android:layout_weight="0.01"
         android:background="#FFFFFF"
         android:paddingStart="10dp"
         android:paddingEnd="5dp"
-        android:src="@drawable/ic_arrow_back" />
+        android:src="@drawable/ic_arrow_back"
+        android:visibility="gone" />
 
     <ImageButton
         android:id="@+id/actionBar_button_move_cancel"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_weight="0.01"
         android:background="#FFFFFF"
         android:paddingStart="10dp"
         android:paddingEnd="5dp"
         android:src="@drawable/ic_cross"
-        android:visibility="gone"/>
+        android:visibility="visible" />
 
     <TextView
         android:id="@+id/actionBar_chats_move_count"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
-        android:gravity="center_vertical"
+        android:layout_weight="0.01"
         android:fontFamily="@font/roboto"
-        android:textSize="20dp"
+        android:gravity="center_vertical"
         android:text="0"
         android:textColor="#03CCFC"
-        android:visibility="gone"/>
+        android:textSize="20dp"
+        android:visibility="visible" />
 
     <TextView
         android:id="@+id/actionBar_move_to"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="center|center_horizontal|center_vertical"
-        android:layout_weight="0.8"
-        android:fontFamily="@font/roboto"
+        android:layout_weight="1"
+        android:fontFamily="@font/roboto_medium"
         android:gravity="center"
         android:paddingStart="-15dp"
         android:text="Переместить в.."
@@ -57,6 +62,7 @@
         android:id="@+id/actionBar_button_move_ok"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_weight="0.01"
         android:background="#FFFFFF"
         android:paddingStart="15dp"
         android:paddingEnd="15dp"
