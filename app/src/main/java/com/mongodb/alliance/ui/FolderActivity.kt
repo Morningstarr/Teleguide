@@ -60,7 +60,6 @@ import kotlin.time.ExperimentalTime
 @RequiresApi(Build.VERSION_CODES.N)
 class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineScope {
     private lateinit var realm: Realm
-    private var user: User? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var pinnedRecyclerView: RecyclerView
     private lateinit var adapter: FolderAdapter
@@ -69,15 +68,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
     private lateinit var state : ClientState
+    lateinit var binding: ActivityFolderBinding
+    private var user: User? = null
     private var count : Int = -1
-    var isSelecting : Boolean = false
     private var folderId : ObjectId? = null
-
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
-
-    lateinit var binding: ActivityFolderBinding
+    var isSelecting : Boolean = false
 
     @TelegramServ
     @Inject
@@ -253,7 +251,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 folderAddDialog.tag
             )
         }
-
     }
 
     @ExperimentalCoroutinesApi
@@ -274,9 +271,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 try {
                     adapter.filter.filter(newText)
                     return false
-                }
-                catch(e:Exception){
-                    if(e.message != "lateinit property adapter has not been initialized"){
+                } catch (e: Exception) {
+                    if (e.message != "lateinit property adapter has not been initialized") {
                         Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
                     }
                     return true
@@ -294,17 +290,21 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         } else {
             /*lifecycleScope.*/runBlocking {
                 showLoading(true)
-                val task = async {
-                    withContext(Dispatchers.IO) {
+                //val task = async {
+                    var currState = withContext(Dispatchers.IO) {
                         (tService as TelegramService).returnClientState()
                     }
-                }
-                state = task.await()
-                if(state == ClientState.waitParameters) {
+                //}
+                //state = task.await()
+                if(currState == ClientState.waitParameters) {
                     withContext(Dispatchers.IO) {
                         (tService as TelegramService).setUpClient()
                     }
                 }
+                currState = withContext(Dispatchers.IO) {
+                    (tService as TelegramService).returnClientState()
+                }
+                state = currState
             }
 
             val config = SyncConfiguration.Builder(user, user?.id)
@@ -322,7 +322,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         setUpRecyclerPinned(null)
                         showLoading(false)
 
-                        if(count != -1) {
+                        if (count != -1) {
                             setPasteModes()
                         }
                     }
@@ -350,9 +350,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 try {
                     adapter.filter.filter(newText)
                     return false
-                }
-                catch(e:Exception){
-                    if(e.message != "lateinit property adapter has not been initialized"){
+                } catch (e: Exception) {
+                    if (e.message != "lateinit property adapter has not been initialized") {
                         Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
                     }
                     return true
@@ -367,6 +366,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         super.onDestroy()
         recyclerView.adapter = null
         recyclerView.visibility = View.GONE
+        adapter.miniaturesRefresh()
         realm.close()
     }
 
@@ -404,15 +404,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
             val touchHelper = ItemTouchHelper(callback)
             touchHelper.attachToRecyclerView(recyclerView)
-
             recyclerView.visibility = View.VISIBLE
         }
         else{
             binding.foldersTextLayout.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         }
-
-        //recyclerView.visibility = View.VISIBLE
     }
 
     private fun refreshRecyclerView(){
@@ -524,44 +521,69 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     Timber.e(e)
                 }
 
-                popup.menuInflater.inflate(R.menu.menu, popup.menu)
+                popup.menuInflater.inflate(R.menu.chats_folders_menu, popup.menu)
                 popup.show()
 
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
-                        R.id.action_profile -> {
+                        R.id.chats_folders_action_profile -> {
                             startActivity(Intent(this, ProfileActivity::class.java))
                         }
-                        R.id.action_logout -> {
+                        R.id.chats_folders_action_refresh -> {
+                            setUpRecyclerView(realm)
+                            setUpRecyclerPinned(null)
+                        }
+                        R.id.chats_folders_action_exit -> {
                             try {
-                                lifecycleScope.launch {
-                                    binding.foldersProgress.visibility = View.VISIBLE
+                                val checkBoxView =
+                                    View.inflate(this, R.layout.check_frame_layout, null)
+                                val checkBox =
+                                    checkBoxView.findViewById<View>(R.id.alert_checkBox) as CheckBox
+                                checkBox.setOnCheckedChangeListener { _, _ ->
+                                    // Save to shared preferences
+                                }
 
-                                    user?.logOutAsync {
-                                        if (it.isSuccess) {
-                                            realm = Realm.getDefaultInstance()
-                                            realm.close()
-
-                                            user = null
-                                        } else {
-                                            Timber.e("log out failed! Error: ${it.error}")
-                                            return@logOutAsync
+                                val builder = AlertDialog.Builder(this)
+                                builder.setTitle("")
+                                builder.setMessage("Чтобы добавить новые чаты необходимо будет войти в Telegram аккаунт.")
+                                    .setView(checkBoxView)
+                                    .setCancelable(true)
+                                    .setPositiveButton(
+                                        "Выйти"
+                                    ) { _, _ ->
+                                        lifecycleScope.launch {
+                                            binding.foldersProgress.visibility = View.VISIBLE
+                                            user?.logOutAsync {
+                                                if (it.isSuccess) {
+                                                    realm = Realm.getDefaultInstance()
+                                                    realm.close()
+                                                    user = null
+                                                } else {
+                                                    Timber.e("log out failed! Error: ${it.error}")
+                                                    return@logOutAsync
+                                                }
+                                            }
+                                            Timber.d("user logged out")
+                                            binding.foldersProgress.visibility = View.GONE
+                                            if(checkBox.isChecked){
+                                                (tService as TelegramService).logOut()
+                                            }
+                                            startActivity(
+                                                Intent(
+                                                    baseContext,
+                                                    LoginActivity::class.java
+                                                )
+                                            )
                                         }
                                     }
+                                    .setNegativeButton(
+                                        "Отмена"
+                                    ) { dialog, _ ->
+                                        dialog.cancel()
+                                    }.show()
+                            }
+                            catch (e:Exception){
 
-                                    Timber.d("user logged out")
-
-                                    binding.foldersProgress.visibility = View.GONE
-                                    startActivity(
-                                        Intent(
-                                            baseContext,
-                                            LoginActivity::class.java
-                                        )
-                                    )
-                                }
-                            } catch (e: Exception) {
-                                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
-                                    .show()
                             }
                         }
                     }

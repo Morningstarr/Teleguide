@@ -497,44 +497,70 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     Timber.e(e.message)
                 }
 
-                popup.menuInflater.inflate(R.menu.menu, popup.menu)
+                popup.menuInflater.inflate(R.menu.chats_folders_menu, popup.menu)
                 popup.show()
 
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
-                        R.id.action_profile -> {
+                        R.id.chats_folders_action_profile -> {
                             startActivity(Intent(this, ProfileActivity::class.java))
                         }
-                        R.id.action_logout -> {
+                        R.id.chats_folders_action_refresh -> {
+                            setUpRecyclerView(realm)
+                            setUpRecyclerPinned(null)
+                        }
+                        R.id.chats_folders_action_exit -> {
                             try {
-                                lifecycleScope.launch {
-                                    binding.channelsInFolderProgress.visibility = View.VISIBLE
+                                val checkBoxView =
+                                    View.inflate(this, R.layout.check_frame_layout, null)
+                                val checkBox =
+                                    checkBoxView.findViewById<View>(R.id.alert_checkBox) as CheckBox
+                                checkBox.setOnCheckedChangeListener { _, _ ->
+                                    // Save to shared preferences
+                                }
 
-                                    user?.logOutAsync {
-                                        if (it.isSuccess) {
-                                            realm = Realm.getDefaultInstance()
-                                            realm.close()
-
-                                            user = null
-                                        } else {
-                                            Timber.e("log out failed! Error: ${it.error}")
-                                            return@logOutAsync
+                                val builder = AlertDialog.Builder(this)
+                                builder.setTitle("")
+                                builder.setMessage("Чтобы добавить новые чаты необходимо будет войти в Telegram аккаунт.")
+                                    .setView(checkBoxView)
+                                    .setCancelable(true)
+                                    .setPositiveButton(
+                                        "Выйти"
+                                    ) { _, _ ->
+                                        lifecycleScope.launch {
+                                            binding.channelsInFolderProgress.visibility = View.VISIBLE
+                                            user?.logOutAsync {
+                                                if (it.isSuccess) {
+                                                    realm = Realm.getDefaultInstance()
+                                                    realm.close()
+                                                    user = null
+                                                } else {
+                                                    Timber.e("log out failed! Error: ${it.error}")
+                                                    return@logOutAsync
+                                                }
+                                            }
+                                            Timber.d("user logged out")
+                                            binding.channelsInFolderProgress.visibility = View.GONE
+                                            if(checkBox.isChecked){
+                                                (tService as TelegramService).logOut()
+                                            }
+                                            finish()
+                                            startActivity(
+                                                Intent(
+                                                    baseContext,
+                                                    LoginActivity::class.java
+                                                )
+                                            )
                                         }
                                     }
+                                    .setNegativeButton(
+                                        "Отмена"
+                                    ) { dialog, _ ->
+                                        dialog.cancel()
+                                    }.show()
+                            }
+                            catch (e:Exception){
 
-                                    Timber.d("user logged out")
-
-                                    binding.channelsInFolderProgress.visibility = View.GONE
-                                    startActivity(
-                                        Intent(
-                                            baseContext,
-                                            LoginActivity::class.java
-                                        )
-                                    )
-                                }
-                            } catch (e: Exception) {
-                                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT)
-                                    .show()
                             }
                         }
                     }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/chats_folders_action_profile"
+        android:icon="@drawable/ic_profile"
+        android:title="Профиль"
+        />
+    <item
+        android:id="@+id/chats_folders_action_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="Обновить"
+        />
+    <item
+        android:id="@+id/chats_folders_action_exit"
+        android:icon="@drawable/ic_logout"
+        android:title="Выйти"
+        />
+
+</menu>

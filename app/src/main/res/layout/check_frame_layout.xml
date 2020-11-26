@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <CheckBox
+        android:id="@+id/alert_checkBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="20dp"
+        android:button="@drawable/checkbox_selector"
+        android:fontFamily="@font/roboto"
+        android:paddingStart="10dp"
+        android:text="Отвязать телеграм аккаунт?"
+        android:textSize="14sp" />
+
+</FrameLayout>
