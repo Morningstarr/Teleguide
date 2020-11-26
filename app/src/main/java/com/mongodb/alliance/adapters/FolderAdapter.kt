@@ -71,16 +71,31 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     }
 
     inner class FolderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var cardView : CardView = view.findViewById<CardView>(R.id.card_view)
-        var swipeLayout : SwipeLayout = view.findViewById<SwipeLayout>(R.id.swipe_layout)
-        var itemLayout : LinearLayout = view.findViewById<LinearLayout>(R.id.item_layout)
-        var bottomWrapper : LinearLayout = view.findViewById<LinearLayout>(R.id.bottom_wrapper)
-        var checkLayout : ConstraintLayout = view.findViewById<ConstraintLayout>(R.id.check_layout)
+        var cardView : CardView = view.findViewById(R.id.card_view)
+        var swipeLayout : SwipeLayout = view.findViewById(R.id.swipe_layout)
+        var itemLayout : LinearLayout = view.findViewById(R.id.item_layout)
+        var bottomWrapper : LinearLayout = view.findViewById(R.id.bottom_wrapper)
+        var checkLayout : ConstraintLayout = view.findViewById(R.id.check_layout)
         var name: TextView = view.findViewById(R.id.folder_name)
         var data: FolderRealm? = null
         var additional: TextView = view.findViewById(R.id.additional_count)
         var isSelecting : Boolean = false
         var isSelectedPaste : Boolean = false
+        var isMiniaturesLoaded : Boolean = false
+    }
+
+    override fun onBindViewHolder(
+        holder: FolderViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if(payloads.isNotEmpty()) {
+            if (payloads[0] is Boolean) {
+                holder.isMiniaturesLoaded = false
+            }
+        }else {
+            super.onBindViewHolder(holder,position, payloads)
+        }
     }
 
     @ExperimentalCoroutinesApi
@@ -99,7 +114,9 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                         state = tService.returnClientState()
                     }
                 }
-                loadMiniatureImages(count, holder, state)
+                if(!holder.isMiniaturesLoaded) {
+                    loadMiniatureImages(count, holder, state)
+                }
             }
 
             if(!isPaste) {
@@ -315,7 +332,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                                     )
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
+                        ).into(holder.itemLayout.findViewById(R.id.third_nested),
                             object : Callback {
                                 override fun onSuccess() {
                                     holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
@@ -331,6 +348,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                                         View.INVISIBLE
                                 }
                             })
+                        holder.isMiniaturesLoaded = true
                     }
                 }
 
@@ -392,6 +410,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                                         View.INVISIBLE
                                 }
                             })
+                        holder.isMiniaturesLoaded = true
                     }
                 }
 
@@ -477,6 +496,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                                         View.INVISIBLE
                                 }
                             })
+                        holder.isMiniaturesLoaded = true
                         }
                 }
             }
@@ -561,11 +581,19 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                                         View.INVISIBLE
                                 }
                             })
+                        holder.isMiniaturesLoaded = true
                     }
                 }
             }
         }
     }
+
+    fun miniaturesRefresh(){
+        for(item in foldersFilterList) {
+            notifyItemChanged(foldersFilterList.indexOf(item), false)
+        }
+    }
+
 
     private fun getFirstChatsNames(holder: FolderViewHolder) : HashMap<String, String>{
         val bgRealm = Realm.getDefaultInstance()
