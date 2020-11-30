@@ -451,7 +451,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
 
     fun returnRecentMessage(chatName: String) : HashMap<String, String> {
         var message = ""
-        var messageTime: String = ""
+        var messageTime = ""
         val resultMap: HashMap<String, String> = HashMap()
         try {
             if (isChatInList(chatName)) {
@@ -522,7 +522,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     }
 
     suspend fun returnImagePath(chatName: String) : String {
-        var imagePath : String = ""
+        var imagePath = ""
         try {
             val file = returnChatImageId(chatName)?.let { TdApi.DownloadFile(it, 1, 0, 0, true) }
                 ?.let { client.exec(it) }

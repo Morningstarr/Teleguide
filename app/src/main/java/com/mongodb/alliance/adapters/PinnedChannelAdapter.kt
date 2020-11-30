@@ -57,7 +57,6 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
 
     inner class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.chat_realm_name)
-        var cardView : CardView = view.findViewById(R.id.chat_card_view)
         var swipeLayout : SwipeLayout = view.findViewById(R.id.chat_swipe_layout)
         var itemLayout : ConstraintLayout = view.findViewById(R.id.chat_item_layout)
         var bottomWrapper : LinearLayout = view.findViewById(R.id.chat_bottom_wrapper)
@@ -83,7 +82,7 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
                 state = (tService as TelegramService).returnClientState()
             }
         }
-        loadChatData(holder, state, tService)
+        getChatMessageData(holder)
 
         if(holder.data != null) {
             if ((holder.data as ChannelRealm).isPinned) {
@@ -102,7 +101,7 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
 
         holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
             override fun onClose(layout: SwipeLayout?) {
-                //when the SurfaceView totally cover the BottomView.
+
             }
 
             override fun onUpdate(layout: SwipeLayout?, leftOffset: Int, topOffset: Int) {
@@ -165,68 +164,55 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
 
     }
 
-    @ExperimentalCoroutinesApi
-    private fun loadChatData(holder : ChannelViewHolder, state: ClientState, tService: Service){
-        if(state == ClientState.ready) {
-            val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
-            val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
-            val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
-            val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
-            val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
-            launch {
-                val task = async {
-                    holder.data?.name?.let {
-                        (tService as TelegramService).getRecentMessage(it)
-                    }
-                }
-                val messageData = task.await()
-                if (messageData != null) {
-                    lastMessageText.text = messageData.keys.elementAt(0)
-                    lastMessageTimeText.text = messageData.values.elementAt(0)
-                }
-
-                lastMessageText.visibility = View.VISIBLE
-                if(messageData?.values?.elementAt(0) != "") {
-                    lastMessageTimeText.visibility =
-                        View.VISIBLE
-                }
-
-                    Picasso.get().load(File(holder.data?.name?.let {
-                        (tService as TelegramService).downloadImageFile(
-                            it
-                        )
-                    })).into(chatImage,
-                        object : Callback {
-                            override fun onSuccess() {
-                                imagePlaceholderText.visibility =
-                                    View.INVISIBLE
-                                chatImage.visibility =
-                                    View.VISIBLE
-                            }
-
-                            override fun onError(e: Exception?) {
-                                imagePlaceholderText.visibility =
-                                    View.VISIBLE
-                                chatImage.visibility =
-                                    View.INVISIBLE
-                            }
-                        })
-
-                val task2 = async {
-                    holder.data?.name?.let { (tService as TelegramService).getUnreadCount(it) }
-                }
-                val count = task2.await()
-                if (count!! > 0) {
-                    unreadCountText.visibility =
-                        View.VISIBLE
-                    unreadCountText.text =
-                        count.toString()
-                } else {
-                    unreadCountText.visibility =
-                        View.INVISIBLE
-                }
+    private fun getChatMessageData(holder: ChannelViewHolder){
+        val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
+        val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
+        val results = holder.data?.displayName?.let { (tService as TelegramService).returnRecentMessage(it) }
+        val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
+        val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
+        val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
+        lastMessageText.text = results?.keys?.elementAt(0)
+        lastMessageTimeText.text = results?.values?.elementAt(0)
+        lastMessageText.visibility = View.VISIBLE
+        if(results?.values?.elementAt(0) != "") {
+            lastMessageTimeText.visibility =
+                View.VISIBLE
+        }
+        val count = holder.data?.displayName?.let { (tService as TelegramService).returnUnreadCount(it) }
+        if(count != null) {
+            if (count > 0) {
+                unreadCountText.visibility =
+                    View.VISIBLE
+                unreadCountText.text = count.toString()
+            }
+            else{
+                unreadCountText.visibility =
+                    View.INVISIBLE
             }
         }
+        launch {
+            Picasso.get().load(File(holder.data?.displayName?.let {
+                (tService as TelegramService).returnImagePath(
+                    it
+                )
+            })).into(chatImage,
+                object : Callback {
+                    override fun onSuccess() {
+                        imagePlaceholderText.visibility =
+                            View.INVISIBLE
+                        chatImage.visibility =
+                            View.VISIBLE
+                    }
+
+                    override fun onError(e: Exception?) {
+                        imagePlaceholderText.visibility =
+                            View.VISIBLE
+                        chatImage.visibility =
+                            View.INVISIBLE
+                    }
+                })
+        }
+
     }
 
     fun addContext(activity : ChannelsRealmActivity){

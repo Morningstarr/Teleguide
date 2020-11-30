@@ -88,7 +88,6 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     state = (tService as TelegramService).returnClientState()
                 }
             }
-            //loadChatData(holder, state, tService)
             getChatMessageData(holder)
 
             if (holder.data != null) {
