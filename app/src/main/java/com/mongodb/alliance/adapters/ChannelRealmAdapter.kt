@@ -88,8 +88,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     state = (tService as TelegramService).returnClientState()
                 }
             }
-            loadChatData(holder, state, tService)
-
+            getChatMessageData(holder)
 
             if (holder.data != null) {
                 mItemManger.bindView(holder.itemView, position)
@@ -206,6 +205,56 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
 
         bgRealm.close()
         return result
+    }
+
+    private fun getChatMessageData(holder : ChannelViewHolder){
+        val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
+        val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
+        val results = holder.data?.displayName?.let { (tService as TelegramService).returnRecentMessage(it) }
+        val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
+        val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
+        val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
+        lastMessageText.text = results?.keys?.elementAt(0)
+        lastMessageTimeText.text = results?.values?.elementAt(0)
+        lastMessageText.visibility = View.VISIBLE
+        if(results?.values?.elementAt(0) != "") {
+            lastMessageTimeText.visibility =
+                View.VISIBLE
+        }
+        val count = holder.data?.displayName?.let { (tService as TelegramService).returnUnreadCount(it) }
+        if(count != null) {
+            if (count > 0) {
+                unreadCountText.visibility =
+                    View.VISIBLE
+                unreadCountText.text = count.toString()
+            }
+            else{
+                unreadCountText.visibility =
+                    View.INVISIBLE
+            }
+        }
+        launch {
+            Picasso.get().load(File(holder.data?.displayName?.let {
+                (tService as TelegramService).returnImagePath(
+                    it
+                )
+            })).into(chatImage,
+                object : Callback {
+                    override fun onSuccess() {
+                        imagePlaceholderText.visibility =
+                            View.INVISIBLE
+                        chatImage.visibility =
+                            View.VISIBLE
+                    }
+
+                    override fun onError(e: Exception?) {
+                        imagePlaceholderText.visibility =
+                            View.VISIBLE
+                        chatImage.visibility =
+                            View.INVISIBLE
+                    }
+                })
+        }
     }
 
     @ExperimentalCoroutinesApi

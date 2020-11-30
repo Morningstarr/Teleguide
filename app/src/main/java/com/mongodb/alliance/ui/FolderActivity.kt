@@ -288,14 +288,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
         } else {
-            /*lifecycleScope.*/runBlocking {
+            runBlocking {
                 showLoading(true)
-                //val task = async {
                     var currState = withContext(Dispatchers.IO) {
                         (tService as TelegramService).returnClientState()
                     }
-                //}
-                //state = task.await()
+
                 if(currState == ClientState.waitParameters) {
                     withContext(Dispatchers.IO) {
                         (tService as TelegramService).setUpClient()
@@ -305,6 +303,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     (tService as TelegramService).returnClientState()
                 }
                 state = currState
+                if(state == ClientState.ready) {
+                    val tsk = async {
+                        (tService as TelegramService).fillChats()
+                    }
+                    tsk.await()
+                }
             }
 
             val config = SyncConfiguration.Builder(user, user?.id)
@@ -358,7 +362,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 }
             }
         })
-        
+
         //todo ошибка перетаскивания при перезапуске
     }
 

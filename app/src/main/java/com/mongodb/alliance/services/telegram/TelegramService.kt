@@ -22,6 +22,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,6 +38,7 @@ import kotlin.time.seconds
 @Singleton
 class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber {
 
+    private var chatsList : ArrayList<TdApi.Chat> = ArrayList()
     private var telegram : Telegram
     private var client : TelegramClient
     private lateinit var clientState : ClientState
@@ -298,7 +300,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
 
     @ExperimentalCoroutinesApi
     suspend fun changeAccount(){
-        var newClient = telegram.client()
+        val newClient = telegram.client()
         client = newClient
         setUpClient()
         TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
@@ -310,7 +312,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     suspend fun getRecentMessage(chatName: String) : HashMap<String, String>{
         var message = ""
         var messageTime : String = ""
-        var resultMap : HashMap<String, String> = HashMap()
+        val resultMap : HashMap<String, String> = HashMap()
         try{
             val searchPublicChat = client.exec(TdApi.SearchPublicChat(chatName))
             val chat = (searchPublicChat as TdApi.Chat)
@@ -415,6 +417,122 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         }
         finally {
             return unreadCount
+        }
+    }
+
+    suspend fun fillChats(){
+        val chats = getChats()
+        chatsList = chats as ArrayList<TdApi.Chat>
+    }
+
+    fun isChatInList(chatName: String) : Boolean{
+        //val chats = getChats()
+        //val nm = chats as ArrayList<TdApi.Chat>
+        return chatsList.find { it.title == chatName } != null
+    }
+
+    fun returnUnreadCount(chatName: String) : Int {
+        var unreadCount : Int = 0
+        try{
+            if(isChatInList(chatName)) {
+                val chat = chatsList.find { it.title == chatName }
+                if(chat != null) {
+                    unreadCount = chat.unreadCount
+                }
+            }
+        }
+        catch(e : Exception){
+            Timber.e(e.message)
+        }
+        finally {
+            return unreadCount
+        }
+    }
+
+    fun returnRecentMessage(chatName: String) : HashMap<String, String> {
+        var message = ""
+        var messageTime = ""
+        val resultMap: HashMap<String, String> = HashMap()
+        try {
+            if (isChatInList(chatName)) {
+                val foundChat = chatsList.find { it.title == chatName }
+                val messageContent = foundChat?.lastMessage?.content.toString()
+                val correctDate = (foundChat?.lastMessage?.date.toString() + "000").toLong()
+                val messageDate = Date(correctDate)
+                val currentDate = Date(System.currentTimeMillis())
+                if (messageDate.day == currentDate.day) {
+                    messageTime = SimpleDateFormat("hh:mm").format(Date(correctDate).time)
+                }
+                if (SimpleDateFormat("dd").format(currentDate)
+                        .toInt() - SimpleDateFormat("dd").format(messageDate).toInt() == 1
+                ) {
+                    messageTime = "Вчера"
+                }
+                if (SimpleDateFormat("dd").format(currentDate)
+                        .toInt() - SimpleDateFormat("dd").format(messageDate).toInt() == 2
+                ) {
+                    messageTime = "Позавчера"
+                }
+                if (SimpleDateFormat("dd").format(currentDate)
+                        .toInt() - SimpleDateFormat("dd").format(messageDate).toInt() > 2
+                ) {
+                    messageTime = SimpleDateFormat("dd.MM.yy").format(messageDate)
+                }
+                if (messageContent.contains("video")) {
+                    message = "Видео, "
+                }
+                if (messageContent.contains("MessagePhoto")) {
+                    message = "Фотография, "
+                }
+                val textContent = messageContent.subSequence(
+                    messageContent.indexOf("text = \"") + 8,
+                    messageContent.lastIndexOf("\"")
+                ).toString()
+                if (textContent != "") {
+                    message += textContent
+                } else {
+                    message = message.removeRange(message.lastIndexOf(","), message.length)
+                }
+            }
+            else {
+                message = "Нет доступа к данному чату"
+            }
+        }
+        catch (e:Exception){
+            Timber.e(e.message)
+        }
+        finally {
+            resultMap[message] = messageTime
+            return resultMap
+        }
+    }
+
+    fun returnChatImageId(chatName: String) : Int? {
+        var chatPhotoId : Int? = 0
+        try {
+            val chat = chatsList.find { it.title == chatName }
+            chatPhotoId = chat?.photo?.small?.id
+        }
+        catch (e: Exception) {
+            Timber.e(e.message)
+        }
+        finally {
+            return chatPhotoId
+        }
+    }
+
+    suspend fun returnImagePath(chatName: String) : String {
+        var imagePath = ""
+        try {
+            val file = returnChatImageId(chatName)?.let { TdApi.DownloadFile(it, 1, 0, 0, true) }
+                ?.let { client.exec(it) }
+            imagePath = (file as TdApi.File).local.path!!
+        }
+        catch(e:Exception){
+            Timber.e(e.message)
+        }
+        finally {
+            return imagePath
         }
     }
 }

@@ -43,22 +43,20 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     RecyclerSwipeAdapter<FolderAdapter.FolderViewHolder>(), CoroutineScope, Filterable {
 
     var selectedFolders : MutableList<FolderRealm> = ArrayList()
-
     var foldersFilterList : MutableList<FolderRealm> = ArrayList()
 
     var selectedToPast : FolderRealm? = null
 
     var isPaste : Boolean = false
-
     var context : FolderActivity? = null
-
-    init {
-        foldersFilterList = data
-    }
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
+
+    init {
+        foldersFilterList = data
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FolderViewHolder {
         val itemView: View = LayoutInflater.from(parent.context)
@@ -78,24 +76,8 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         var checkLayout : ConstraintLayout = view.findViewById(R.id.check_layout)
         var name: TextView = view.findViewById(R.id.folder_name)
         var data: FolderRealm? = null
-        var additional: TextView = view.findViewById(R.id.additional_count)
         var isSelecting : Boolean = false
         var isSelectedPaste : Boolean = false
-        var isMiniaturesLoaded : Boolean = false
-    }
-
-    override fun onBindViewHolder(
-        holder: FolderViewHolder,
-        position: Int,
-        payloads: MutableList<Any>
-    ) {
-        if(payloads.isNotEmpty()) {
-            if (payloads[0] is Boolean) {
-                holder.isMiniaturesLoaded = false
-            }
-        }else {
-            super.onBindViewHolder(holder,position, payloads)
-        }
     }
 
     @ExperimentalCoroutinesApi
@@ -114,8 +96,11 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                         state = tService.returnClientState()
                     }
                 }
-                if(!holder.isMiniaturesLoaded) {
-                    loadMiniatureImages(count, holder, state)
+                if(state == ClientState.ready) {
+                    loadImages(holder, count)
+                }
+                else{
+                    showPlaceholders(holder, count)
                 }
             }
 
@@ -307,283 +292,340 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         }
     }
 
-    @ExperimentalCoroutinesApi
-    fun loadMiniatureImages(count : Int, holder : FolderViewHolder, state : ClientState){
+    private fun loadImages(holder: FolderViewHolder, count: Int){
         val chats = getFirstChatsNames(holder)
+
+        val pictures = holder.itemLayout.findViewById<LinearLayout>(R.id.pictures_layout)
+
+        val thirdNestedPlaceholder = holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder)
+        val secondNestedPlaceholder = holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder)
+        val firstNestedPlaceholder = holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder)
+
+        val thirdNested = holder.itemLayout.findViewById<ImageView>(R.id.third_nested)
+        val secondNested = holder.itemLayout.findViewById<ImageView>(R.id.second_nested)
+        val firstNested = holder.itemLayout.findViewById<ImageView>(R.id.first_nested)
+
+        val additional = holder.itemLayout.findViewById<TextView>(R.id.additional_count)
 
         when (count){
             0 -> {
-                holder.itemLayout.findViewById<LinearLayout>(R.id.pictures_layout).visibility = View.INVISIBLE
+                pictures.visibility = View.INVISIBLE
             }
             1 -> {
-                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
-                if(state == ClientState.ready) {
-                    launch {
-                        Picasso.get().load(
-                            File(
-                                (tService as TelegramService).downloadImageFile(
-                                    chats.keys.elementAt(
-                                        0
-                                    )
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.visibility = View.INVISIBLE
+                firstNestedPlaceholder.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                additional.visibility = View.INVISIBLE
+                launch {
+                    Picasso.get().load(
+                        File(
+                            (tService as TelegramService).returnImagePath(
+                                chats.values.elementAt(
+                                    0
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById(R.id.third_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(thirdNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                thirdNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                thirdNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
-                        holder.isMiniaturesLoaded = true
-                    }
+                            override fun onError(e: Exception?) {
+                                thirdNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                thirdNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
                 }
-
             }
             2 -> {
-                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility = View.INVISIBLE
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
-                if(state == ClientState.ready) {
-                    launch {
-                        Picasso.get().load(
-                            File(
-                                (tService as TelegramService).downloadImageFile(
-                                    chats.keys.elementAt(
-                                        1
-                                    )
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                firstNestedPlaceholder.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                additional.visibility = View.INVISIBLE
+                launch {
+                    Picasso.get().load(
+                        File(
+                            (tService as TelegramService).returnImagePath(
+                                chats.values.elementAt(
+                                    1
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(thirdNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                thirdNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                thirdNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
+                            override fun onError(e: Exception?) {
+                                thirdNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                thirdNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
 
-                        Picasso.get().load(
-                            File(
-                                tService.downloadImageFile(
-                                    chats.keys.elementAt(
-                                        0
-                                    )
+                    Picasso.get().load(
+                        File(
+                            tService.returnImagePath(
+                                chats.values.elementAt(
+                                    0
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById(R.id.second_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(secondNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                secondNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                secondNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
-                        holder.isMiniaturesLoaded = true
-                    }
+                            override fun onError(e: Exception?) {
+                                secondNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                secondNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
                 }
-
             }
             3 -> {
-                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).text = chats.values.elementAt(2)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).visibility = View.INVISIBLE
-                if(state == ClientState.ready) {
-                    launch {
-                        Picasso.get().load(
-                            File(
-                                (tService as TelegramService).downloadImageFile(
-                                    chats.keys.elementAt(
-                                        2
-                                    )
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                additional.visibility = View.INVISIBLE
+                launch {
+                    Picasso.get().load(
+                        File(
+                            (tService as TelegramService).returnImagePath(
+                                chats.values.elementAt(
+                                    2
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(thirdNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                thirdNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                thirdNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
+                            override fun onError(e: Exception?) {
+                                thirdNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                thirdNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
 
-                        Picasso.get().load(
-                            File(
-                                tService.downloadImageFile(
-                                    chats.keys.elementAt(
-                                        1
-                                    )
+                    Picasso.get().load(
+                        File(
+                            tService.returnImagePath(
+                                chats.values.elementAt(
+                                    1
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById(R.id.second_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(secondNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                secondNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                secondNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
+                            override fun onError(e: Exception?) {
+                                secondNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                secondNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
 
-                        Picasso.get().load(
-                            File(
-                                tService.downloadImageFile(
-                                    chats.keys.elementAt(
-                                        0
-                                    )
+                    Picasso.get().load(
+                        File(
+                            tService.returnImagePath(
+                                chats.values.elementAt(
+                                    0
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById(R.id.first_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(firstNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                firstNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                firstNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
-                        holder.isMiniaturesLoaded = true
-                        }
+                            override fun onError(e: Exception?) {
+                                firstNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                firstNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
                 }
+
             }
             else -> {
-                holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).text = chats.values.elementAt(0)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).text = chats.values.elementAt(1)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).text = chats.values.elementAt(2)[0].toString()
-                holder.itemLayout.findViewById<TextView>(R.id.additional_count).text = "+" + (count - 3).toString()
-                if(state == ClientState.ready) {
-                    launch {
-                        Picasso.get().load(
-                            File(
-                                (tService as TelegramService).downloadImageFile(
-                                    chats.keys.elementAt(
-                                        2
-                                    )
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                additional.text = "+" + (count - 3).toString()
+                launch {
+                    Picasso.get().load(
+                        File(
+                            (tService as TelegramService).returnImagePath(
+                                chats.values.elementAt(
+                                    2
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById<ImageView>(R.id.third_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(thirdNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                thirdNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                thirdNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.third_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
+                            override fun onError(e: Exception?) {
+                                thirdNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                thirdNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
 
-                        Picasso.get().load(
-                            File(
-                                tService.downloadImageFile(
-                                    chats.keys.elementAt(
-                                        1
-                                    )
+                    Picasso.get().load(
+                        File(
+                            tService.returnImagePath(
+                                chats.values.elementAt(
+                                    1
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById(R.id.second_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(holder.itemLayout.findViewById(R.id.second_nested),
+                        object : Callback {
+                            override fun onSuccess() {
+                                secondNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                secondNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.second_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
+                            override fun onError(e: Exception?) {
+                                secondNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                secondNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
 
-                        Picasso.get().load(
-                            File(
-                                tService.downloadImageFile(
-                                    chats.keys.elementAt(
-                                        0
-                                    )
+                    Picasso.get().load(
+                        File(
+                            tService.returnImagePath(
+                                chats.values.elementAt(
+                                    0
                                 )
                             )
-                        ).into(holder.itemLayout.findViewById(R.id.first_nested),
-                            object : Callback {
-                                override fun onSuccess() {
-                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
-                                        View.INVISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
-                                        View.VISIBLE
-                                }
+                        )
+                    ).into(firstNested,
+                        object : Callback {
+                            override fun onSuccess() {
+                                firstNestedPlaceholder.visibility =
+                                    View.INVISIBLE
+                                firstNested.visibility =
+                                    View.VISIBLE
+                            }
 
-                                override fun onError(e: Exception?) {
-                                    holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder).visibility =
-                                        View.VISIBLE
-                                    holder.itemLayout.findViewById<ImageView>(R.id.first_nested).visibility =
-                                        View.INVISIBLE
-                                }
-                            })
-                        holder.isMiniaturesLoaded = true
-                    }
+                            override fun onError(e: Exception?) {
+                                firstNestedPlaceholder.visibility =
+                                    View.VISIBLE
+                                firstNested.visibility =
+                                    View.INVISIBLE
+                            }
+                        })
                 }
+            }
+
+        }
+    }
+
+    private fun showPlaceholders(holder: FolderViewHolder, count: Int){
+        val chats = getFirstChatsNames(holder)
+
+        val pictures = holder.itemLayout.findViewById<LinearLayout>(R.id.pictures_layout)
+
+        val thirdNestedPlaceholder = holder.itemLayout.findViewById<TextView>(R.id.third_nested_placeholder)
+        val secondNestedPlaceholder = holder.itemLayout.findViewById<TextView>(R.id.second_nested_placeholder)
+        val firstNestedPlaceholder = holder.itemLayout.findViewById<TextView>(R.id.first_nested_placeholder)
+
+        val thirdNested = holder.itemLayout.findViewById<ImageView>(R.id.third_nested)
+        val secondNested = holder.itemLayout.findViewById<ImageView>(R.id.second_nested)
+        val firstNested = holder.itemLayout.findViewById<ImageView>(R.id.first_nested)
+
+        val additional = holder.itemLayout.findViewById<TextView>(R.id.additional_count)
+
+        when(count){
+            0 -> {
+                pictures.visibility = View.INVISIBLE
+            }
+            1 -> {
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.visibility = View.INVISIBLE
+                firstNestedPlaceholder.visibility = View.INVISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                additional.visibility = View.INVISIBLE
+            }
+            2 -> {
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                firstNestedPlaceholder.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                additional.visibility = View.INVISIBLE
+            }
+            3 -> {
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                additional.visibility = View.INVISIBLE
+            }
+            else -> {
+                thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
+                additional.text = "+" + (count - 3).toString()
             }
         }
     }

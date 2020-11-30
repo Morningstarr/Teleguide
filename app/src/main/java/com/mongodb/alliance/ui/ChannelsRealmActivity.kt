@@ -71,6 +71,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private lateinit var rootLayout : CoordinatorLayout
     var isSelecting : Boolean = false
 
+
     @TelegramServ
     @Inject
     lateinit var tService: Service
@@ -231,9 +232,6 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             }
         }
 
-        binding.channelsSearchView.onActionViewExpanded()
-        Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
-
         binding.channelsSearchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -253,6 +251,9 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             }
 
         })
+
+        binding.channelsSearchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
 
         subscribe<OpenChannelEvent>(lifecycleScope){ event ->
             startActivity(event.intent)
@@ -278,20 +279,31 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-            runBlocking {
+            lifecycleScope.launch {
+
                 showLoading(true)
-                val task = async {
-                    withContext(Dispatchers.IO) {
-                        (tService as TelegramService).returnClientState()
+                withContext(Dispatchers.IO) {
+                    val task = async {
+                        //withContext(Dispatchers.IO) {
+                            (tService as TelegramService).returnClientState()
+                        //}
                     }
-                }
-                state = task.await()
-                if(state == ClientState.waitParameters) {
-                    withContext(Dispatchers.IO) {
-                        (tService as TelegramService).setUpClient()
+                    state = task.await()
+                    if (state == ClientState.waitParameters) {
+                        //withContext(Dispatchers.IO) {
+                            (tService as TelegramService).setUpClient()
+                        //}
                     }
+                    //launch {
+                    val tsk = async {
+                        (tService as TelegramService).fillChats()
+                    }
+                    tsk.await()
+                    //}
                 }
                 showLoading(false)
+
+                recyclerView.visibility = View.VISIBLE
             }
 
             val config = SyncConfiguration.Builder(user, user?.id)
