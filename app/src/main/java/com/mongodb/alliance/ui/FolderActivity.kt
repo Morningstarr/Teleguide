@@ -215,6 +215,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             adapter.insert(event.folder)
         }
 
+        subscribe<FolderEditEvent>(lifecycleScope){ event ->
+            adapter.update(event.folder)
+        }
+
         EventBus.getDefault().register(this)
 
         setDefaultActionBar()

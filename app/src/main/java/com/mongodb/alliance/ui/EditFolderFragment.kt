@@ -9,10 +9,13 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.FragmentAddFolderBinding
 import com.mongodb.alliance.databinding.FragmentEditFolderBinding
+import com.mongodb.alliance.events.FolderEditEvent
 import com.mongodb.alliance.events.FolderPinEvent
 import com.mongodb.alliance.events.FolderUnpinEvent
 import com.mongodb.alliance.model.FolderRealm
@@ -26,7 +29,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 
 
-class EditFolderFragment(var folder : FolderRealm) : BottomSheetDialogFragment(), CoroutineScope {
+class EditFolderFragment(var folder : FolderRealm) : BottomSheetDialogFragment(), CoroutineScope, GlobalBroker.Publisher {
     private lateinit var binding : FragmentEditFolderBinding
 
     private var job: Job = Job()
@@ -51,8 +54,9 @@ class EditFolderFragment(var folder : FolderRealm) : BottomSheetDialogFragment()
             loading(false)
             try {
                 validateFolderName(nameEdit.text.toString())
-                updateFolder(nameEdit.text.toString())
-                EventBus.getDefault().post(FolderUnpinEvent("", null))
+                val folder = updateFolder(nameEdit.text.toString())
+                publish(FolderEditEvent(folder))
+                //EventBus.getDefault().post(FolderUnpinEvent("", null))
                 dismiss()
             }
             catch(e:Exception){
@@ -70,18 +74,19 @@ class EditFolderFragment(var folder : FolderRealm) : BottomSheetDialogFragment()
     @InternalCoroutinesApi
     @ExperimentalTime
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun updateFolder(name: String){
+    private fun updateFolder(name: String) : FolderRealm? {
         val bgRealm = Realm.getDefaultInstance()
-
-        launch {
-            val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", folder._id)
+        var tempFolder : FolderRealm? = null
+        runBlocking {
+            tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", folder._id)
                 .findFirst() as FolderRealm
-            bgRealm.executeTransaction { realm ->
-                tempFolder.name = name
+            bgRealm.executeTransaction {
+                tempFolder?.name = name
             }
         }
 
         bgRealm.close()
+        return tempFolder
     }
 
     private fun validateFolderName(name: String){
