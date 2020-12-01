@@ -1,5 +1,7 @@
 package com.mongodb.alliance.events
 
-data class AddFolderEvent(var message : String = "") {
+import com.mongodb.alliance.model.FolderRealm
+
+data class AddFolderEvent(var folder : FolderRealm) {
 
 }

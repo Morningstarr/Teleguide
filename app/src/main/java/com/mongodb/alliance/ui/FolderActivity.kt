@@ -202,11 +202,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         )
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onMessageEvent(event: AddFolderEvent){
-        refreshRecyclerView()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -214,6 +209,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             val intent = Intent(baseContext, ChannelsRealmActivity::class.java)
             intent.putExtra("folderId", event.folderId)
             startActivity(intent)
+        }
+
+        subscribe<AddFolderEvent>(lifecycleScope){ event ->
+            adapter.insert(event.folder)
         }
 
         EventBus.getDefault().register(this)
@@ -608,7 +607,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         ) { dialog, _ ->
             adapter.deleteSelected()
             setDefaultActionBar()
-            refreshRecyclerView()
+            //refreshRecyclerView()
             dialog.dismiss()
             binding.fldrFab.show()
         }

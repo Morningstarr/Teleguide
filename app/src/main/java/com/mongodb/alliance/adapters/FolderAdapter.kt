@@ -599,10 +599,12 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
+
             }
             2 -> {
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                secondNestedPlaceholder.visibility = View.VISIBLE
                 firstNestedPlaceholder.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
@@ -762,14 +764,23 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         val bgRealm = Realm.getDefaultInstance()
 
         for (folder in selectedFolders) {
+            val position : Int = foldersFilterList.indexOf(folder)
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<FolderRealm>().equalTo("_id", folder._id).findFirst()
                 results?.deleteFromRealm()
             }
+            notifyItemRemoved(position)
+            foldersFilterList.removeAt(position)
         }
 
         selectedFolders.clear()
         bgRealm.close()
+
+    }
+
+    fun insert(folder : FolderRealm){
+        notifyItemInserted(foldersFilterList.size + 1)
+        foldersFilterList.add(folder)
     }
 
     fun setPasteMode(flag : Boolean){
