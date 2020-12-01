@@ -134,8 +134,8 @@ app:cardElevation="0dp">
 
                     <ImageView
                         android:id="@+id/chat_pinned"
-                        android:layout_width="wrap_content"
-                        android:layout_height="20dp"
+                        android:layout_width="30dp"
+                        android:layout_height="24dp"
                         android:layout_gravity="center"
 
                         android:layout_weight="0.27"
