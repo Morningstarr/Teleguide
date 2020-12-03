@@ -216,7 +216,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         subscribe<FolderEditEvent>(lifecycleScope){ event ->
-            adapter.update(event.folder)
+            adapter.notifyDataSetChanged()
         }
 
         EventBus.getDefault().register(this)
@@ -373,7 +373,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         super.onDestroy()
         recyclerView.adapter = null
         recyclerView.visibility = View.GONE
-        adapter.miniaturesRefresh()
         realm.close()
     }
 

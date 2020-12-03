@@ -248,7 +248,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                         if (temp != null) {
                             EventBus.getDefault().post(FolderPinDenyEvent("", holder))
                         } else {
-                            holder.data?.let { it1 -> setPinned(it1, true) }
+                            holder.data?.let { it1 -> setPinned(it1) }
                             EventBus.getDefault().post(FolderPinEvent("", holder.data!!))
                         }
                     }
@@ -312,9 +312,12 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 pictures.visibility = View.INVISIBLE
             }
             1 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
                 secondNestedPlaceholder.visibility = View.INVISIBLE
                 firstNestedPlaceholder.visibility = View.INVISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
@@ -346,9 +349,14 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 }
             }
             2 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
                 firstNestedPlaceholder.visibility = View.INVISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
                 launch {
@@ -404,9 +412,16 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 }
             }
             3 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
+                firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
                 launch {
                     Picasso.get().load(
@@ -487,10 +502,18 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
             }
             else -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
+                firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
                 additional.text = "+" + (count - 3).toString()
+                additional.visibility = View.VISIBLE
                 launch {
                     Picasso.get().load(
                         File(
@@ -592,6 +615,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 pictures.visibility = View.INVISIBLE
             }
             1 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 thirdNestedPlaceholder.visibility = View.VISIBLE
                 secondNestedPlaceholder.visibility = View.INVISIBLE
@@ -600,36 +624,41 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
-
             }
             2 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 thirdNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNestedPlaceholder.visibility = View.VISIBLE
-                firstNestedPlaceholder.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
+                firstNestedPlaceholder.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
             }
             3 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
                 thirdNestedPlaceholder.visibility = View.VISIBLE
                 secondNestedPlaceholder.visibility = View.VISIBLE
                 firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
             }
             else -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
                 thirdNestedPlaceholder.visibility = View.VISIBLE
                 secondNestedPlaceholder.visibility = View.VISIBLE
                 firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.text = "+" + (count - 3).toString()
@@ -638,23 +667,9 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         }
     }
 
-    fun miniaturesRefresh(){
-        for(item in foldersFilterList) {
-            notifyItemChanged(foldersFilterList.indexOf(item), false)
-        }
-    }
-
-    fun update(folder : FolderRealm?){
-        val found = foldersFilterList.find { it._id == folder?._id }
-        val pos = foldersFilterList.indexOf(found)
-        notifyItemChanged(pos)
-        //found?.name = folder?.name.toString()
-        //notifyItemChanged(pos)
-    }
-
     private fun getFirstChatsNames(holder: FolderViewHolder) : HashMap<String, String>{
         val bgRealm = Realm.getDefaultInstance()
-        val firstChats : HashMap<String, String> = HashMap<String, String>()
+        val firstChats : HashMap<String, String> = HashMap()
         bgRealm.executeTransaction { realm ->
             val firstChatsObjects = realm.where<ChannelRealm>().equalTo("folder._id", holder.data?._id).sort("order").limit(3).findAll().toMutableList()
             try {
@@ -726,14 +741,14 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         bgRealm.close()
     }
 
-    private fun setPinned(folder : FolderRealm, pinned : Boolean) {
+    private fun setPinned(folder : FolderRealm) {
         val bgRealm = Realm.getDefaultInstance()
 
         runBlocking {
             val tempFolder = bgRealm.where<FolderRealm>().equalTo("_id", folder._id)
                 .findFirst() as FolderRealm
             bgRealm.executeTransaction {
-                tempFolder.isPinned = pinned
+                tempFolder.isPinned = true
             }
         }
 
