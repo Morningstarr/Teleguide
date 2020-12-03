@@ -49,6 +49,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
     var isPaste : Boolean = false
     var context : FolderActivity? = null
+    var previousPos : Int = -1
 
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -78,6 +79,27 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         var data: FolderRealm? = null
         var isSelecting : Boolean = false
         var isSelectedPaste : Boolean = false
+    }
+
+    override fun onBindViewHolder(
+        holder: FolderViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if(payloads.isNotEmpty()) {
+            if (payloads[0] is Boolean){
+                if(payloads[0] == true) {
+                    holder.cardView.cardElevation = 0f
+                    holder.isSelectedPaste = false
+                }
+                else{
+                    holder.cardView.cardElevation = 10f
+                    holder.isSelectedPaste = true
+                }
+            }
+        }else {
+            super.onBindViewHolder(holder,position, payloads);
+        }
     }
 
     @ExperimentalCoroutinesApi
@@ -218,10 +240,12 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 }
                 else{
                     if(selectedToPast != holder.data) {
-                        holder.cardView.cardElevation = 10f
-                        holder.isSelectedPaste = true
                         selectedToPast = holder.data
-                        notifyDataSetChanged()
+                        notifyItemChanged(holder.position, false)
+                        if(previousPos != -1) {
+                            notifyItemChanged(previousPos, true)
+                        }
+                        previousPos = holder.position
                         EventBus.getDefault().post(CancelPasteSelectionEvent(false))
                         EventBus.getDefault().post(holder.data?._id?.let { it1 ->
                             SelectFolderToMoveEvent(
@@ -230,10 +254,8 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                         })
                     }
                     else{
-                        holder.cardView.cardElevation = 0f
-                        holder.isSelectedPaste = false
                         selectedToPast = null
-                        notifyDataSetChanged()
+                        notifyItemChanged(holder.position, true)
                         EventBus.getDefault().post(SelectFolderToMoveEvent(null))
                     }
                 }
@@ -700,7 +722,8 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
     fun cancelPasteSelection(){
         selectedToPast = null
-        notifyDataSetChanged()
+        notifyItemChanged(previousPos, true)
+        previousPos = -1
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
