@@ -398,10 +398,13 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
 
     fun moveChannels(newFolder : FolderRealm){
         val bgRealm = Realm.getDefaultInstance()
-
+        var oldFolder : FolderRealm? = null
         for (channel in selectedChannels) {
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
+                if(oldFolder != null){
+                    oldFolder = results?.folder
+                }
                 results?.folder = newFolder
                 val maxOrderValue =
                     realm.where<ChannelRealm>().equalTo("folder._id", newFolder._id).findAll().max("order")
@@ -412,6 +415,19 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     results?.order = 1
                 }
             }
+        }
+
+        bgRealm.executeTransaction {
+            if(oldFolder?.nestedCount == selectedChannels.size){
+                oldFolder?.nestedCount = 0
+            }
+            else {
+                if(oldFolder?.nestedCount != null) {
+                    oldFolder?.nestedCount = (oldFolder?.nestedCount as Int) - selectedChannels.size
+                }
+            }
+
+            newFolder.nestedCount += selectedChannels.size
         }
 
         selectedChannels.clear()

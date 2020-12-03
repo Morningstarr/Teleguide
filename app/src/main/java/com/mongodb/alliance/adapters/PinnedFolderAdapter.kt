@@ -73,6 +73,22 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
         var checkLayout : ConstraintLayout = view.findViewById(R.id.check_layout)
     }
 
+    override fun onBindViewHolder(
+        holder: FolderViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if(payloads.isNotEmpty()) {
+            if (payloads[0] is Boolean){
+                holder.isPasteSelected = false
+                holder.cardView.cardElevation = 0f
+            }
+        }
+        else {
+            super.onBindViewHolder(holder,position, payloads);
+        }
+    }
+
     @ExperimentalCoroutinesApi
     override fun onBindViewHolder(holder: FolderViewHolder, position: Int) {
         holder.data = folder
@@ -224,7 +240,7 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
 
     fun cancelPasteSelection(){
         selectedToPaste = null
-        notifyDataSetChanged()
+        notifyItemChanged(0, true)
     }
 
     fun findPinned() : FolderRealm?{
@@ -283,9 +299,11 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
                 pictures.visibility = View.INVISIBLE
             }
             1 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.visibility = View.INVISIBLE
                 firstNestedPlaceholder.visibility = View.INVISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
@@ -317,9 +335,12 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
                 }
             }
             2 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.visibility = View.INVISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
                 launch {
@@ -375,9 +396,16 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
                 }
             }
             3 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
+                firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
                 launch {
                     Picasso.get().load(
@@ -458,10 +486,18 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
 
             }
             else -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
+                firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
+                secondNested.visibility = View.INVISIBLE
+                firstNested.visibility = View.INVISIBLE
                 additional.text = "+" + (count - 3).toString()
+                additional.visibility = View.VISIBLE
                 launch {
                     Picasso.get().load(
                         File(
@@ -563,7 +599,9 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
                 pictures.visibility = View.INVISIBLE
             }
             1 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
                 secondNestedPlaceholder.visibility = View.INVISIBLE
                 firstNestedPlaceholder.visibility = View.INVISIBLE
                 thirdNested.visibility = View.INVISIBLE
@@ -572,31 +610,43 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
                 additional.visibility = View.INVISIBLE
             }
             2 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
                 firstNestedPlaceholder.visibility = View.INVISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
-                firstNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
             }
             3 -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
+                firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
-                firstNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
                 additional.visibility = View.INVISIBLE
             }
             else -> {
+                pictures.visibility = View.VISIBLE
                 thirdNestedPlaceholder.text = chats.values.elementAt(0)[0].toString()
                 secondNestedPlaceholder.text = chats.values.elementAt(1)[0].toString()
                 firstNestedPlaceholder.text = chats.values.elementAt(2)[0].toString()
+                thirdNestedPlaceholder.visibility = View.VISIBLE
+                secondNestedPlaceholder.visibility = View.VISIBLE
+                firstNestedPlaceholder.visibility = View.VISIBLE
+                thirdNested.visibility = View.INVISIBLE
                 secondNested.visibility = View.INVISIBLE
                 firstNested.visibility = View.INVISIBLE
-                firstNested.visibility = View.INVISIBLE
                 additional.text = "+" + (count - 3).toString()
+                additional.visibility = View.VISIBLE
             }
         }
     }
