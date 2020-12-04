@@ -402,7 +402,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         for (channel in selectedChannels) {
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
-                if(oldFolder != null){
+                if(oldFolder == null){
                     oldFolder = results?.folder
                 }
                 results?.folder = newFolder
