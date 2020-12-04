@@ -82,7 +82,12 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
                 state = (tService as TelegramService).returnClientState()
             }
         }
-        getChatMessageData(holder)
+        if(state == ClientState.ready) {
+            getChatMessageData(holder)
+        }
+        else{
+            showPlaceholders(holder)
+        }
 
         if(holder.data != null) {
             if ((holder.data as ChannelRealm).isPinned) {
@@ -213,6 +218,23 @@ internal class PinnedChannelAdapter @Inject constructor(var channel: ChannelReal
                 })
         }
 
+    }
+
+    private fun showPlaceholders(holder : ChannelViewHolder){
+        val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
+        val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
+
+        val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
+        val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
+        val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
+
+        lastMessageText.text = "Нет доступа к содержимому чата"
+        lastMessageTimeText.visibility = View.INVISIBLE
+        unreadCountText.visibility = View.INVISIBLE
+        chatImage.visibility = View.INVISIBLE
+        imagePlaceholderText.text = holder.data?.displayName?.get(0)?.toString()
+        imagePlaceholderText.visibility = View.VISIBLE
+        lastMessageText.visibility = View.VISIBLE
     }
 
     fun addContext(activity : ChannelsRealmActivity){

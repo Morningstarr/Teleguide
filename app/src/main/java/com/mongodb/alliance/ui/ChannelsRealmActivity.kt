@@ -267,6 +267,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     }
 
+    @ExperimentalCoroutinesApi
     override fun onStart() {
         super.onStart()
         setDefaultActionBar()
@@ -279,7 +280,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-            lifecycleScope.launch {
+            runBlocking {
 
                 showLoading(true)
                 withContext(Dispatchers.IO) {
@@ -292,16 +293,19 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                     if (state == ClientState.waitParameters) {
                         //withContext(Dispatchers.IO) {
                             (tService as TelegramService).setUpClient()
+                        state = (tService as TelegramService).returnClientState()
                         //}
                     }
                     //launch {
-                    val tsk = async {
-                        (tService as TelegramService).fillChats()
+                    if(state == ClientState.ready) {
+                        val tsk = async {
+                            (tService as TelegramService).fillChats()
+                        }
+                        tsk.await()
                     }
-                    tsk.await()
                     //}
                 }
-                showLoading(false)
+
 
                 recyclerView.visibility = View.VISIBLE
             }
@@ -320,6 +324,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                         this@ChannelsRealmActivity.realm = realm
                         setUpRecyclerView(realm)
                         setUpRecyclerPinned(null)
+                        showLoading(false)
                     }
                 })
             }

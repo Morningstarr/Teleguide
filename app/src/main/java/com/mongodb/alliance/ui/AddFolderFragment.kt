@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
+import cafe.adriel.broker.GlobalBroker
+import cafe.adriel.broker.publish
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.FragmentAddFolderBinding
@@ -26,7 +28,7 @@ import java.util.regex.Pattern
 import kotlin.time.ExperimentalTime
 
 
-class AddFolderFragment : BottomSheetDialogFragment() {
+class AddFolderFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher {
     private lateinit var binding : FragmentAddFolderBinding
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
@@ -47,8 +49,8 @@ class AddFolderFragment : BottomSheetDialogFragment() {
             loading(false)
             try {
                 validateFolderName(nameEdit.text.toString())
-                createFolder(nameEdit.text.toString())
-                EventBus.getDefault().post(AddFolderEvent())
+                val folder = createFolder(nameEdit.text.toString())
+                publish(AddFolderEvent(folder))
                 dismiss()
             }
             catch(e:Exception){
@@ -64,7 +66,7 @@ class AddFolderFragment : BottomSheetDialogFragment() {
     @InternalCoroutinesApi
     @ExperimentalTime
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun createFolder(name: String){
+    private fun createFolder(name: String) : FolderRealm{
         val bgRealm = Realm.getDefaultInstance()
 
         val partition = channelApp.currentUser()?.id ?: "" // FIXME: show error if nil
@@ -88,6 +90,8 @@ class AddFolderFragment : BottomSheetDialogFragment() {
         //}
 
         bgRealm.close()
+
+        return folder
     }
 
     private fun validateFolderName(name: String){

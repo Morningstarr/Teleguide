@@ -88,7 +88,12 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     state = (tService as TelegramService).returnClientState()
                 }
             }
-            getChatMessageData(holder)
+            if(state == ClientState.ready){
+                getChatMessageData(holder)
+            }
+            else{
+                showPlaceholders(holder)
+            }
 
             if (holder.data != null) {
                 mItemManger.bindView(holder.itemView, position)
@@ -257,6 +262,23 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         }
     }
 
+    private fun showPlaceholders(holder : ChannelViewHolder){
+        val lastMessageText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message)
+        val lastMessageTimeText = holder.itemLayout.findViewById<TextView>(R.id.chat_last_message_time)
+
+        val unreadCountText = holder.itemLayout.findViewById<TextView>(R.id.chat_unread_count)
+        val chatImage = holder.itemLayout.findViewById<ImageView>(R.id.chat_image)
+        val imagePlaceholderText = holder.itemLayout.findViewById<TextView>(R.id.chat_image_placeholder)
+
+        lastMessageText.text = "Нет доступа к содержимому чата"
+        lastMessageTimeText.visibility = View.INVISIBLE
+        unreadCountText.visibility = View.INVISIBLE
+        chatImage.visibility = View.INVISIBLE
+        imagePlaceholderText.text = holder.data?.displayName?.get(0)?.toString()
+        imagePlaceholderText.visibility = View.VISIBLE
+        lastMessageText.visibility = View.VISIBLE
+    }
+
     @ExperimentalCoroutinesApi
     private fun loadChatData(holder : ChannelViewHolder, state: ClientState, tService : Service) {
         if(state == ClientState.ready) {
@@ -376,10 +398,13 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
 
     fun moveChannels(newFolder : FolderRealm){
         val bgRealm = Realm.getDefaultInstance()
-
+        var oldFolder : FolderRealm? = null
         for (channel in selectedChannels) {
             bgRealm.executeTransaction { realm ->
                 val results = realm.where<ChannelRealm>().equalTo("_id", channel._id).findFirst()
+                if(oldFolder == null){
+                    oldFolder = results?.folder
+                }
                 results?.folder = newFolder
                 val maxOrderValue =
                     realm.where<ChannelRealm>().equalTo("folder._id", newFolder._id).findAll().max("order")
@@ -390,6 +415,19 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     results?.order = 1
                 }
             }
+        }
+
+        bgRealm.executeTransaction {
+            if(oldFolder?.nestedCount == selectedChannels.size){
+                oldFolder?.nestedCount = 0
+            }
+            else {
+                if(oldFolder?.nestedCount != null) {
+                    oldFolder?.nestedCount = (oldFolder?.nestedCount as Int) - selectedChannels.size
+                }
+            }
+
+            newFolder.nestedCount += selectedChannels.size
         }
 
         selectedChannels.clear()
