@@ -1,11 +1,9 @@
 package com.mongodb.alliance.ui
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.ContextThemeWrapper
@@ -15,6 +13,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -24,13 +23,15 @@ import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
-import com.mongodb.alliance.adapters.*
+import com.mongodb.alliance.adapters.ChannelRealmAdapter
 import com.mongodb.alliance.adapters.PinnedChannelAdapter
-import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.model.*
+import com.mongodb.alliance.adapters.SimpleItemTouchHelperCallback
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityChannelsRealmBinding
+import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.*
+import com.mongodb.alliance.model.ChannelRealm
+import com.mongodb.alliance.model.FolderRealm
 import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
@@ -185,6 +186,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
+    @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -259,7 +261,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             startActivity(event.intent)
         }
 
-        subscribe<SelectPinnedChatEvent>(lifecycleScope){ event ->
+        subscribe<SelectPinnedChatEvent>(lifecycleScope){
             Toast.makeText(baseContext, "Открепите чат для дальнейшего взаимодействия!", Toast.LENGTH_LONG).show()
         }
         EventBus.getDefault().register(this)
@@ -274,39 +276,30 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
-            Timber.e(e.message)
+            Timber.e(e)
         }
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
             runBlocking {
-
                 showLoading(true)
                 withContext(Dispatchers.IO) {
                     val task = async {
-                        //withContext(Dispatchers.IO) {
-                            (tService as TelegramService).returnClientState()
-                        //}
+                        (tService as TelegramService).returnClientState()
                     }
                     state = task.await()
                     if (state == ClientState.waitParameters) {
-                        //withContext(Dispatchers.IO) {
-                            (tService as TelegramService).setUpClient()
+                        (tService as TelegramService).setUpClient()
                         state = (tService as TelegramService).returnClientState()
-                        //}
                     }
-                    //launch {
                     if(state == ClientState.ready) {
                         val tsk = async {
                             (tService as TelegramService).fillChats()
                         }
                         tsk.await()
                     }
-                    //}
                 }
-
-
                 recyclerView.visibility = View.VISIBLE
             }
 
@@ -329,7 +322,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 })
             }
             catch(e: Exception){
-                Timber.e(e.message)
+                Timber.e(e)
             }
         }
     }
@@ -354,8 +347,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
         builder.setPositiveButton(
             "Войти"
-        ) { dialog, _ ->
-            var intent = Intent(baseContext, ProfileActivity::class.java)
+        ) { _, _ ->
+            val intent = Intent(baseContext, ProfileActivity::class.java)
             intent.putExtra("beginConnection", true)
             startActivity(intent)
         }
@@ -511,7 +504,7 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                         }
                     }
                 } catch (e: Exception) {
-                    Timber.e(e.message)
+                    Timber.e(e)
                 }
 
                 popup.menuInflater.inflate(R.menu.chats_folders_menu, popup.menu)

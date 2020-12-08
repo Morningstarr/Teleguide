@@ -215,7 +215,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             adapter.insert(event.folder)
         }
 
-        subscribe<FolderEditEvent>(lifecycleScope){ event ->
+        subscribe<FolderEditEvent>(lifecycleScope){
             adapter.notifyDataSetChanged()
         }
 
@@ -254,15 +254,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 folderAddDialog.tag
             )
         }
-    }
-
-    @ExperimentalCoroutinesApi
-    override fun onStart() {
-        super.onStart()
-
-        binding.searchView.onActionViewExpanded()
-        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
-        binding.fldrFab.requestFocus()
 
         binding.searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
@@ -283,6 +274,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
         })
 
+        binding.searchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+
+    }
+
+    @ExperimentalCoroutinesApi
+    override fun onStart() {
+        super.onStart()
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
@@ -344,27 +343,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     override fun onRestart() {
         super.onRestart()
         binding.searchView.onActionViewExpanded()
-        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
-        binding.fldrFab.requestFocus()
-
-        binding.searchView.setOnQueryTextListener(object :
-            androidx.appcompat.widget.SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                try {
-                    adapter.filter.filter(newText)
-                    return false
-                } catch (e: Exception) {
-                    if (e.message != "lateinit property adapter has not been initialized") {
-                        Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
-                    }
-                    return true
-                }
-            }
-        })
+        Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
 
         //todo ошибка перетаскивания при перезапуске
     }
