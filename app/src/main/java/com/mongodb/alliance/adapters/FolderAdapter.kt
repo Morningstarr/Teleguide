@@ -24,6 +24,7 @@ import com.squareup.picasso.Picasso
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.select
 import org.greenrobot.eventbus.EventBus
 import java.io.File
 import java.lang.Exception
@@ -48,6 +49,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     var selectedToPast : FolderRealm? = null
 
     var isPaste : Boolean = false
+    var isSearching : Boolean = false
     var context : FolderActivity? = null
     var previousPos : Int = -1
 
@@ -75,6 +77,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
         var itemLayout : LinearLayout = view.findViewById(R.id.item_layout)
         var bottomWrapper : LinearLayout = view.findViewById(R.id.bottom_wrapper)
         var checkLayout : ConstraintLayout = view.findViewById(R.id.check_layout)
+        var checkButton : ImageView = view.findViewById(R.id.check_folder)
         var name: TextView = view.findViewById(R.id.folder_name)
         var data: FolderRealm? = null
         var isSelecting : Boolean = false
@@ -97,8 +100,24 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                     holder.isSelectedPaste = true
                 }
             }
+            if(payloads[0] is Int){
+                if(payloads[0] == 0){
+                    holder.checkButton.visibility = View.VISIBLE
+                    holder.cardView.cardElevation = 10f
+                    holder.isSelecting = true
+                }
+                else{
+                    holder.checkButton.visibility = View.INVISIBLE
+                    holder.cardView.cardElevation = 0f
+                    holder.isSelecting = false
+                }
+            }
         }else {
-            super.onBindViewHolder(holder,position, payloads);
+            super.onBindViewHolder(holder, position, payloads)
+            if(selectedFolders.find { it._id == holder.data?._id } != null) {
+                holder.checkButton.visibility =
+                    View.VISIBLE
+            }
         }
     }
 
@@ -169,11 +188,9 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 if(!isPaste) {
                     if (!holder.isSelecting) {
                         EventBus.getDefault().post(SelectFolderEvent(true))
-                        holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                            View.VISIBLE
                         holder.isSelecting = true
                         holder.data?.let { it1 -> selectedFolders.add(it1) }
-                        holder.cardView.cardElevation = 10f
+                        notifyItemChanged(holder.position, 0)
                         return@setOnLongClickListener true
                     } else {
                         return@setOnLongClickListener false
@@ -189,12 +206,9 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                     if (!holder.isSelecting) {
                         if (selectedFolders.size > 0) {
                             EventBus.getDefault().post(SelectFolderEvent(true))
-                            holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                                View.VISIBLE
                             holder.isSelecting = true
                             holder.data?.let { it1 -> selectedFolders.add(it1) }
-
-                            holder.cardView.cardElevation = 10f
+                            notifyItemChanged(holder.position, 0)
                         }
                         else{
                             holder.itemLayout.performClick()
@@ -202,12 +216,9 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
                     } else {
                         EventBus.getDefault().post(SelectFolderEvent(false))
-                        holder.data?.let { it1 -> selectedFolders.remove(it1) }
-                        holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                            View.GONE
                         holder.isSelecting = false
-
-                        holder.cardView.cardElevation = 0f
+                        holder.data?.let { it1 -> selectedFolders.remove(it1) }
+                        notifyItemChanged(holder.position, 1)
                     }
                 }
             }
@@ -220,21 +231,15 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                     else{
                         if(holder.isSelecting) {
                             EventBus.getDefault().post(SelectFolderEvent(false))
-                            holder.data?.let { it1 -> selectedFolders.remove(it1) }
-                            holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                                View.GONE
                             holder.isSelecting = false
-
-                            holder.cardView.cardElevation = 0f
+                            holder.data?.let { it1 -> selectedFolders.remove(it1) }
+                            notifyItemChanged(holder.position, 1)
                         }
                         else{
                             EventBus.getDefault().post(SelectFolderEvent(true))
-                            holder.checkLayout.findViewById<ImageView>(R.id.check_folder).visibility =
-                                View.VISIBLE
                             holder.isSelecting = true
                             holder.data?.let { it1 -> selectedFolders.add(it1) }
-
-                            holder.cardView.cardElevation = 10f
+                            notifyItemChanged(holder.position, 0)
                         }
                     }
                 }
@@ -282,22 +287,22 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 EventBus.getDefault().post(holder.data?.let { it1 -> EditFolderEvent(it1) })
             }
 
-            if(holder.isSelecting && !selectedFolders.contains(holder.data)){
-                holder.isSelecting = false
+            if(selectedFolders.size != 0){
+                if(selectedFolders.contains(holder.data)){
+                    holder.checkButton.visibility = View.VISIBLE
+                    holder.cardView.cardElevation = 10f
+                    holder.isSelecting = true
+                }
+                else{
+                    holder.checkButton.visibility = View.INVISIBLE
+                    holder.cardView.cardElevation = 0f
+                    holder.isSelecting = false
+                }
             }
-
-            val checkButton = holder.checkLayout.findViewById<ImageView>(R.id.check_folder)
-            if (!holder.isSelecting && checkButton.visibility == View.VISIBLE) {
-                checkButton.visibility = View.GONE
+            else{
+                holder.checkButton.visibility = View.INVISIBLE
                 holder.cardView.cardElevation = 0f
-            }
-            if(holder.isSelecting && checkButton.visibility == View.GONE){
-                checkButton.visibility = View.VISIBLE
-                holder.cardView.cardElevation = 10f
-            }
-            if(selectedFolders.contains(holder.data) && checkButton.visibility == View.GONE){
-                checkButton.visibility = View.VISIBLE
-                holder.cardView.cardElevation = 10f
+                holder.isSelecting = false
             }
 
             if(selectedToPast != null){
@@ -309,9 +314,12 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 }
             }
             else{
-                holder.cardView.cardElevation = 0f
+                if(isPaste) {
+                    holder.cardView.cardElevation = 0f
+                }
             }
         }
+
     }
 
     private fun loadImages(holder: FolderViewHolder, count: Int){
@@ -797,9 +805,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     }
 
     fun cancelSelection(){
-        for(i in 0..foldersFilterList.size){
-            notifyItemChanged(i)
-        }
+        notifyDataSetChanged()
         selectedFolders.clear()
     }
 
@@ -842,6 +848,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     fun filterResults(text : String) {
         if (text.isEmpty()) {
             foldersFilterList = data
+            isSearching = false
         } else {
             val resultList : MutableList<FolderRealm> = ArrayList()
             for (row in data) {
@@ -850,6 +857,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 }
             }
             foldersFilterList = resultList
+            isSearching = true
         }
         setDataList(foldersFilterList)
     }

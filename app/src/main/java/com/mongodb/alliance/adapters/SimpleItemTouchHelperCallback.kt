@@ -58,7 +58,7 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         viewHolder: RecyclerView.ViewHolder
     ): Int {
         var dragFlags = 0
-        if((recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste) ||
+        if((recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste && !(recyclerView.adapter as FolderAdapter).isSearching) ||
             (recyclerView.adapter is PinnedFolderAdapter && !(recyclerView.adapter as PinnedFolderAdapter).returnPasteMode())) {
             if(recyclerView.adapter is FolderAdapter) {
                 (adapter as FolderAdapter).context?.binding?.fldrFab?.hide()
