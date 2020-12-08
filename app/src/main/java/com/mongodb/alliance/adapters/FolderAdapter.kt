@@ -49,6 +49,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     var selectedToPast : FolderRealm? = null
 
     var isPaste : Boolean = false
+    var isSearching : Boolean = false
     var context : FolderActivity? = null
     var previousPos : Int = -1
 
@@ -804,9 +805,6 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     }
 
     fun cancelSelection(){
-        /*for(i in 0..selected.size){
-            notifyItemChanged(i)
-        }*/
         notifyDataSetChanged()
         selectedFolders.clear()
     }
@@ -850,6 +848,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
     fun filterResults(text : String) {
         if (text.isEmpty()) {
             foldersFilterList = data
+            isSearching = false
         } else {
             val resultList : MutableList<FolderRealm> = ArrayList()
             for (row in data) {
@@ -858,6 +857,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                 }
             }
             foldersFilterList = resultList
+            isSearching = true
         }
         setDataList(foldersFilterList)
     }

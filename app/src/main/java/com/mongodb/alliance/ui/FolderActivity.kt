@@ -353,8 +353,15 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         recyclerView.adapter = null
         recyclerView.visibility = View.GONE
         realm.close()
+        binding.searchView.setQuery("", false)
+        binding.searchView.clearFocus()
     }
 
+    override fun onPause() {
+        super.onPause()
+        binding.searchView.setQuery("", false)
+        binding.searchView.clearFocus()
+    }
     override fun onBackPressed() {
         if(isSelecting) {
             setDefaultActionBar()
