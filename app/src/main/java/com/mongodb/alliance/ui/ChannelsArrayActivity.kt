@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.ActionBar
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -148,6 +149,35 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         setContentView(view)
 
         recyclerView = binding.channelsList
+
+        binding.channelsArrSearchView.setOnQueryTextListener(object :
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                try {
+                    adapter.filter.filter(newText)
+                    return false
+                } catch (e: Exception) {
+                    if (e.message != "lateinit property adapter has not been initialized") {
+                        Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                    return true
+                }
+            }
+        })
+
+        binding.channelsArrSearchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.channelsArrSearchView.clearFocus() }, 0)
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        binding.channelsArrSearchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.channelsArrSearchView.clearFocus() }, 0)
+
     }
 
     @ExperimentalCoroutinesApi

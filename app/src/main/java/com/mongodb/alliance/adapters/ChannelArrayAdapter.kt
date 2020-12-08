@@ -3,9 +3,7 @@ package com.mongodb.alliance.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -20,21 +18,30 @@ import com.mongodb.alliance.events.SelectChatFromArrayEvent
 import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
+import kotlinx.coroutines.InternalCoroutinesApi
 import org.bson.types.ObjectId
 import org.greenrobot.eventbus.EventBus
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.time.ExperimentalTime
 
 
 internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>, var folderName : String) : GlobalBroker.Publisher,
-    RecyclerView.Adapter<ChannelArrayAdapter.ChannelArrayViewHolder?>() {
+    RecyclerView.Adapter<ChannelArrayAdapter.ChannelArrayViewHolder?>(), Filterable {
 
     private var selectedChats : MutableList<ChannelRealm> = ArrayList()
+    private  var channelsArrFilterList : MutableList<ChannelRealm> = ArrayList()
+
+    init {
+        channelsArrFilterList = data
+    }
 
     override fun getItemCount(): Int {
-        return data.size
+        return channelsArrFilterList.size
     }
 
     fun getItem(position: Int) : ChannelRealm{
-        return data[position]
+        return channelsArrFilterList[position]
     }
 
 
@@ -138,6 +145,11 @@ internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>, var fold
         notifyDataSetChanged()
     }
 
+    fun setDataList(chats: MutableList<ChannelRealm>) {
+        channelsArrFilterList = chats
+        notifyDataSetChanged()
+    }
+
 
     internal inner class ChannelArrayViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.channel_arr_channel_name)
@@ -148,5 +160,39 @@ internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>, var fold
         var data: ChannelRealm? = null
         var isSelected: Boolean = false
 
+    }
+
+    fun filterResults(text : String) {
+        if (text.isEmpty()) {
+            channelsArrFilterList = data
+        } else {
+            val resultList : MutableList<ChannelRealm> = ArrayList()
+            for (row in data) {
+                if (row.displayName.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT))) {
+                    resultList.add(row)
+                }
+            }
+            channelsArrFilterList = resultList
+        }
+        setDataList(channelsArrFilterList)
+    }
+
+    override fun getFilter() : Filter {
+        return NamesFilter(this)
+    }
+
+    private class NamesFilter(private val adapter: ChannelArrayAdapter) : Filter() {
+        override fun performFiltering(constraint: CharSequence?): FilterResults {
+            return FilterResults()
+        }
+
+        @ExperimentalTime
+        @InternalCoroutinesApi
+        override fun publishResults(
+            constraint: CharSequence,
+            results: FilterResults?
+        ) {
+            adapter.filterResults(constraint.toString())
+        }
     }
 }
