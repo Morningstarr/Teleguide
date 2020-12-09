@@ -5,8 +5,6 @@ import android.app.ActionBar
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -35,7 +33,6 @@ import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.authorization.LoginActivity
-import com.mongodb.alliance.ui.telegram.ConnectTelegramActivity
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
@@ -218,7 +215,7 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
     }
 
     private fun setUpRecyclerView() {
-        val adp = folder?.name?.let { ChannelArrayAdapter(ChannelsArray, it) }
+        val adp = folder?.name?.let { ChannelArrayAdapter(ChannelsArray) }
         if (adp != null) {
             adapter = adp
             recyclerView.layoutManager = LinearLayoutManager(this)
