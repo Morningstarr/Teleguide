@@ -54,7 +54,7 @@ internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>) : Global
         if (channelsArrFilterList[position].isValid){
             if (payloads.isNotEmpty()) {
                 if (payloads[0] is Boolean) {
-                    if (payloads[0] == true) {
+                    if (payloads[0] == false) {
                         holder.checkBtn.visibility =
                             View.INVISIBLE
                         holder.isSelected = true
@@ -86,12 +86,12 @@ internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>) : Global
                     EventBus.getDefault().post(SelectChatFromArrayEvent(true))
                     holder.isSelected = true
                     holder.data?.let { it1 -> selectedChats.add(it1) }
-                    notifyItemChanged(holder.position)
+                    notifyItemChanged(holder.position, true)
                 } else {
                     EventBus.getDefault().post(SelectChatFromArrayEvent(false))
                     holder.isSelected = false
                     holder.data?.let { it1 -> selectedChats.remove(it1) }
-                    notifyItemChanged(holder.position)
+                    notifyItemChanged(holder.position, false)
                 }
             }
 
@@ -100,7 +100,7 @@ internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>) : Global
                     EventBus.getDefault().post(SelectChatFromArrayEvent(true))
                     holder.isSelected = true
                     holder.data?.let { it1 -> selectedChats.add(it1) }
-                    notifyItemChanged(holder.position)
+                    notifyItemChanged(holder.position, true)
                     return@setOnLongClickListener true
                 } else {
                     return@setOnLongClickListener false
@@ -112,12 +112,12 @@ internal class ChannelArrayAdapter(var data: MutableList<ChannelRealm>) : Global
                     EventBus.getDefault().post(SelectChatFromArrayEvent(true))
                     holder.isSelected = true
                     holder.data?.let { it1 -> selectedChats.add(it1) }
-                    notifyItemChanged(holder.position)
+                    notifyItemChanged(holder.position, true)
                 } else {
                     EventBus.getDefault().post(SelectChatFromArrayEvent(false))
                     holder.isSelected = false
                     holder.data?.let { it1 -> selectedChats.remove(it1) }
-                    notifyItemChanged(holder.position)
+                    notifyItemChanged(holder.position, false)
                 }
             }
 
