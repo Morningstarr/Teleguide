@@ -64,7 +64,7 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
                 try {
                     showLoading(false)
                     withContext(Dispatchers.IO) {
-                        var task = async {
+                        val task = async {
                             (t_service as TelegramService).callPasswordConfirm(input.text.toString())
                         }
                         result = task.await()
@@ -74,10 +74,12 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
                         removeRetained<StateChangedEvent>()
                     }
                     else{
-                        EventBus.getDefault().post(NullObjectAccessEvent("Bad request. Check your entering data and internet connection and try again"))
+                        Toast.makeText(activity, "Bad request. Check your entering data and internet connection and try again", Toast.LENGTH_SHORT).show()
+                        showLoading(true)
+                        cancel()
                     }
                 } catch (e: Exception) {
-                    timber.log.Timber.e(e.message)
+                    timber.log.Timber.e(e)
                     Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
                         .show()
                     showLoading(true)

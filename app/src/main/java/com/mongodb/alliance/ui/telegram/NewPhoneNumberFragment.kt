@@ -90,7 +90,9 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
                                 binding.numberEdit.text.toString()))
                     }
                     else{
-                        EventBus.getDefault().post(NullObjectAccessEvent("Bad request. Check your entering data and internet connection and try again"))
+                        Toast.makeText(activity, "Bad request. Check your entering data and internet connection and try again", Toast.LENGTH_SHORT).show()
+                        showLoading(true)
+                        cancel()
                     }
                     showLoading(true)
                 }

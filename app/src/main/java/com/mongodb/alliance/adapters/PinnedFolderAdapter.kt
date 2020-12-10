@@ -234,6 +234,10 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
         holder.itemLayout.findViewById<ImageView>(R.id.pinned).visibility = View.VISIBLE
     }
 
+    fun setCurrState(st: ClientState){
+        state = st
+    }
+
     fun addContext(activity : FolderActivity){
         context = activity
     }

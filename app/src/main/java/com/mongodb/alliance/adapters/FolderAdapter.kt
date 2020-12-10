@@ -322,6 +322,10 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
     }
 
+    fun setCurrState(st : ClientState){
+        state = st
+    }
+
     private fun loadImages(holder: FolderViewHolder, count: Int){
         val chats = getFirstChatsNames(holder)
 
