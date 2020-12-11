@@ -1,5 +1,6 @@
 package com.mongodb.alliance.services.telegram
 
+import android.annotation.SuppressLint
 import android.os.Build
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.getRetained
@@ -22,7 +23,6 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -97,11 +97,9 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
 
     override suspend fun setUpClient(){
         try {
-            val clientState = ClientState.setParameters
             if (client.getAuthorizationState()
                     .toString() == TdApi.AuthorizationStateWaitTdlibParameters().toString()
             ) {
-
                 client.setTdlibParameters(
                     TdApi.TdlibParameters(
                         apiId = 1682238,
@@ -116,10 +114,9 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                 )
                 client.exec(TdApi.CheckDatabaseEncryptionKey())
             }
-            //publish(StateChangedEvent(clientState))
         }
         catch (e: Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
     }
 
@@ -128,8 +125,8 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         client.updates.onEach { value ->
             when (value) {
                 is TdApi.UpdateAuthorizationState -> {
-                    val state = value.authorizationState
-                    when (state) {
+                    val stt = value.authorizationState
+                    when (stt) {
                         is TdApi.AuthorizationStateWaitPhoneNumber -> {
                             Timber.d("Waiting for number");
                             val state = returnClientState()
@@ -177,22 +174,20 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     }
 
     suspend fun callCodeConfirm(input: String): TelegramObject? {
-        try {
-            var res = client.exec(TdApi.CheckAuthenticationCode(input))
-            return res
-        }
-        catch (e: Exception){
-            return null
+        removeRetained<StateChangedEvent>()
+        return try {
+            client.exec(TdApi.CheckAuthenticationCode(input))
+        } catch (e: Exception){
+            null
         }
     }
 
     suspend fun callPasswordConfirm(input: String): TelegramObject? {
-        try{
-            var res = client.exec(TdApi.CheckAuthenticationPassword(input))
-            return res
-        }
-        catch (e: Exception){
-            return null
+        removeRetained<StateChangedEvent>()
+        return try{
+            client.exec(TdApi.CheckAuthenticationPassword(input))
+        } catch (e: Exception){
+            null
         }
     }
 
@@ -214,7 +209,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         }
     }
 
-    suspend fun getChatIds() : LongArray {
+    private suspend fun getChatIds() : LongArray {
         val getChats = TdApi.GetChats(TdApi.ChatListMain(), Long.MAX_VALUE, 0, Int.MAX_VALUE)
         val chats : TdApi.Chats = client.exec(getChats) as TdApi.Chats
         return chats.chatIds
@@ -223,7 +218,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     suspend fun getChats(): List<TdApi.Chat> = getChatIds()
         .map { ids -> getChat(ids) }
 
-    suspend fun getChat(chatId: Long): TdApi.Chat {
+    private suspend fun getChat(chatId: Long): TdApi.Chat {
         return client.exec(TdApi.GetChat(chatId)) as TdApi.Chat
     }
 
@@ -237,7 +232,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             client.exec(TdApi.LogOut())
         }
         catch (e: Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
     }
 
@@ -246,7 +241,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             client.close()
         }
         catch (e: Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
     }
 
@@ -284,7 +279,6 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     }
 
     suspend fun isUser() : TdApi.User?{
-        lateinit var username : String
         return try{
             client.getMe()
         } catch (e: Exception){
@@ -308,6 +302,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         publish(StateChangedEvent(clientState), retain = true)
         initService()
     }
+
 
     suspend fun getRecentMessage(chatName: String) : HashMap<String, String>{
         var message = ""
@@ -354,7 +349,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             }
         }
         catch (e:Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
         finally {
             resultMap[message] = messageTime
@@ -374,7 +369,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             }
         }
         catch (e: Exception) {
-            Timber.e(e.message)
+            Timber.e(e)
         }
         finally {
             return chatPhotoId
@@ -384,14 +379,13 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     @ExperimentalCoroutinesApi
     suspend fun downloadImageFile(name : String): String {
         var imagePath : String = ""
-        //TdApi.GetChatMember()
         try {
             val file = getChatImageId(name)?.let { TdApi.DownloadFile(it, 1, 0, 0, true) }
                 ?.let { client.exec(it) }
             imagePath = (file as TdApi.File).local.path!!
         }
         catch(e:Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
         finally {
             return imagePath
@@ -404,7 +398,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
     }
 
     suspend fun getUnreadCount(name : String): Int {
-        var unreadCount : Int = 0
+        var unreadCount = 0
         try{
             val searchPublicChat = client.exec(TdApi.SearchPublicChat(name))
             val chat = (searchPublicChat as TdApi.Chat)
@@ -413,7 +407,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             }
         }
         catch(e : Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
         finally {
             return unreadCount
@@ -425,14 +419,12 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         chatsList = chats as ArrayList<TdApi.Chat>
     }
 
-    fun isChatInList(chatName: String) : Boolean{
-        //val chats = getChats()
-        //val nm = chats as ArrayList<TdApi.Chat>
+    private fun isChatInList(chatName: String) : Boolean{
         return chatsList.find { it.title == chatName } != null
     }
 
     fun returnUnreadCount(chatName: String) : Int {
-        var unreadCount : Int = 0
+        var unreadCount = 0
         try{
             if(isChatInList(chatName)) {
                 val chat = chatsList.find { it.title == chatName }
@@ -442,7 +434,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
             }
         }
         catch(e : Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
         finally {
             return unreadCount
@@ -507,7 +499,7 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
         }
     }
 
-    fun returnChatImageId(chatName: String) : Int? {
+    private fun returnChatImageId(chatName: String) : Int? {
         var chatPhotoId : Int? = 0
         try {
             val chat = chatsList.find { it.title == chatName }

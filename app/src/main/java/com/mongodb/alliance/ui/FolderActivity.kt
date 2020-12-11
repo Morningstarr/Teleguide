@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.subscribe
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.FolderAdapter
@@ -36,6 +37,9 @@ import com.mongodb.alliance.services.telegram.ClientState
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mongodb.alliance.ui.authorization.LoginActivity
+import com.mongodb.alliance.ui.telegram.CodeFragment
+import com.mongodb.alliance.ui.telegram.NewPhoneNumberFragment
+import com.mongodb.alliance.ui.telegram.PasswordFragment
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.Realm
 import io.realm.kotlin.where
@@ -69,10 +73,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var rootLayout : CoordinatorLayout
     private lateinit var state : ClientState
     lateinit var binding: ActivityFolderBinding
+    private var bottomSheetFragment: BottomSheetDialogFragment? = null
     private var user: User? = null
     private var count : Int = -1
     private var folderId : ObjectId? = null
     private var job: Job = Job()
+    private var isResumed = false
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
     var isSelecting : Boolean = false
@@ -288,7 +294,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             Timber.e(e)
         }
         if (user == null) {
-            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            startActivity(intent)
+            overridePendingTransition(1, 1)
         } else {
             runBlocking {
                 showLoading(true)
@@ -305,11 +315,29 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     (tService as TelegramService).returnClientState()
                 }
                 state = currState
-                if(state == ClientState.ready) {
-                    val tsk = async {
-                        (tService as TelegramService).fillChats()
+                when(state){
+                    ClientState.ready -> {
+                        val tsk = async {
+                            (tService as TelegramService).fillChats()
+                        }
+                        tsk.await()
                     }
-                    tsk.await()
+                    ClientState.waitNumber -> {
+                        if (!isResumed) {
+                            showNotConnectedAlert()
+                        }
+                    }
+                    ClientState.waitCode -> {
+                        if (!isResumed) {
+                            showNotFinishedAlert()
+                        }
+                    }
+                    ClientState.waitPassword -> {
+                        if (!isResumed) {
+                            showNotFinishedAlert()
+                        }
+                    }
+                    else -> { Toast.makeText(baseContext, state.displayName, Toast.LENGTH_SHORT).show() }
                 }
             }
 
@@ -338,6 +366,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 Timber.e(e)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isResumed = true
     }
 
     override fun onRestart() {
@@ -376,7 +409,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-    private fun setUpRecyclerView(realm: Realm) {
+    private fun setUpRecyclerView(realm: Realm, currSt: ClientState = ClientState.undefined) {
         val mutableFolders = realm.where<FolderRealm>().sort("order")
             .findAll().toMutableList()
         mutableFolders.removeIf {
@@ -385,9 +418,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
         if(mutableFolders.size != 0) {
             binding.foldersTextLayout.visibility = View.INVISIBLE
-            adapter = FolderAdapter(
-                mutableFolders, state, tService
-            )
+            if(currSt == ClientState.undefined) {
+                adapter = FolderAdapter(
+                    mutableFolders, state, tService
+                )
+            }
+            else{
+                adapter = FolderAdapter(
+                    mutableFolders, currSt, tService
+                )
+            }
 
             recyclerView.layoutManager = LinearLayoutManager(this)
             recyclerView.adapter = adapter
@@ -557,9 +597,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                                             }
                                             Timber.d("user logged out")
                                             binding.foldersProgress.visibility = View.GONE
-                                            if(checkBox.isChecked){
+                                            if (checkBox.isChecked) {
                                                 (tService as TelegramService).logOut()
                                             }
+                                            finish()
                                             startActivity(
                                                 Intent(
                                                     baseContext,
@@ -573,8 +614,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                                     ) { dialog, _ ->
                                         dialog.cancel()
                                     }.show()
-                            }
-                            catch (e:Exception){
+                            } catch (e: Exception) {
 
                             }
                         }
@@ -596,7 +636,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         ) { dialog, _ ->
             adapter.deleteSelected()
             setDefaultActionBar()
-            //refreshRecyclerView()
             dialog.dismiss()
             binding.fldrFab.show()
         }
@@ -687,6 +726,166 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 finish()
             }
         }
+    }
+
+    @ExperimentalCoroutinesApi
+    private fun showNotFinishedAlert(){
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("В прошлый раз вы не завершили вход в Telegram аккаунт")
+
+        builder.setPositiveButton(
+            "Продолжить вход"
+        ) { _, _ ->
+            try {
+                lifecycleScope.launch {
+                    (tService as TelegramService).initService()
+                }
+                subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true){
+                    lifecycleScope.launch {
+                        val tsk = async {
+                            (tService as TelegramService).fillChats()
+                        }
+                        tsk.await()
+                        adapter.setCurrState(ClientState.ready)
+                        adapter.notifyDataSetChanged()
+                        pinnedAdapter.setCurrState(ClientState.ready)
+                        pinnedAdapter.notifyDataSetChanged()
+                        Toast.makeText(
+                            baseContext,
+                            "Подключение успешно завершено",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                }
+                subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true) { event ->
+                    Timber.d("State changed")
+                    when (event.clientState) {
+                        ClientState.waitCode -> {
+                            bottomSheetFragment =
+                                CodeFragment()
+                            (bottomSheetFragment as CodeFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as CodeFragment).tag
+                            )
+                        }
+                        ClientState.waitPassword -> {
+                            bottomSheetFragment =
+                                PasswordFragment()
+                            (bottomSheetFragment as PasswordFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as PasswordFragment).tag
+                            )
+                        }
+                        else -> {
+                            Toast.makeText(
+                                baseContext,
+                                event.clientState.displayName,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+            catch (e: Exception){
+                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+        builder.setNegativeButton(
+            "Нет"
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+
+        }
+
+        val alert = builder.create()
+        alert.show()
+    }
+
+    @ExperimentalCoroutinesApi
+    private fun showNotConnectedAlert(){
+        val builder =
+            AlertDialog.Builder(this)
+
+        builder.setMessage("Чтобы добавить новые чаты необходимо войти в Telegram аккаунт")
+
+        builder.setPositiveButton(
+            "Войти"
+        ) { _, _ ->
+            try {
+                lifecycleScope.launch {
+                    (tService as TelegramService).initService()
+                }
+                subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true){
+                    lifecycleScope.launch {
+                        val tsk = async {
+                            (tService as TelegramService).fillChats()
+                        }
+                        tsk.await()
+                        adapter.setCurrState(ClientState.ready)
+                        adapter.notifyDataSetChanged()
+                        pinnedAdapter.setCurrState(ClientState.ready)
+                        pinnedAdapter.notifyDataSetChanged()
+                        Toast.makeText(
+                            baseContext,
+                            "Подключение успешно завершено",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                }
+                subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true) { event ->
+                    Timber.d("State changed")
+                    when (event.clientState) {
+                        ClientState.waitNumber -> {
+                            bottomSheetFragment =
+                                NewPhoneNumberFragment()
+                            (bottomSheetFragment as NewPhoneNumberFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as NewPhoneNumberFragment).tag
+                            )
+                        }
+                        ClientState.waitCode -> {
+                            bottomSheetFragment =
+                                CodeFragment()
+                            (bottomSheetFragment as CodeFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as CodeFragment).tag
+                            )
+                        }
+                        ClientState.waitPassword -> {
+                            bottomSheetFragment =
+                                PasswordFragment()
+                            (bottomSheetFragment as PasswordFragment).show(
+                                this.supportFragmentManager,
+                                (bottomSheetFragment as PasswordFragment).tag
+                            )
+                        }
+                        else -> {
+                            Toast.makeText(
+                                baseContext,
+                                event.clientState.displayName,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+            catch (e: Exception){
+                Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+        builder.setNegativeButton(
+            "Нет"
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+
+        }
+
+        val alert = builder.create()
+        alert.show()
     }
 
     private fun hideKeyboard() {
