@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui.authorization
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import com.mongodb.alliance.authorization.SignListener
 import com.mongodb.alliance.authorization.SignUpListener
 import com.mongodb.alliance.databinding.FragmentSignUpBinding
 import com.mongodb.alliance.events.SuccessSignIn
+import com.mongodb.alliance.ui.FolderActivity
 import io.realm.mongodb.App
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.greenrobot.eventbus.EventBus
@@ -32,6 +34,8 @@ class SignUpFragment: BottomSheetDialogFragment(),
     fun onMessageEvent(event : SuccessSignIn){
         if(event.message == "ok") {
             activity?.finish()
+            val intent = Intent(activity?.baseContext, FolderActivity::class.java)
+            startActivity(intent)
         }
         else{
             Toast.makeText(activity, event.message, Toast.LENGTH_LONG).show()

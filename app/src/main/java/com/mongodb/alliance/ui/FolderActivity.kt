@@ -16,18 +16,14 @@ import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
-import cafe.adriel.broker.removeRetained
 import cafe.adriel.broker.subscribe
-import cafe.adriel.broker.unsubscribe
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.mongodb.alliance.PhoneNumberFragment
 import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.FolderAdapter
 import com.mongodb.alliance.adapters.PinnedFolderAdapter
@@ -298,7 +294,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             Timber.e(e)
         }
         if (user == null) {
-            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            startActivity(intent)
+            overridePendingTransition(1, 1)
         } else {
             runBlocking {
                 showLoading(true)
@@ -323,17 +323,17 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         tsk.await()
                     }
                     ClientState.waitNumber -> {
-                        if(!isResumed){
+                        if (!isResumed) {
                             showNotConnectedAlert()
                         }
                     }
                     ClientState.waitCode -> {
-                        if(!isResumed) {
+                        if (!isResumed) {
                             showNotFinishedAlert()
                         }
                     }
                     ClientState.waitPassword -> {
-                        if(!isResumed) {
+                        if (!isResumed) {
                             showNotFinishedAlert()
                         }
                     }
@@ -409,7 +409,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
     }
 
-    private fun setUpRecyclerView(realm: Realm, currSt : ClientState = ClientState.undefined) {
+    private fun setUpRecyclerView(realm: Realm, currSt: ClientState = ClientState.undefined) {
         val mutableFolders = realm.where<FolderRealm>().sort("order")
             .findAll().toMutableList()
         mutableFolders.removeIf {
@@ -597,9 +597,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                                             }
                                             Timber.d("user logged out")
                                             binding.foldersProgress.visibility = View.GONE
-                                            if(checkBox.isChecked){
+                                            if (checkBox.isChecked) {
                                                 (tService as TelegramService).logOut()
                                             }
+                                            finish()
                                             startActivity(
                                                 Intent(
                                                     baseContext,
@@ -613,8 +614,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                                     ) { dialog, _ ->
                                         dialog.cancel()
                                     }.show()
-                            }
-                            catch (e:Exception){
+                            } catch (e: Exception) {
 
                             }
                         }
@@ -789,7 +789,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     }
                 }
             }
-            catch(e: Exception){
+            catch (e: Exception){
                 Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
             }
         }
@@ -873,7 +873,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                     }
                 }
             }
-            catch(e: Exception){
+            catch (e: Exception){
                 Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
             }
         }
