@@ -47,4 +47,5 @@
     <string name="search_hint"><font size="14">Поиск</font></string>
     <string name="search_hint_black"><font size="14"><font color="#4D4D4D">Поиск</font></font></string>
     <string name="plus_nested_chats"> +%1$s </string>
+    <string name="continue_">Продолжить</string>
 </resources>

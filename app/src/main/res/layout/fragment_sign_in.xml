@@ -204,7 +204,6 @@
         android:layout_gravity="center"
         android:layout_marginStart="30dp"
         android:layout_marginTop="5dp"
-
         android:layout_marginEnd="30dp"
         android:layout_marginBottom="5dp"
         android:background="@drawable/rectangle_8"

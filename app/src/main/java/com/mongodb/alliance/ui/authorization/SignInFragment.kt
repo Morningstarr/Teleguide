@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui.authorization
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import com.mongodb.alliance.authorization.SignInListener
 import com.mongodb.alliance.authorization.SignListener
 import com.mongodb.alliance.databinding.FragmentSignInBinding
 import com.mongodb.alliance.events.SuccessSignIn
+import com.mongodb.alliance.ui.FolderActivity
 import io.realm.mongodb.App
 import io.realm.mongodb.User
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -85,6 +87,10 @@ class SignInFragment: BottomSheetDialogFragment(),
             if(result != null) {
                 if (result.isSuccess) {
                     dismiss()
+                    val intent = Intent(activity, FolderActivity::class.java)
+                    //intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
                     activity?.finish()
                     loading(true)
                 } else {

@@ -48,6 +48,10 @@ class LoginActivity : AppCompatActivity(), GlobalBroker.Publisher {
         }
     }
 
+    override fun onBackPressed() {
+        finish()
+    }
+
 }
 
 

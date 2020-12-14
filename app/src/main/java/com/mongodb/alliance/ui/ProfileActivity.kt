@@ -1,6 +1,7 @@
 package com.mongodb.alliance.ui
 
 import android.Manifest.permission.*
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.ActionBar
 import android.app.AlertDialog
@@ -22,7 +23,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cafe.adriel.broker.GlobalBroker
@@ -37,11 +37,17 @@ import com.cloudinary.utils.ObjectUtils
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.kroegerama.imgpicker.BottomSheetImagePicker
 import com.kroegerama.imgpicker.ButtonType
-import com.mongodb.alliance.*
+import com.mongodb.alliance.FileUtils
+import com.mongodb.alliance.NewPasswordFragment
+import com.mongodb.alliance.R
 import com.mongodb.alliance.adapters.UserDataAdapter
+import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityProfileBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.events.*
+import com.mongodb.alliance.events.ChangeUserDataEvent
+import com.mongodb.alliance.events.NullObjectAccessEvent
+import com.mongodb.alliance.events.StateChangedEvent
+import com.mongodb.alliance.events.TelegramConnectedEvent
 import com.mongodb.alliance.model.UserData
 import com.mongodb.alliance.model.UserDataType
 import com.mongodb.alliance.model.UserRealm
@@ -79,7 +85,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
     @TelegramServ
     @Inject
-    lateinit var t_service: Service
+    lateinit var tService: Service
     private lateinit var recyclerView: RecyclerView
     private lateinit var binding: ActivityProfileBinding
     private lateinit var realm: Realm
@@ -99,7 +105,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     private val permissions: ArrayList<String> = ArrayList()
 
     private val ALL_PERMISSIONS_RESULT = 107
-    private val IMAGE_RESULT = 200
 
     private var user: User? = null
 
@@ -108,13 +113,14 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
     }
 
+    @SuppressLint("WrongConstant")
     @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
         EventBus.getDefault().register(this)
         lifecycleScope.launch {
-            (t_service as TelegramService).setUpClient()
+            (tService as TelegramService).setUpClient()
         }
         try{
             MediaManager.init(this)
@@ -123,7 +129,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             if(!e.message?.contains("already initialized")!!){
                 finish()
             }
-            Timber.e(e.message)
+            Timber.e(e)
         }
         subscribe<ChangeUserDataEvent>(lifecycleScope, emitRetained = true) { event ->
             when(event.parameter) {
@@ -131,29 +137,28 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     val builder =
                         AlertDialog.Builder(this)
 
-                    builder.setTitle("Warning")
-                    builder.setMessage("Are you sure you want to change your phone number? It will lead to disconnection of current telegram account!")
+                    builder.setMessage("Вы уверены, что хотите изменить номер телефона? Это приведет к отключению текущего Telegram аккаунта и потере доступа к чатам!")
 
                     builder.setPositiveButton(
-                        "YES"
-                    ) { dialog, which ->
+                        "Да"
+                    ) { _, _ ->
                         lifecycleScope.launch {
                             withContext(Dispatchers.IO) {
-                                (t_service as TelegramService).logOut()
+                                (tService as TelegramService).logOut()
                             }
                             withContext(Dispatchers.Main) {
                                 setUpRecyclerView()
                             }
                             withContext(Dispatchers.IO) {
-                                (t_service as TelegramService).setUpClient()
-                                (t_service as TelegramService).initService()
+                                (tService as TelegramService).setUpClient()
+                                (tService as TelegramService).initService()
                             }
                         }
 
                     }
                     builder.setNegativeButton(
-                        "NO"
-                    ) { dialog, which -> // Do nothing
+                        "Нет"
+                    ) { dialog, _ -> // Do nothing
                         dialog.dismiss()
                     }
 
@@ -161,31 +166,30 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     alert.show()
                 }
                 2 -> {
-                    if((t_service as TelegramService).isUser() != null) {
+                    if((tService as TelegramService).isUser() != null) {
                         val builder =
                             AlertDialog.Builder(this)
 
-                        builder.setTitle("Warning")
-                        builder.setMessage("Are you sure you want to change your telegram account?")
+                        builder.setMessage("Вы уверены, что хотите сменить телеграм аккаунт? Доступ к добавленным чатам данного аккаунта будет заблокирован. Данное действие нельзя отменить!")
                         builder.setPositiveButton(
-                            "YES"
-                        ) { dialog, which ->
+                            "Да"
+                        ) { _, _ ->
                             lifecycleScope.launch {
                                 withContext(Dispatchers.IO) {
-                                    (t_service as TelegramService).logOut()
+                                    (tService as TelegramService).logOut()
                                 }
                                 withContext(Dispatchers.Main) {
                                     setUpRecyclerView()
                                 }
                                 withContext(Dispatchers.IO) {
-                                    (t_service as TelegramService).setUpClient()
-                                    (t_service as TelegramService).initService()
+                                    (tService as TelegramService).setUpClient()
+                                    (tService as TelegramService).initService()
                                 }
                             }
                         }
                         builder.setNegativeButton(
-                            "NO"
-                        ) { dialog, which -> // Do nothing
+                            "Нет"
+                        ) { dialog, _ -> // Do nothing
                             dialog.dismiss()
                         }
 
@@ -196,16 +200,15 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         lifecycleScope.launch {
                             val task = async {
                                 withContext(Dispatchers.IO) {
-                                    (t_service as TelegramService).returnClientState()
+                                    (tService as TelegramService).returnClientState()
                                 }
                             }
-                            val state = task.await()
-                            when (state) {
+                            when (task.await()) {
                                 ClientState.ready -> {
                                     Toast.makeText(baseContext, "state ready", Toast.LENGTH_SHORT).show()
                                 }
                                 ClientState.waitNumber, ClientState.waitPassword, ClientState.waitCode -> {
-                                    (t_service as TelegramService).initService()
+                                    (tService as TelegramService).initService()
                                 }
                                 else -> {
                                     Toast.makeText(baseContext, "unknown state", Toast.LENGTH_SHORT).show()
@@ -218,12 +221,11 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     val builder =
                         AlertDialog.Builder(this)
 
-                    builder.setTitle("Warning")
-                    builder.setMessage("Are you sure you want to change your account password? It can't be undone!")
+                    builder.setMessage("Вы уверены, что хотите сменить пароль от данного аккаунта?")
 
                     builder.setPositiveButton(
-                        "YES"
-                    ) { dialog, which -> // Do nothing but close the dialog
+                        "Да"
+                    ) { _, _ -> // Do nothing but close the dialog
                         realm = Realm.getDefaultInstance()
                         val appUserRealm = realm.where<UserRealm>()
                             .equalTo("user_id", channelApp.currentUser()?.id)
@@ -234,13 +236,13 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                             if (it.isSuccess) {
                                 Toast.makeText(
                                     this,
-                                    "Successfully sent the user a reset password link to $userEmail",
+                                    "Ссылка на сброс пароля успешно отправлена на адрес $userEmail",
                                     Toast.LENGTH_LONG
                                 ).show().also { finish() }
                             } else {
                                 Toast.makeText(
                                     this,
-                                    "Failed to send the user a reset password link to $userEmail",
+                                    "Не удалось отправить ссылку на сброс пароля на адрес $userEmail",
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
@@ -248,8 +250,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     }
 
                     builder.setNegativeButton(
-                        "NO"
-                    ) { dialog, which -> // Do nothing
+                        "Нет"
+                    ) { dialog, _ -> // Do nothing
                         dialog.dismiss()
                     }
 
@@ -262,11 +264,10 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         otherEventsSubscription()
         telegramConnectedSubscription()
 
-
-        permissions.add(CAMERA);
-        permissions.add(WRITE_EXTERNAL_STORAGE);
-        permissions.add(READ_EXTERNAL_STORAGE);
-        permissionsToRequest = findUnAskedPermissions(permissions);
+        permissions.add(CAMERA)
+        permissions.add(WRITE_EXTERNAL_STORAGE)
+        permissions.add(READ_EXTERNAL_STORAGE)
+        permissionsToRequest = findUnAskedPermissions(permissions)
 
         val actionbar = supportActionBar
         if (actionbar != null) {
@@ -296,7 +297,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             lifecycleScope.launch {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (permissionsToRequest?.size!! > 0) {
-                        permissionsToRequest?.toArray(Array<String>(permissionsToRequest!!.size) { i -> permissionsToRequest!![i] })
+                        permissionsToRequest?.toArray(Array(permissionsToRequest!!.size) { i -> permissionsToRequest!![i] })
                             ?.let { requestPermissions(it, ALL_PERMISSIONS_RESULT) }
                     }
                     else{
@@ -322,8 +323,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             try {
                 val fields: Array<Field> = popup.javaClass.declaredFields
                 for (field in fields) {
-                    if ("mPopup" == field.getName()) {
-                        field.setAccessible(true)
+                    if ("mPopup" == field.name) {
+                        field.isAccessible = true
                         val menuPopupHelper: Any = field.get(popup)
                         val classPopupHelper =
                             Class.forName(menuPopupHelper.javaClass.name)
@@ -336,7 +337,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     }
                 }
             } catch (e: Exception) {
-                Timber.e(e.message)
+                Timber.e(e)
             }
 
             popup.menuInflater.inflate(R.menu.profile_menu, popup.menu)
@@ -366,7 +367,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         lifecycleScope.launch {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 if (permissionsToRequest?.size!! > 0) {
-                                    permissionsToRequest?.toArray(Array<String>(permissionsToRequest!!.size) { i -> permissionsToRequest!![i] })
+                                    permissionsToRequest?.toArray(Array(permissionsToRequest!!.size) { i -> permissionsToRequest!![i] })
                                         ?.let { requestPermissions(it, ALL_PERMISSIONS_RESULT) }
                                 }
                                 else{
@@ -379,18 +380,17 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         val builder =
                             AlertDialog.Builder(this)
 
-                        builder.setTitle("Внимание")
                         builder.setMessage("Вы уверены, что хотите удалить фото?")
 
                         builder.setPositiveButton(
-                            "YES"
-                        ) { dialog, which -> // Do nothing but close the dialog
+                            "Да"
+                        ) { _, _ -> // Do nothing but close the dialog
                             deleteImage(true)
                         }
 
                         builder.setNegativeButton(
-                            "NO"
-                        ) { dialog, which -> // Do nothing
+                            "Нет"
+                        ) { dialog, _ -> // Do nothing
                             dialog.dismiss()
                         }
 
@@ -413,7 +413,6 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     override fun onStart() {
         super.onStart()
 
-        val action: String? = intent?.action
         val data: Uri? = intent?.data
 
         if(data != null){
@@ -433,7 +432,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         try {
             user = channelApp.currentUser()
         } catch (e: IllegalStateException) {
-            Timber.e(e.message)
+            Timber.e(e)
         }
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
@@ -454,7 +453,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     }
                 })
             } catch (e: Exception) {
-                Timber.e(e.message)
+                Timber.e(e)
             }
         }
 
@@ -479,14 +478,15 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
         if(intent.getBooleanExtra("beginConnection", false)){
             lifecycleScope.launch {
-                (t_service as TelegramService).initService()
+                (tService as TelegramService).initService()
             }
         }
 
     }
 
+    @ExperimentalCoroutinesApi
     private fun setUpRecyclerView() {
-        var userDataArray = ArrayList<UserData>()
+        val userDataArray = ArrayList<UserData>()
         val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
         userDataArray.add(UserData(appUserRealm.name,"Ваш электронный адрес", UserDataType.email))
         userDataArray.add(checkNumber())
@@ -509,7 +509,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             val config = HashMap<String, String>()
             config["cloud_name"] = "dbtelecloud"
 
-            val requestId = MediaManager.get().upload(
+            MediaManager.get().upload(
                 FileUtils.getPath(
                     baseContext,
                     uris[0]
@@ -523,7 +523,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                         // your code here
                     }
                     override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {
-                        val progress = bytes.toDouble() / totalBytes
+
                     }
                     override fun onSuccess(requestId: String, resultData: Map<*, *>) {
                         val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst()
@@ -552,7 +552,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 .startNow(this)
         }
         catch(e:Exception){
-            Timber.e(e.message)
+            Timber.e(e)
         }
 
     }
@@ -593,7 +593,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         if (shouldShowRequestPermissionRationale(permissionsRejected[0])) {
                             showMessageOKCancel("These permissions are mandatory for the application. Please allow access.",
-                                DialogInterface.OnClickListener { dialog, which ->
+                                DialogInterface.OnClickListener { _, _ ->
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                         requestPermissions(
                                             permissionsRejected.toTypedArray(),
@@ -616,17 +616,18 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         AlertDialog.Builder(this)
             .setMessage(message)
             .setPositiveButton("OK", okListener)
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Отмена", null)
             .create()
             .show()
     }
 
+    @ExperimentalCoroutinesApi
     private fun checkTelegram() : UserData{
-        var isNotFinishedConnection : Boolean = false
+        var isNotFinishedConnection = false
         var username = "default"
         runBlocking {
             val taskName = async {
-                (t_service as TelegramService).getProfileName()
+                (tService as TelegramService).getProfileName()
             }
             username = taskName.await()
         }
@@ -641,17 +642,17 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             runBlocking {
                 val task = async {
                     withContext(Dispatchers.IO) {
-                        (t_service as TelegramService).returnClientState()
+                        (tService as TelegramService).returnClientState()
                     }
                 }
-                val state = task.await()
-                when (state) {
+                when (task.await()) {
                     ClientState.waitPassword, ClientState.waitCode -> {
                         isNotFinishedConnection = true
                     }
                     ClientState.waitNumber -> {
                         isNotFinishedConnection = false
                     }
+                    else -> {  }
                 }
             }
             if (!isNotFinishedConnection) {
@@ -674,7 +675,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         var number = "default"
         runBlocking {
             val taskName = async {
-                (t_service as TelegramService).getPhoneNumber()
+                (tService as TelegramService).getPhoneNumber()
             }
             number = taskName.await()
         }
@@ -705,12 +706,12 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     publicId = imageUrl.subSequence(imageUrl.lastIndexOf("/") + 1, imageUrl.lastIndexOf(".")).toString()
                 }
                 else{
-                    Toast.makeText(baseContext, "Error! Nothing to delete", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(baseContext, "Ошибка! Нечего удалять.", Toast.LENGTH_SHORT).show()
                     return
                 }
             }
             else{
-                Toast.makeText(baseContext, "User not found!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(baseContext, "Пользователь не найден!", Toast.LENGTH_SHORT).show()
             }
             lateinit var response : String
             binding.mainBackdrop.setImageResource(0)
@@ -736,7 +737,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 }
                 if(response.contains("ok")){
                     if(showMessage){
-                        Toast.makeText(baseContext, "Deleted successfully!", Toast.LENGTH_SHORT)
+                        Toast.makeText(baseContext, "Успешно удалено!", Toast.LENGTH_SHORT)
                             .show()
                         realm.executeTransaction {
                             appUserRealm?.image = null
@@ -745,7 +746,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     }
                 }
                 else{
-                    Toast.makeText(baseContext, "An error occured while deleting a picture! Please, try again", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(baseContext, "Произошла ошибка при попытке удаления изображения! Пожалуйста, попробуйте снова.", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -755,8 +756,9 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         }
     }
 
+    @ExperimentalCoroutinesApi
     private fun telegramConnectedSubscription() {
-        subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true) { event ->
+        subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true) {
             setUpRecyclerView()
         }
     }
