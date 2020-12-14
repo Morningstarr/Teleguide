@@ -115,6 +115,12 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
     fun showLoading(show : Boolean){
         binding.numberConfirmBtn.isEnabled = show
         binding.numberEdit.isEnabled = show
+        if(show){
+            binding.shadow.visibility = View.VISIBLE
+        }
+        else{
+            binding.shadow.visibility = View.INVISIBLE
+        }
     }
 
     override fun onDismiss(dialog: DialogInterface) {

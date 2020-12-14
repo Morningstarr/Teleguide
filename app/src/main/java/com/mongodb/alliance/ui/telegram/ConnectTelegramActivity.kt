@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.*
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.mongodb.alliance.PhoneNumberFragment
 import com.mongodb.alliance.events.PhoneChangedEvent
 import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.ActivityConnectTelegramBinding
@@ -200,11 +199,11 @@ class ConnectTelegramActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                 ClientState.waitNumber -> {
                     //bottomSheetFragment?.dismiss()
                     bottomSheetFragment =
-                        PhoneNumberFragment()
+                        NewPhoneNumberFragment()
 
-                    (bottomSheetFragment as PhoneNumberFragment).show(
+                    (bottomSheetFragment as NewPhoneNumberFragment).show(
                         this.supportFragmentManager,
-                        (bottomSheetFragment as PhoneNumberFragment).tag
+                        (bottomSheetFragment as NewPhoneNumberFragment).tag
                     )
                 }
                 ClientState.waitCode -> {

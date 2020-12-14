@@ -15,7 +15,6 @@ import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.CodeTextWatcher
 import com.mongodb.alliance.R
-import com.mongodb.alliance.databinding.FragmentCodeBinding
 import com.mongodb.alliance.databinding.NewFragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
 import com.mongodb.alliance.events.NullObjectAccessEvent
@@ -74,7 +73,7 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
                     showLoading(true)
 
                 } catch (e: Exception) {
-                    timber.log.Timber.e(e.message)
+                    timber.log.Timber.e(e)
                     Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
                         .show()
                     showLoading(true)
@@ -86,6 +85,12 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
     fun showLoading(show : Boolean){
         binding.codeConfirmBtn.isEnabled = show
         binding.teleCodeEdit.isEnabled = show
+        if(show){
+            binding.shadow.visibility = View.VISIBLE
+        }
+        else{
+            binding.shadow.visibility = View.INVISIBLE
+        }
     }
 
     override fun onDismiss(dialog: DialogInterface) {

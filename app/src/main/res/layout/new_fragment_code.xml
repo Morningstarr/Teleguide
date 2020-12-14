@@ -62,7 +62,7 @@
         android:layout_marginStart="23dp"
         android:layout_marginTop="15dp"
         android:layout_marginEnd="23dp"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="15dp"
         android:maxHeight="60dp"
         android:minWidth="276dp"
         android:minHeight="52dp"
@@ -70,7 +70,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_max="60dp"
-        app:layout_constraintHeight_min="60dp"
+        app:layout_constraintHeight_min="52dp"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tele_code_edit"
@@ -78,23 +78,35 @@
         app:sl_dy="0dp"
         app:sl_fillColor="#03CCFC"
         app:sl_shadowColor="#D2D2D2"
-        app:sl_shadowRadius="8dp">
+        app:sl_shadowRadius="8dp" />
 
-        <Button
-            android:id="@+id/code_confirm_btn"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_horizontal"
-            android:background="@drawable/rectangle_8"
-            android:fontFamily="@font/roboto"
-            android:stateListAnimator="@drawable/animator"
-            android:text="Продолжить"
-            android:textAppearance="@style/facebook"
-            android:textColor="#FFFFFF"
-            android:textSize="14dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-    </com.dd.ShadowLayout>
+    <Button
+        android:id="@+id/code_confirm_btn"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/rectangle_8"
+        android:fontFamily="@font/roboto"
+        android:foregroundGravity="center"
+        android:gravity="center"
+        android:stateListAnimator="@drawable/animator"
+        android:text="@string/continue_"
+        android:textAppearance="@style/facebook"
+        android:textColor="@drawable/text_color_selector"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toBottomOf="@+id/shadow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="56dp"
+        app:layout_constraintHeight_min="48dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/shadow"
+        android:textSize="14dp"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintTop_toBottomOf="@+id/tele_code_edit" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
