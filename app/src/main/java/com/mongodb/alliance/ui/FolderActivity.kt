@@ -79,6 +79,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private var folderId : ObjectId? = null
     private var job: Job = Job()
     private var isResumed = false
+    private var isLogin = false
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
     var isSelecting : Boolean = false
@@ -313,6 +314,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
+            isLogin = true
         } else {
             runBlocking {
                 showLoading(true)
@@ -337,17 +339,17 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         tsk.await()
                     }
                     ClientState.waitNumber -> {
-                        if (!isResumed) {
+                        if (!isResumed && !isLogin) {
                             showNotConnectedAlert()
                         }
                     }
                     ClientState.waitCode -> {
-                        if (!isResumed) {
+                        if (!isResumed && !isLogin) {
                             showNotFinishedAlert()
                         }
                     }
                     ClientState.waitPassword -> {
-                        if (!isResumed) {
+                        if (!isResumed && !isLogin) {
                             showNotFinishedAlert()
                         }
                     }
@@ -406,6 +408,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         binding.searchView.clearFocus()
     }
 
+    override fun onActivityReenter(resultCode: Int, data: Intent?) {
+        super.onActivityReenter(resultCode, data)
+
+    }
+
     override fun onPause() {
         super.onPause()
         binding.searchView.setQuery("", false)
@@ -455,8 +462,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             recyclerView.visibility = View.VISIBLE
         }
         else{
+            binding.searchView.onActionViewExpanded()
+            Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+
             binding.foldersTextLayout.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
+
         }
     }
 
