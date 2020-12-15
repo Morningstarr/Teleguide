@@ -131,7 +131,7 @@ class SignUpFragment: BottomSheetDialogFragment(),
                 val fragmentTransaction: FragmentTransaction? = fragmentManager
                     ?.beginTransaction()
 
-                val bsf = SignInFragment()
+                val bsf = SignInFragment(activity)
                 fragmentTransaction?.add(0, bsf)
 
                 bsf.signIn(false, binding.enterEmailSup.text.toString(), binding.enterPassSup.text.toString())

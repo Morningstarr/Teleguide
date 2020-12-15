@@ -16,6 +16,7 @@ import cafe.adriel.broker.publish
 import com.daimajia.swipe.SwipeLayout
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter
 import com.mongodb.alliance.R
+import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.ChannelRealm
 import com.mongodb.alliance.model.FolderRealm
@@ -27,6 +28,7 @@ import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
 import io.realm.Realm
 import io.realm.kotlin.where
+import io.realm.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import java.io.File
@@ -656,26 +658,32 @@ internal class PinnedFolderAdapter @Inject constructor(var folder: FolderRealm, 
     }
 
     private fun getFirstChatsNames(holder: PinnedFolderAdapter.FolderViewHolder) : HashMap<String, String>{
-        val bgRealm = Realm.getDefaultInstance()
         val firstChats : HashMap<String, String> = HashMap()
-        bgRealm.executeTransaction { realm ->
-            val firstChatsObjects = realm.where<ChannelRealm>().equalTo("folder._id", holder.data?._id).sort("order").limit(3).findAll().toMutableList()
+        val bgRealm = Realm.getDefaultInstance()
+        bgRealm.executeTransaction {
+            val firstChatsObjects =
+                it.where<ChannelRealm>().equalTo("folder._id", holder.data?._id)
+                    .sort("order").limit(3).findAll().toMutableList()
             try {
                 if (firstChatsObjects[0] != null) {
-                    firstChats[firstChatsObjects[0].name] = firstChatsObjects[0].displayName
+                    firstChats[firstChatsObjects[0].name] =
+                        firstChatsObjects[0].displayName
                 }
                 if (firstChatsObjects[1] != null) {
-                    firstChats[firstChatsObjects[1].name] = firstChatsObjects[1].displayName
+                    firstChats[firstChatsObjects[1].name] =
+                        firstChatsObjects[1].displayName
                 }
                 if (firstChatsObjects[2] != null) {
-                    firstChats[firstChatsObjects[2].name] = firstChatsObjects[2].displayName
+                    firstChats[firstChatsObjects[2].name] =
+                        firstChatsObjects[2].displayName
                 }
+            } catch (e: Exception) {
             }
-            catch(e:Exception){}
         }
 
         bgRealm.close()
         return firstChats
+
     }
 
 }

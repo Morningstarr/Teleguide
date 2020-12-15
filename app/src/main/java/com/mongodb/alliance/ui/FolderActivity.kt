@@ -340,6 +340,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
 
             val config = SyncConfiguration.Builder(user, user?.id)
+                .allowQueriesOnUiThread(true)
+                .allowWritesOnUiThread(true)
                 .waitForInitialRemoteData()
                 .build()
 
