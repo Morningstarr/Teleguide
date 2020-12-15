@@ -218,7 +218,23 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         subscribe<AddFolderEvent>(lifecycleScope){ event ->
-            adapter.insert(event.folder)
+            try {
+                if (adapter.foldersFilterList.size > 0) {
+                    adapter.foldersFilterList.add(event.folder)
+                    adapter.notifyItemInserted(event.folder.order)
+                } else {
+                    adapter.foldersFilterList.add(event.folder)
+                    adapter.notifyDataSetChanged()
+                }
+            }
+            catch(e:UninitializedPropertyAccessException){
+                setUpRecyclerView(realm)
+            }
+
+            recyclerView.visibility = View.VISIBLE
+            binding.foldersTextLayout.visibility = View.INVISIBLE
+            binding.searchView.onActionViewExpanded()
+            Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
         }
 
         subscribe<FolderEditEvent>(lifecycleScope){
@@ -564,6 +580,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         R.id.chats_folders_action_refresh -> {
                             setUpRecyclerView(realm)
                             setUpRecyclerPinned(null)
+                            binding.searchView.onActionViewExpanded()
+                            Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
                         }
                         R.id.chats_folders_action_exit -> {
                             try {
@@ -638,6 +656,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             setDefaultActionBar()
             dialog.dismiss()
             binding.fldrFab.show()
+            if(adapter.foldersFilterList.size == 0) {
+                recyclerView.visibility = View.GONE
+                binding.foldersTextLayout.visibility = View.VISIBLE
+                binding.searchView.onActionViewExpanded()
+                Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+            }
         }
         builder.setNegativeButton(
             "Нет, спасибо"
