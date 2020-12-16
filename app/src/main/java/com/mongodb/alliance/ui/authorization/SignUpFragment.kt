@@ -75,6 +75,9 @@ class SignUpFragment: BottomSheetDialogFragment(),
                             }!!) {
                                     signUp(emailEdit.text.toString(), passEdit.text.toString())
                                 }
+                        else{
+                            loading(true)
+                        }
                     } else {
                         this.activity?.let { it1 -> onLoginFailed("Пароли не совпадают!", it1) }
                         loading(true)
@@ -111,6 +114,7 @@ class SignUpFragment: BottomSheetDialogFragment(),
         binding.repeatPassSup.isEnabled = show
         binding.googleBtnSup.isEnabled = show
         binding.facebookBtnSup.isEnabled = show
+        binding.labelIsAcc.isEnabled = show
         if(show) {
             binding.shadow.visibility = View.VISIBLE
             binding.shadowFacebookSup.visibility = View.VISIBLE

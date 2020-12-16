@@ -129,6 +129,9 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: MoveCancelEvent){
         setDefaultActionBar()
+        binding.channelsFab.show()
+        isSelecting = false
+        adapter.cancelSelection()
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -159,6 +162,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             else{
                 if(countText.text.toString().toInt() == 1){
                     setDefaultActionBar()
+                    isSelecting = false
+                    adapter.cancelSelection()
                     binding.channelsFab.show()
                 }
                 else {

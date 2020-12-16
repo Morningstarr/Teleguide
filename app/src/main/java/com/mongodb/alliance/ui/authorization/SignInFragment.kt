@@ -54,10 +54,10 @@ class SignInFragment (var cntxt : Context? = null): BottomSheetDialogFragment(),
                     {
                         signIn(false, emailEdit.text.toString(), passEdit.text.toString())
                     }
-                    /*else{
-                        this.activity?.let { it1 -> onLoginFailed("Некорректное имя пользователя или пароль", it1) }
+                    else{
+                        //this.activity?.let { it1 -> onLoginFailed("Некорректное имя пользователя или пароль", it1) }
                         loading(true)
-                    }*/
+                    }
                 } else {
                     this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
                     loading(true)
@@ -128,6 +128,7 @@ class SignInFragment (var cntxt : Context? = null): BottomSheetDialogFragment(),
         binding.facebookBtnSin.isEnabled = show
         binding.enterEmailSin.isEnabled = show
         binding.enterPassSin.isEnabled = show
+        binding.labelCreateAcc.isEnabled = show
         if(show) {
             binding.shadow.visibility = View.VISIBLE
             binding.shadowFacebookSin.visibility = View.VISIBLE

@@ -72,6 +72,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
     private lateinit var state : ClientState
+    private var touchHelper : ItemTouchHelper? = null
     lateinit var binding: ActivityFolderBinding
     private var bottomSheetFragment: BottomSheetDialogFragment? = null
     private var user: User? = null
@@ -142,6 +143,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             else{
                 if(countText.text.toString().toInt() == 1){
                     setDefaultActionBar()
+                    isSelecting = false
+                    adapter.cancelSelection()
                     binding.fldrFab.show()
                 }
                 else {
@@ -396,6 +399,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         binding.searchView.onActionViewExpanded()
         Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
 
+        touchHelper?.attachToRecyclerView(null)
+
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+        touchHelper = ItemTouchHelper(callback)
+        //recyclerView.touch
+        touchHelper!!.attachToRecyclerView(recyclerView)
         //todo ошибка перетаскивания при перезапуске
     }
 
@@ -428,6 +437,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
         }
         else{
+            if(adapter.isPaste){
+                adapter.setPasteMode(false)
+                pinnedAdapter.setPasteMode(false)
+                EventBus.getDefault().post(MoveCancelEvent())
+                finish()
+            }
             super.onBackPressed()
         }
     }
@@ -456,9 +471,11 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             recyclerView.adapter = adapter
             recyclerView.setHasFixedSize(true)
 
-            val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-            val touchHelper = ItemTouchHelper(callback)
-            touchHelper.attachToRecyclerView(recyclerView)
+            if(touchHelper == null) {
+                val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+                touchHelper = ItemTouchHelper(callback)
+                touchHelper!!.attachToRecyclerView(recyclerView)
+            }
             recyclerView.visibility = View.VISIBLE
         }
         else{
