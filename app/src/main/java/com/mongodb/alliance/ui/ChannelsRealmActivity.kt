@@ -453,8 +453,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         else{
             binding.channelsTextLayout.visibility = View.VISIBLE
-            //binding.channelsSearchView.onActionViewExpanded()
-            //Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+            binding.channelsSearchView.onActionViewExpanded()
+            Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
             recyclerView.visibility = View.GONE
             if(touchHelper != null) {
                 touchHelper!!.attachToRecyclerView(null)

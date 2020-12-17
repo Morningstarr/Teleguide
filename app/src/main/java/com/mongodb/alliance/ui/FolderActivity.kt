@@ -176,10 +176,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         builder.setPositiveButton(
             "Открепить папку"
         ) { dialog, _ ->
-            pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
-            event.folder?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_folder)?.performClick()
-            setUpRecyclerPinned(null)
-            refreshRecyclerView()
+            val pinned = pinnedAdapter.findPinned()
+            pinned?.let { pinnedAdapter.setPinned(it, false) }
+            event.folderObj?.let { pinnedAdapter.setPinned(it, true) }
+
+            unPinFolder(pinned)
+            pinFolder(event.folderObj)
+
+
             dialog.dismiss()
         }
         builder.setNegativeButton(
@@ -194,14 +198,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderPinEvent){
-        setUpRecyclerPinned(event.pinnedFolder)
-        refreshRecyclerView()
+        pinFolder(event.pinnedFolder)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderUnpinEvent){
-        setUpRecyclerPinned(null)
-        refreshRecyclerView()
+        unPinFolder(event.folder)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -960,6 +962,24 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         imm.hideSoftInputFromWindow(view.windowToken, 0)
         Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
         binding.fldrFab.requestFocus()
+    }
+
+    private fun pinFolder(folder : FolderRealm?){
+        setUpRecyclerPinned(folder)
+        if(adapter.foldersFilterList.contains(folder)) {
+            val index = adapter.foldersFilterList.indexOf(folder)
+            folder.let { adapter.foldersFilterList.remove(it) }
+            folder?.order.let { adapter.notifyItemRemoved(index) }
+        }
+    }
+
+    private fun unPinFolder(folder : FolderRealm?){
+        setUpRecyclerPinned(null)
+        folder?.let { adapter.foldersFilterList.add(it) }
+        val index = adapter.foldersFilterList.indexOf(folder)
+        adapter.notifyItemInserted(index)
+        folder?.order?.let { adapter.swapItems(index, it) }
+        adapter.data = adapter.foldersFilterList
     }
 
 }

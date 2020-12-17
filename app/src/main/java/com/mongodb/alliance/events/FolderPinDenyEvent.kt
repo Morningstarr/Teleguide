@@ -6,6 +6,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlin.time.ExperimentalTime
 
 @InternalCoroutinesApi
-data class FolderPinDenyEvent @ExperimentalTime constructor(var message : String = "", var folder : FolderAdapter.FolderViewHolder?) {
+data class FolderPinDenyEvent @ExperimentalTime constructor(var message : String = "", var folder : FolderAdapter.FolderViewHolder?,
+                                                                var folderObj : FolderRealm?) {
 
 }

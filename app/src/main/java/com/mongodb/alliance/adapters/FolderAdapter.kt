@@ -273,7 +273,7 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
                     if (!isP) {
                         val temp = findPinned()
                         if (temp != null) {
-                            EventBus.getDefault().post(FolderPinDenyEvent("", holder))
+                            EventBus.getDefault().post(FolderPinDenyEvent("", holder, holder.data))
                         } else {
                             holder.data?.let { it1 -> setPinned(it1) }
                             EventBus.getDefault().post(FolderPinEvent("", holder.data!!))
@@ -324,6 +324,37 @@ class FolderAdapter @Inject constructor(var data: MutableList<FolderRealm>, var 
 
     fun setCurrState(st : ClientState){
         state = st
+    }
+
+    fun folderPin(folder : FolderRealm){
+        mItemManger.closeAllItems()
+        val isP = folder.isPinned
+        if (!isP) {
+            val temp = findPinned()
+            if (temp != null) {
+                EventBus.getDefault().post(FolderPinDenyEvent("", null, folder))
+            } else {
+                setPinned(folder)
+                EventBus.getDefault().post(FolderPinEvent("", folder))
+            }
+        }
+    }
+
+    fun swapItems(startPos:Int, endPos:Int){
+        mItemManger.closeAllItems()
+
+        if (startPos < endPos) {
+            for (i in startPos until endPos) {
+                Collections.swap(foldersFilterList, i, i + 1)
+            }
+        } else {
+            for (i in startPos downTo endPos + 1) {
+                Collections.swap(foldersFilterList, i, i - 1)
+            }
+        }
+
+        notifyItemMoved(startPos, endPos)
+
     }
 
     private fun loadImages(holder: FolderViewHolder, count: Int){
