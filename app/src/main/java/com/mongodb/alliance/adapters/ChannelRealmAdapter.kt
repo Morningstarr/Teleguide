@@ -48,7 +48,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
 
     private var selectedChannels : MutableList<ChannelRealm> = ArrayList()
 
-    private var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
+    var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
 
     init {
         channelsFilterList = data

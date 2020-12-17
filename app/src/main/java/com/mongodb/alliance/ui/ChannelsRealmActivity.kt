@@ -387,6 +387,15 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             setDefaultActionBar()
             refreshRecyclerView()
             dialog.dismiss()
+            binding.channelsFab.show()
+            if(adapter.channelsFilterList.size == 0) {
+                recyclerView.visibility = View.GONE
+                binding.channelsTextLayout.visibility = View.VISIBLE
+                binding.channelsSearchView.onActionViewExpanded()
+                Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+            }
+            isSelecting = false
+            adapter.cancelSelection()
         }
         builder.setNegativeButton(
             "Нет, спасибо"

@@ -695,6 +695,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                 binding.searchView.onActionViewExpanded()
                 Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
             }
+            isSelecting = false
+            adapter.cancelSelection()
         }
         builder.setNegativeButton(
             "Нет, спасибо"
