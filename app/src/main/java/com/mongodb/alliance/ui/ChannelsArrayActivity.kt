@@ -156,6 +156,14 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
             override fun onQueryTextChange(newText: String?): Boolean {
                 try {
                     adapter.filter.filter(newText)
+                    if(newText != "") {
+                        binding.channelsArrSearchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.GONE
+                    }
+                    else{
+                        binding.channelsArrSearchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.VISIBLE
+                    }
                     return false
                 } catch (e: Exception) {
                     if (e.message != "lateinit property adapter has not been initialized") {
@@ -221,12 +229,6 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
             recyclerView.layoutManager = LinearLayoutManager(this)
             recyclerView.adapter = adapter
             recyclerView.setHasFixedSize(true)
-            recyclerView.addItemDecoration(
-                DividerItemDecoration(
-                    this,
-                    DividerItemDecoration.VERTICAL
-                )
-            )
         } else {
             Toast.makeText(baseContext, "Folder data error!", Toast.LENGTH_SHORT).show()
         }

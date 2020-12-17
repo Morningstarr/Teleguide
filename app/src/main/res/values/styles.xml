@@ -9,6 +9,11 @@
         <item name="actionBarStyle">@style/AppThemeActionBar</item>
         <item name="popupMenuStyle">@style/MyPopupMenu</item>
         <item name="draggedItemElevation">10dp</item>
+        <item name="searchViewStyle">@style/AppTheme.SearchView</item>
+    </style>
+
+    <style name="AppTheme.SearchView" parent="Widget.AppCompat.SearchView">
+        <item name="android:textSize">14sp</item>
     </style>
 
     <style name="noAnimTheme" parent="AppTheme">

@@ -291,6 +291,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             override fun onQueryTextChange(newText: String?): Boolean {
                 try {
                     adapter.filter.filter(newText)
+                    if(newText != "") {
+                        binding.searchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.GONE
+                    }
+                    else{
+                        binding.searchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.VISIBLE
+                    }
                     return false
                 } catch (e: Exception) {
                     if (e.message != "lateinit property adapter has not been initialized") {
@@ -414,11 +422,6 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         realm.close()
         binding.searchView.setQuery("", false)
         binding.searchView.clearFocus()
-    }
-
-    override fun onActivityReenter(resultCode: Int, data: Intent?) {
-        super.onActivityReenter(resultCode, data)
-
     }
 
     override fun onPause() {

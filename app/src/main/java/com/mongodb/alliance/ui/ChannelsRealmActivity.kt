@@ -249,6 +249,14 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             override fun onQueryTextChange(newText: String?): Boolean {
                 try {
                     adapter.filter.filter(newText)
+                    if(newText != "") {
+                        binding.channelsSearchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.GONE
+                    }
+                    else{
+                        binding.channelsSearchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.VISIBLE
+                    }
                     return false
                 }
                 catch(e:Exception){
@@ -334,9 +342,23 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
+    override fun onRestart() {
+        super.onRestart()
+        binding.channelsSearchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+    }
+
     override fun onStop() {
         super.onStop()
         touchHelper?.attachToRecyclerView(null)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        recyclerView.adapter = null
+        realm.close()
+        binding.channelsSearchView.setQuery("", false)
+        binding.channelsSearchView.clearFocus()
     }
 
     override fun onBackPressed() {

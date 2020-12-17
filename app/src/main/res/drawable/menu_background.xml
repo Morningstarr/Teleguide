@@ -2,17 +2,16 @@
 <vector
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="216dp"
-    android:height="112dp"
-    android:viewportWidth="216"
-    android:viewportHeight="112"
+    android:width="185dp"
+    android:height="96dp"
+    android:viewportWidth="185"
+    android:viewportHeight="96"
     >
 
     <group>
 
-        <clip-path
-            android:pathData="M4 0H212C214.209 0 216 1.79086 216 4V108C216 110.209 214.209 112 212 112H4C1.79086 112 0 110.209 0 108V4C0 1.79086 1.79086 0 4 0Z"
-            />
+        <clip-path android:pathData="M4 0H181C183.209 0 185 1.79086 185 4V92C185 94.2091 183.209 96 181 96H4C1.79086 96 0 94.2091 0 92V4C0 1.79086 1.79086 0 4 0Z"
+        />
 
         <path
             android:pathData="M0 0V112H216V0"
