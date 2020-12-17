@@ -44,6 +44,8 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
+    var isSearching = false
+
     private var selectedChannels : MutableList<ChannelRealm> = ArrayList()
 
     private var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
@@ -511,6 +513,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
     fun filterResults(text : String) {
         if (text.isEmpty()) {
             channelsFilterList = data
+            isSearching = false
         } else {
             val resultList : MutableList<ChannelRealm> = ArrayList()
             for (row in data) {
@@ -519,6 +522,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                 }
             }
             channelsFilterList = resultList
+            isSearching = true
         }
         setDataList(channelsFilterList)
     }

@@ -59,7 +59,8 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
     ): Int {
         var dragFlags = 0
         if((recyclerView.adapter is FolderAdapter && !(recyclerView.adapter as FolderAdapter).isPaste && !(recyclerView.adapter as FolderAdapter).isSearching) ||
-            (recyclerView.adapter is PinnedFolderAdapter && !(recyclerView.adapter as PinnedFolderAdapter).returnPasteMode())) {
+            (recyclerView.adapter is PinnedFolderAdapter && !(recyclerView.adapter as PinnedFolderAdapter).returnPasteMode()) ||
+            (recyclerView.adapter is ChannelRealmAdapter && !(recyclerView.adapter as ChannelRealmAdapter).isSearching)) {
             if(recyclerView.adapter is FolderAdapter) {
                 (adapter as FolderAdapter).context?.binding?.fldrFab?.hide()
             }
@@ -79,7 +80,6 @@ class SimpleItemTouchHelperCallback(var adapter: ItemTouchHelperAdapter) : ItemT
         if(viewHolder is FolderAdapter.FolderViewHolder) {
             if (!viewHolder.isSelecting) {
                 adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
-                //(adapter as FolderAdapter).context?.binding?.fldrFab?.show()
                 return true
             } else {
                 viewHolder.cardView.cardElevation = 10f

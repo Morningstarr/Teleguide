@@ -72,6 +72,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
     private lateinit var state : ClientState
+    private var callb : SimpleItemTouchHelperCallback? = null
     private var touchHelper : ItemTouchHelper? = null
     lateinit var binding: ActivityFolderBinding
     private var bottomSheetFragment: BottomSheetDialogFragment? = null
@@ -394,18 +395,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         isResumed = true
     }
 
+    override fun onStop() {
+        super.onStop()
+        touchHelper?.attachToRecyclerView(null)
+    }
+
     override fun onRestart() {
         super.onRestart()
         binding.searchView.onActionViewExpanded()
         Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
 
-        touchHelper?.attachToRecyclerView(null)
-
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-        touchHelper = ItemTouchHelper(callback)
-        //recyclerView.touch
-        touchHelper!!.attachToRecyclerView(recyclerView)
-        //todo ошибка перетаскивания при перезапуске
     }
 
     override fun onDestroy() {
@@ -471,11 +470,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             recyclerView.adapter = adapter
             recyclerView.setHasFixedSize(true)
 
-            if(touchHelper == null) {
-                val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-                touchHelper = ItemTouchHelper(callback)
-                touchHelper!!.attachToRecyclerView(recyclerView)
-            }
+            callb = SimpleItemTouchHelperCallback(adapter)
+            touchHelper = ItemTouchHelper(callb!!)
+            touchHelper!!.attachToRecyclerView(recyclerView)
+
             recyclerView.visibility = View.VISIBLE
         }
         else{
@@ -484,6 +482,9 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
             binding.foldersTextLayout.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
+            if(touchHelper != null) {
+                touchHelper!!.attachToRecyclerView(null)
+            }
 
         }
     }
@@ -494,14 +495,18 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         mutableFolders.removeIf {
             it.isPinned
         }
-        adapter.setDataList(mutableFolders)
-        if(mutableFolders.size <= 0){
-            binding.foldersTextLayout.visibility = View.VISIBLE
-        }
-        else{
-            if(binding.foldersTextLayout.visibility == View.VISIBLE) {
-                binding.foldersTextLayout.visibility = View.INVISIBLE
+        try {
+            adapter.setDataList(mutableFolders)
+            if (mutableFolders.size <= 0) {
+                binding.foldersTextLayout.visibility = View.VISIBLE
+            } else {
+                if (binding.foldersTextLayout.visibility == View.VISIBLE) {
+                    binding.foldersTextLayout.visibility = View.INVISIBLE
+                }
             }
+        }
+        catch(e:UninitializedPropertyAccessException){
+            binding.foldersTextLayout.visibility = View.VISIBLE
         }
     }
 
@@ -606,7 +611,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                             startActivity(Intent(this, ProfileActivity::class.java))
                         }
                         R.id.chats_folders_action_refresh -> {
-                            setUpRecyclerView(realm)
+                            refreshRecyclerView()
                             setUpRecyclerPinned(null)
                             binding.searchView.onActionViewExpanded()
                             Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)

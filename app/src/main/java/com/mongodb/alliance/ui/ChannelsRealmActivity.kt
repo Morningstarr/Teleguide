@@ -70,6 +70,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private var folderId : String? = null
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
+    private var callb : SimpleItemTouchHelperCallback? = null
+    private var touchHelper : ItemTouchHelper? = null
     var isSelecting : Boolean = false
 
 
@@ -332,6 +334,11 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        touchHelper?.attachToRecyclerView(null)
+    }
+
     override fun onBackPressed() {
         if(isSelecting) {
             setDefaultActionBar()
@@ -408,13 +415,19 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             folderId?.let { adapter.setFolderId(it) }
             recyclerView.setHasFixedSize(true)
 
-            val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-            val touchHelper = ItemTouchHelper(callback)
-            touchHelper.attachToRecyclerView(recyclerView)
+            callb = SimpleItemTouchHelperCallback(adapter)
+            touchHelper = ItemTouchHelper(callb!!)
+            touchHelper!!.attachToRecyclerView(recyclerView)
 
         }
         else{
             binding.channelsTextLayout.visibility = View.VISIBLE
+            //binding.channelsSearchView.onActionViewExpanded()
+            //Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+            recyclerView.visibility = View.GONE
+            if(touchHelper != null) {
+                touchHelper!!.attachToRecyclerView(null)
+            }
         }
 
     }
@@ -424,10 +437,21 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         mutableChannels.removeIf {
             it.isPinned
         }
-        adapter.setDataList(mutableChannels)
-        if(mutableChannels.size <= 0){
+        try {
+            adapter.setDataList(mutableChannels)
+            if (mutableChannels.size <= 0) {
+                binding.channelsTextLayout.visibility = View.VISIBLE
+            }
+            else{
+                if (binding.channelsTextLayout.visibility == View.VISIBLE) {
+                    binding.channelsTextLayout.visibility = View.INVISIBLE
+                }
+            }
+        }
+        catch(e:UninitializedPropertyAccessException){
             binding.channelsTextLayout.visibility = View.VISIBLE
         }
+
     }
 
     private fun setUpRecyclerPinned(pinned: ChannelRealm?){
@@ -521,7 +545,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                             startActivity(Intent(this, ProfileActivity::class.java))
                         }
                         R.id.chats_folders_action_refresh -> {
-                            setUpRecyclerView(realm)
+                            //setUpRecyclerView(realm)
+                            refreshRecyclerView()
                             setUpRecyclerPinned(null)
                         }
                         R.id.chats_folders_action_exit -> {
