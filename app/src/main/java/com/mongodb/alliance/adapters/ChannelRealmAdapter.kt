@@ -174,7 +174,9 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     if (!isP) {
                         val temp = findPinned()
                         if (temp != null) {
-                            EventBus.getDefault().post(ChannelPinDenyEvent("", holder))
+                            EventBus.getDefault().post(ChannelPinDenyEvent("", holder,
+                                holder.data!!
+                            ))
                         } else {
                             holder.data?.let { it1 -> setPinned(it1) }
                             EventBus.getDefault().post(ChannelPinEvent("", holder.data!!))
@@ -467,6 +469,22 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         updateOrders()
 
         return true
+    }
+
+    fun swapItems(startPos : Int, endPos : Int){
+        mItemManger.closeAllItems()
+
+        if (startPos < endPos) {
+            for (i in startPos until endPos) {
+                Collections.swap(channelsFilterList, i, i + 1)
+            }
+        } else {
+            for (i in startPos downTo endPos + 1) {
+                Collections.swap(channelsFilterList, i, i - 1)
+            }
+        }
+
+        notifyItemMoved(startPos, endPos)
     }
 
     private fun updateOrders(){

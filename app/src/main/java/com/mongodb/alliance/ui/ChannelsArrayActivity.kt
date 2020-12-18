@@ -250,33 +250,39 @@ class ChannelsArrayActivity : AppCompatActivity(), GlobalBroker.Subscriber, Glob
         ChannelsArray = ArrayList(nm.size)
         for (i in 0 until nm.size){
             if(nm[i].title != "") {
-                // FIXME: show error if user is null
-                val partition = user?.id.toString()
-                val channel =
-                    ChannelRealm(nm[i].title, partition)
+                try {
+                    val partition = user?.id.toString()
+                    val channel =
+                        ChannelRealm(nm[i].title, partition)
 
-                when (nm[i].type) {
-                    is TdApi.ChatTypePrivate -> {
-                        channel.typeEnum = ChannelType.chat
-                    }
-                    is TdApi.ChatTypeBasicGroup -> {
-                        channel.typeEnum = ChannelType.groupChat
-                    }
-                    is TdApi.ChatTypeSupergroup -> {
-                        val superg =
-                            (tService as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
-                        if (superg != "") {
-                            channel.name = superg
-                            channel.typeEnum = ChannelType.channel
-                            if (realm.where<ChannelRealm>().equalTo("name", channel.name).and()
-                                    .equalTo("folder._id", ObjectId(folderId)).findFirst() == null) {
-                                ChannelsArray.add(channel)
+                    when (nm[i].type) {
+                        is TdApi.ChatTypePrivate -> {
+                            channel.typeEnum = ChannelType.chat
+                        }
+                        is TdApi.ChatTypeBasicGroup -> {
+                            channel.typeEnum = ChannelType.groupChat
+                        }
+                        is TdApi.ChatTypeSupergroup -> {
+                            val superg =
+                                (tService as TelegramService).returnSupergroup((nm[i].type as TdApi.ChatTypeSupergroup).supergroupId)
+                            if (superg != "") {
+                                channel.name = superg
+                                channel.typeEnum = ChannelType.channel
+                                if (realm.where<ChannelRealm>().equalTo("name", channel.name).and()
+                                        .equalTo("folder._id", ObjectId(folderId))
+                                        .findFirst() == null
+                                ) {
+                                    ChannelsArray.add(channel)
+                                }
                             }
                         }
                     }
-                }
 
-                channel.displayName = nm[i].title
+                    channel.displayName = nm[i].title
+                }
+                catch(e:Exception){
+                    Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

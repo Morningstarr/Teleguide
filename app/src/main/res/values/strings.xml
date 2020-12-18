@@ -15,10 +15,6 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="skip">Skip</string>
     <string name="connect_telegram">Connect Telegram</string>
     <string name="no_telephone_number_connected">No telephone number connected</string>

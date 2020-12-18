@@ -2,31 +2,22 @@ package com.mongodb.alliance.ui.telegram
 
 import android.content.DialogInterface
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.mongodb.alliance.CodeTextWatcher
-import com.mongodb.alliance.R
 import com.mongodb.alliance.databinding.NewFragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.events.NullObjectAccessEvent
 import com.mongodb.alliance.events.StateChangedEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
-import dev.whyoleg.ktd.TelegramClient
-import dev.whyoleg.ktd.api.TdApi
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.*
-import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 

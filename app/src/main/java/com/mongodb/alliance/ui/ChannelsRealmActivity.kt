@@ -100,10 +100,13 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         builder.setPositiveButton(
             "Открепить чат"
         ) { dialog, _ ->
-            pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
-            event.channel?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_chat)?.performClick()
-            setUpRecyclerPinned(null)
-            refreshRecyclerView()
+            val pinned = pinnedAdapter.findPinned()
+            pinned?.let { pinnedAdapter.setPinned(it, false) }
+            event.channelObj.let { pinnedAdapter.setPinned(it, true) }
+
+            unPinChannel(pinned)
+            pinChannel(event.channelObj)
+
             dialog.dismiss()
         }
         builder.setNegativeButton(
@@ -118,14 +121,12 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelPinEvent){
-        setUpRecyclerPinned(event.pinnedChannel)
-        refreshRecyclerView()
+        pinChannel(event.pinnedChannel)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelUnpinEvent){
-        setUpRecyclerPinned(null)
-        refreshRecyclerView()
+        unPinChannel(event.channel)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -652,6 +653,24 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         imm.hideSoftInputFromWindow(view.windowToken, 0)
         Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+    }
+
+    private fun pinChannel(channel : ChannelRealm){
+        setUpRecyclerPinned(channel)
+        if(adapter.channelsFilterList.contains(channel)) {
+            val index = adapter.channelsFilterList.indexOf(channel)
+            channel.let { adapter.channelsFilterList.remove(it) }
+            channel.order.let { adapter.notifyItemRemoved(index) }
+        }
+    }
+
+    private fun unPinChannel(channel : ChannelRealm?){
+        setUpRecyclerPinned(null)
+        channel?.let { adapter.channelsFilterList.add(it) }
+        val index = adapter.channelsFilterList.indexOf(channel)
+        adapter.notifyItemInserted(index)
+        channel?.order?.let { adapter.swapItems(index, it) }
+        adapter.data = adapter.channelsFilterList
     }
 
 }
