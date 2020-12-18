@@ -1,6 +1,5 @@
 package com.mongodb.alliance.ui
 
-import android.R.attr.password
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.lifecycleScope
 import cafe.adriel.broker.GlobalBroker
 import cafe.adriel.broker.publish
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -19,10 +17,6 @@ import com.mongodb.alliance.model.FolderRealm
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.greenrobot.eventbus.EventBus
 import timber.log.Timber
 import java.util.regex.Pattern
 import kotlin.time.ExperimentalTime
@@ -50,11 +44,13 @@ class AddFolderFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher {
             try {
                 validateFolderName(nameEdit.text.toString())
                 val folder = createFolder(nameEdit.text.toString())
-                publish(AddFolderEvent(folder))
+                if(folder != null) {
+                    publish(AddFolderEvent(folder))
+                }
                 dismiss()
             }
             catch(e:Exception){
-                Timber.e(e.message)
+                Timber.e(e)
                 Toast.makeText(activity, e.message, Toast.LENGTH_LONG).show()
                 loading(true)
             }
@@ -66,37 +62,36 @@ class AddFolderFragment : BottomSheetDialogFragment(), GlobalBroker.Publisher {
     @InternalCoroutinesApi
     @ExperimentalTime
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun createFolder(name: String) : FolderRealm{
+    private fun createFolder(name: String) : FolderRealm?{
         val bgRealm = Realm.getDefaultInstance()
-
-        val partition = channelApp.currentUser()?.id ?: "" // FIXME: show error if nil
-        val folder = FolderRealm(
-            name,
-            partition
-        )
-        folder.isPinned = false
-        val order = bgRealm.where<FolderRealm>().max("order")
-        if (order != null) {
-            folder.order = order.toInt() + 1
+        var folder : FolderRealm? = null
+        try {
+            val partition = channelApp.currentUser()?.id ?: ""
+            folder = FolderRealm(
+                name,
+                partition
+            )
+            folder.isPinned = false
+            val order = bgRealm.where<FolderRealm>().max("order")
+            if (order != null) {
+                folder.order = order.toInt() + 1
+            }
+            bgRealm.executeTransaction { realm ->
+                realm.insert(folder)
+            }
         }
-        //lifecycleScope.launch {
-            //val task = async {
-                bgRealm.executeTransaction { realm ->
-                    realm.insert(folder)
-                }
-            //}
-            //task.await()
-            //(activity as FolderActivity).setUpRecyclerView(bgRealm)
-        //}
-
-        bgRealm.close()
-
-        return folder
+        catch(e:Exception){
+            Toast.makeText(this.activity, e.message, Toast.LENGTH_SHORT).show()
+        }
+        finally{
+            bgRealm.close()
+            return folder
+        }
     }
 
     private fun validateFolderName(name: String){
-        if(name.length < 2 || name.length > 16){
-            throw (Exception("Имя папки должно быть длиной 2-16 символов!"))
+        if(name.length < 2 || name.length > 25){
+            throw (Exception("Имя папки должно быть длиной 2-25 символов!"))
         }
 
         val special = Pattern.compile("[!@#$%&*(),.+=|<>?{}\\[\\]~]")

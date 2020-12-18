@@ -72,6 +72,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
     private lateinit var state : ClientState
+    private var callb : SimpleItemTouchHelperCallback? = null
+    private var touchHelper : ItemTouchHelper? = null
     lateinit var binding: ActivityFolderBinding
     private var bottomSheetFragment: BottomSheetDialogFragment? = null
     private var user: User? = null
@@ -79,6 +81,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
     private var folderId : ObjectId? = null
     private var job: Job = Job()
     private var isResumed = false
+    private var isLogin = false
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
     var isSelecting : Boolean = false
@@ -141,6 +144,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             else{
                 if(countText.text.toString().toInt() == 1){
                     setDefaultActionBar()
+                    isSelecting = false
+                    adapter.cancelSelection()
                     binding.fldrFab.show()
                 }
                 else {
@@ -171,10 +176,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         builder.setPositiveButton(
             "Открепить папку"
         ) { dialog, _ ->
-            pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
-            event.folder?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_folder)?.performClick()
-            setUpRecyclerPinned(null)
-            refreshRecyclerView()
+            val pinned = pinnedAdapter.findPinned()
+            pinned?.let { pinnedAdapter.setPinned(it, false) }
+            event.folderObj?.let { pinnedAdapter.setPinned(it, true) }
+
+            unPinFolder(pinned)
+            pinFolder(event.folderObj)
+
+
             dialog.dismiss()
         }
         builder.setNegativeButton(
@@ -189,14 +198,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderPinEvent){
-        setUpRecyclerPinned(event.pinnedFolder)
-        refreshRecyclerView()
+        pinFolder(event.pinnedFolder)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: FolderUnpinEvent){
-        setUpRecyclerPinned(null)
-        refreshRecyclerView()
+        unPinFolder(event.folder)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -218,7 +225,23 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         }
 
         subscribe<AddFolderEvent>(lifecycleScope){ event ->
-            adapter.insert(event.folder)
+            try {
+                if (adapter.foldersFilterList.size > 0) {
+                    adapter.foldersFilterList.add(event.folder)
+                    adapter.notifyItemInserted(event.folder.order)
+                } else {
+                    adapter.foldersFilterList.add(event.folder)
+                    adapter.notifyDataSetChanged()
+                }
+            }
+            catch(e:UninitializedPropertyAccessException){
+                setUpRecyclerView(realm)
+            }
+
+            recyclerView.visibility = View.VISIBLE
+            binding.foldersTextLayout.visibility = View.INVISIBLE
+            binding.searchView.onActionViewExpanded()
+            Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
         }
 
         subscribe<FolderEditEvent>(lifecycleScope){
@@ -270,6 +293,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             override fun onQueryTextChange(newText: String?): Boolean {
                 try {
                     adapter.filter.filter(newText)
+                    if(newText != "") {
+                        binding.searchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.GONE
+                    }
+                    else{
+                        binding.searchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.VISIBLE
+                    }
                     return false
                 } catch (e: Exception) {
                     if (e.message != "lateinit property adapter has not been initialized") {
@@ -297,6 +328,7 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
+            isLogin = true
         } else {
             runBlocking {
                 showLoading(true)
@@ -321,17 +353,17 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                         tsk.await()
                     }
                     ClientState.waitNumber -> {
-                        if (!isResumed) {
+                        if (!isResumed && !isLogin) {
                             showNotConnectedAlert()
                         }
                     }
                     ClientState.waitCode -> {
-                        if (!isResumed) {
+                        if (!isResumed && !isLogin) {
                             showNotFinishedAlert()
                         }
                     }
                     ClientState.waitPassword -> {
-                        if (!isResumed) {
+                        if (!isResumed && !isLogin) {
                             showNotFinishedAlert()
                         }
                     }
@@ -340,6 +372,8 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
 
             val config = SyncConfiguration.Builder(user, user?.id)
+                .allowQueriesOnUiThread(true)
+                .allowWritesOnUiThread(true)
                 .waitForInitialRemoteData()
                 .build()
 
@@ -371,12 +405,16 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         isResumed = true
     }
 
+    override fun onStop() {
+        super.onStop()
+        touchHelper?.attachToRecyclerView(null)
+    }
+
     override fun onRestart() {
         super.onRestart()
         binding.searchView.onActionViewExpanded()
         Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
 
-        //todo ошибка перетаскивания при перезапуске
     }
 
     override fun onDestroy() {
@@ -403,6 +441,12 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             }
         }
         else{
+            if(adapter.isPaste){
+                adapter.setPasteMode(false)
+                pinnedAdapter.setPasteMode(false)
+                EventBus.getDefault().post(MoveCancelEvent())
+                finish()
+            }
             super.onBackPressed()
         }
     }
@@ -431,14 +475,22 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             recyclerView.adapter = adapter
             recyclerView.setHasFixedSize(true)
 
-            val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-            val touchHelper = ItemTouchHelper(callback)
-            touchHelper.attachToRecyclerView(recyclerView)
+            callb = SimpleItemTouchHelperCallback(adapter)
+            touchHelper = ItemTouchHelper(callb!!)
+            touchHelper!!.attachToRecyclerView(recyclerView)
+
             recyclerView.visibility = View.VISIBLE
         }
         else{
+            binding.searchView.onActionViewExpanded()
+            Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+
             binding.foldersTextLayout.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
+            if(touchHelper != null) {
+                touchHelper!!.attachToRecyclerView(null)
+            }
+
         }
     }
 
@@ -448,14 +500,18 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         mutableFolders.removeIf {
             it.isPinned
         }
-        adapter.setDataList(mutableFolders)
-        if(mutableFolders.size <= 0){
-            binding.foldersTextLayout.visibility = View.VISIBLE
-        }
-        else{
-            if(binding.foldersTextLayout.visibility == View.VISIBLE) {
-                binding.foldersTextLayout.visibility = View.INVISIBLE
+        try {
+            adapter.setDataList(mutableFolders)
+            if (mutableFolders.size <= 0) {
+                binding.foldersTextLayout.visibility = View.VISIBLE
+            } else {
+                if (binding.foldersTextLayout.visibility == View.VISIBLE) {
+                    binding.foldersTextLayout.visibility = View.INVISIBLE
+                }
             }
+        }
+        catch(e:UninitializedPropertyAccessException){
+            binding.foldersTextLayout.visibility = View.VISIBLE
         }
     }
 
@@ -560,8 +616,10 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                             startActivity(Intent(this, ProfileActivity::class.java))
                         }
                         R.id.chats_folders_action_refresh -> {
-                            setUpRecyclerView(realm)
+                            refreshRecyclerView()
                             setUpRecyclerPinned(null)
+                            binding.searchView.onActionViewExpanded()
+                            Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
                         }
                         R.id.chats_folders_action_exit -> {
                             try {
@@ -636,6 +694,14 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
             setDefaultActionBar()
             dialog.dismiss()
             binding.fldrFab.show()
+            if(adapter.foldersFilterList.size == 0) {
+                recyclerView.visibility = View.GONE
+                binding.foldersTextLayout.visibility = View.VISIBLE
+                binding.searchView.onActionViewExpanded()
+                Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 0)
+            }
+            isSelecting = false
+            adapter.cancelSelection()
         }
         builder.setNegativeButton(
             "Нет, спасибо"
@@ -896,6 +962,24 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
         imm.hideSoftInputFromWindow(view.windowToken, 0)
         Handler().postDelayed(Runnable { binding.searchView.clearFocus() }, 1)
         binding.fldrFab.requestFocus()
+    }
+
+    private fun pinFolder(folder : FolderRealm?){
+        setUpRecyclerPinned(folder)
+        if(adapter.foldersFilterList.contains(folder)) {
+            val index = adapter.foldersFilterList.indexOf(folder)
+            folder.let { adapter.foldersFilterList.remove(it) }
+            folder?.order.let { adapter.notifyItemRemoved(index) }
+        }
+    }
+
+    private fun unPinFolder(folder : FolderRealm?){
+        setUpRecyclerPinned(null)
+        folder?.let { adapter.foldersFilterList.add(it) }
+        val index = adapter.foldersFilterList.indexOf(folder)
+        adapter.notifyItemInserted(index)
+        folder?.order?.let { adapter.swapItems(index, it) }
+        adapter.data = adapter.foldersFilterList
     }
 
 }

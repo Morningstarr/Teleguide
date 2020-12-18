@@ -1,5 +1,6 @@
 package com.mongodb.alliance.ui.authorization
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,7 +23,7 @@ import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 @InternalCoroutinesApi
-class SignInFragment: BottomSheetDialogFragment(),
+class SignInFragment (var cntxt : Context? = null): BottomSheetDialogFragment(),
     SignListener,
     SignInListener {
 
@@ -53,10 +54,10 @@ class SignInFragment: BottomSheetDialogFragment(),
                     {
                         signIn(false, emailEdit.text.toString(), passEdit.text.toString())
                     }
-                    /*else{
-                        this.activity?.let { it1 -> onLoginFailed("Некорректное имя пользователя или пароль", it1) }
+                    else{
+                        //this.activity?.let { it1 -> onLoginFailed("Некорректное имя пользователя или пароль", it1) }
                         loading(true)
-                    }*/
+                    }
                 } else {
                     this.activity?.let { it1 -> onLoginFailed("Заполните все поля!", it1) }
                     loading(true)
@@ -87,8 +88,13 @@ class SignInFragment: BottomSheetDialogFragment(),
             if(result != null) {
                 if (result.isSuccess) {
                     dismiss()
-                    val intent = Intent(activity, FolderActivity::class.java)
-                    //intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    var intent : Intent
+                    if(cntxt != null) {
+                        intent = Intent(cntxt, FolderActivity::class.java)
+                    }
+                    else{
+                        intent = Intent(activity, FolderActivity::class.java)
+                    }
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     activity?.finish()
@@ -103,7 +109,7 @@ class SignInFragment: BottomSheetDialogFragment(),
         }
         catch(e:Exception){
             if(!this.isVisible) {
-                if (e.message.toString().contains("binding")) {
+                if (e.message.toString().contains("attached")) {
                     EventBus.getDefault().post(SuccessSignIn("ok"))
                 } else {
                     EventBus.getDefault().post(SuccessSignIn(e.message.toString()))
@@ -122,6 +128,7 @@ class SignInFragment: BottomSheetDialogFragment(),
         binding.facebookBtnSin.isEnabled = show
         binding.enterEmailSin.isEnabled = show
         binding.enterPassSin.isEnabled = show
+        binding.labelCreateAcc.isEnabled = show
         if(show) {
             binding.shadow.visibility = View.VISIBLE
             binding.shadowFacebookSin.visibility = View.VISIBLE

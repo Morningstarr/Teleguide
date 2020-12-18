@@ -70,6 +70,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
     private var folderId : String? = null
     private lateinit var customActionBarView : View
     private lateinit var rootLayout : CoordinatorLayout
+    private var callb : SimpleItemTouchHelperCallback? = null
+    private var touchHelper : ItemTouchHelper? = null
     var isSelecting : Boolean = false
 
 
@@ -98,10 +100,13 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         builder.setPositiveButton(
             "Открепить чат"
         ) { dialog, _ ->
-            pinnedAdapter.findPinned()?.let { pinnedAdapter.setPinned(it, false) }
-            event.channel?.bottomWrapper?.findViewById<ImageButton>(R.id.pin_chat)?.performClick()
-            setUpRecyclerPinned(null)
-            refreshRecyclerView()
+            val pinned = pinnedAdapter.findPinned()
+            pinned?.let { pinnedAdapter.setPinned(it, false) }
+            event.channelObj.let { pinnedAdapter.setPinned(it, true) }
+
+            unPinChannel(pinned)
+            pinChannel(event.channelObj)
+
             dialog.dismiss()
         }
         builder.setNegativeButton(
@@ -116,19 +121,20 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelPinEvent){
-        setUpRecyclerPinned(event.pinnedChannel)
-        refreshRecyclerView()
+        pinChannel(event.pinnedChannel)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChannelUnpinEvent){
-        setUpRecyclerPinned(null)
-        refreshRecyclerView()
+        unPinChannel(event.channel)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: MoveCancelEvent){
         setDefaultActionBar()
+        binding.channelsFab.show()
+        isSelecting = false
+        adapter.cancelSelection()
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -159,6 +165,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             else{
                 if(countText.text.toString().toInt() == 1){
                     setDefaultActionBar()
+                    isSelecting = false
+                    adapter.cancelSelection()
                     binding.channelsFab.show()
                 }
                 else {
@@ -242,6 +250,14 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             override fun onQueryTextChange(newText: String?): Boolean {
                 try {
                     adapter.filter.filter(newText)
+                    if(newText != "") {
+                        binding.channelsSearchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.GONE
+                    }
+                    else{
+                        binding.channelsSearchView.findViewById<ImageView>(R.id.search_mag_icon).visibility =
+                            View.VISIBLE
+                    }
                     return false
                 }
                 catch(e:Exception){
@@ -327,6 +343,25 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
     }
 
+    override fun onRestart() {
+        super.onRestart()
+        binding.channelsSearchView.onActionViewExpanded()
+        Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        touchHelper?.attachToRecyclerView(null)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        recyclerView.adapter = null
+        realm.close()
+        binding.channelsSearchView.setQuery("", false)
+        binding.channelsSearchView.clearFocus()
+    }
+
     override fun onBackPressed() {
         if(isSelecting) {
             setDefaultActionBar()
@@ -375,6 +410,15 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             setDefaultActionBar()
             refreshRecyclerView()
             dialog.dismiss()
+            binding.channelsFab.show()
+            if(adapter.channelsFilterList.size == 0) {
+                recyclerView.visibility = View.GONE
+                binding.channelsTextLayout.visibility = View.VISIBLE
+                binding.channelsSearchView.onActionViewExpanded()
+                Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+            }
+            isSelecting = false
+            adapter.cancelSelection()
         }
         builder.setNegativeButton(
             "Нет, спасибо"
@@ -403,13 +447,19 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
             folderId?.let { adapter.setFolderId(it) }
             recyclerView.setHasFixedSize(true)
 
-            val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-            val touchHelper = ItemTouchHelper(callback)
-            touchHelper.attachToRecyclerView(recyclerView)
+            callb = SimpleItemTouchHelperCallback(adapter)
+            touchHelper = ItemTouchHelper(callb!!)
+            touchHelper!!.attachToRecyclerView(recyclerView)
 
         }
         else{
             binding.channelsTextLayout.visibility = View.VISIBLE
+            binding.channelsSearchView.onActionViewExpanded()
+            Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+            recyclerView.visibility = View.GONE
+            if(touchHelper != null) {
+                touchHelper!!.attachToRecyclerView(null)
+            }
         }
 
     }
@@ -419,10 +469,21 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         mutableChannels.removeIf {
             it.isPinned
         }
-        adapter.setDataList(mutableChannels)
-        if(mutableChannels.size <= 0){
+        try {
+            adapter.setDataList(mutableChannels)
+            if (mutableChannels.size <= 0) {
+                binding.channelsTextLayout.visibility = View.VISIBLE
+            }
+            else{
+                if (binding.channelsTextLayout.visibility == View.VISIBLE) {
+                    binding.channelsTextLayout.visibility = View.INVISIBLE
+                }
+            }
+        }
+        catch(e:UninitializedPropertyAccessException){
             binding.channelsTextLayout.visibility = View.VISIBLE
         }
+
     }
 
     private fun setUpRecyclerPinned(pinned: ChannelRealm?){
@@ -516,7 +577,8 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
                             startActivity(Intent(this, ProfileActivity::class.java))
                         }
                         R.id.chats_folders_action_refresh -> {
-                            setUpRecyclerView(realm)
+                            //setUpRecyclerView(realm)
+                            refreshRecyclerView()
                             setUpRecyclerPinned(null)
                         }
                         R.id.chats_folders_action_exit -> {
@@ -591,6 +653,24 @@ class ChannelsRealmActivity : AppCompatActivity(), GlobalBroker.Subscriber {
         }
         imm.hideSoftInputFromWindow(view.windowToken, 0)
         Handler().postDelayed(Runnable { binding.channelsSearchView.clearFocus() }, 0)
+    }
+
+    private fun pinChannel(channel : ChannelRealm){
+        setUpRecyclerPinned(channel)
+        if(adapter.channelsFilterList.contains(channel)) {
+            val index = adapter.channelsFilterList.indexOf(channel)
+            channel.let { adapter.channelsFilterList.remove(it) }
+            channel.order.let { adapter.notifyItemRemoved(index) }
+        }
+    }
+
+    private fun unPinChannel(channel : ChannelRealm?){
+        setUpRecyclerPinned(null)
+        channel?.let { adapter.channelsFilterList.add(it) }
+        val index = adapter.channelsFilterList.indexOf(channel)
+        adapter.notifyItemInserted(index)
+        channel?.order?.let { adapter.swapItems(index, it) }
+        adapter.data = adapter.channelsFilterList
     }
 
 }

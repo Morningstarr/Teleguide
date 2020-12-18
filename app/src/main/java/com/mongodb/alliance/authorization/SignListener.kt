@@ -16,19 +16,8 @@ interface SignListener {
         Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
     }
 
-    fun onLoginAfterSignUpSuccess(activity : Activity){
-        val intent = Intent(activity, ConnectTelegramActivity::class.java)
-        intent.putExtra("newAcc", true)
-        startActivity(activity, intent, null)
-        activity.finish()
-    }
-
-    fun onLoginSuccess(activity : Activity){
-        activity.finish()
-    }
-
     fun validateCredentials(email : String, password : String, activity : Activity) : Boolean{
-        if(email.isEmpty() || email.length < 3){
+        if(email.isEmpty() || email.length < 3 || !isEmail(email)){
             onLoginFailed("Your email is incorrect!", activity)
             return false
         }
@@ -37,6 +26,10 @@ interface SignListener {
             return false
         }
         return true
+    }
+
+    private fun isEmail(email : String):Boolean{
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
 }

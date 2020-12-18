@@ -450,6 +450,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     override fun onSuccess(realm: Realm) {
                         // since this realm should live exactly as long as this activity, assign the realm to a member variable
                         this@ProfileActivity.realm = realm
+
                     }
                 })
             } catch (e: Exception) {
@@ -487,8 +488,16 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     @ExperimentalCoroutinesApi
     private fun setUpRecyclerView() {
         val userDataArray = ArrayList<UserData>()
-        val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
-        userDataArray.add(UserData(appUserRealm.name,"Ваш электронный адрес", UserDataType.email))
+        var username = ""
+        try {
+            val appUserRealm =
+                realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
+            username = appUserRealm.name
+        }
+        catch(e:Exception){
+            username = "default"
+        }
+        userDataArray.add(UserData(username,"Ваш электронный адрес", UserDataType.email))
         userDataArray.add(checkNumber())
         userDataArray.add(checkTelegram())
         userDataArray.add(UserData("123123123", "Нажмите, чтобы изменить пароль", UserDataType.password))

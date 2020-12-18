@@ -44,9 +44,11 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
+    var isSearching = false
+
     private var selectedChannels : MutableList<ChannelRealm> = ArrayList()
 
-    private var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
+    var channelsFilterList : MutableList<ChannelRealm> = ArrayList()
 
     init {
         channelsFilterList = data
@@ -172,7 +174,9 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                     if (!isP) {
                         val temp = findPinned()
                         if (temp != null) {
-                            EventBus.getDefault().post(ChannelPinDenyEvent("", holder))
+                            EventBus.getDefault().post(ChannelPinDenyEvent("", holder,
+                                holder.data!!
+                            ))
                         } else {
                             holder.data?.let { it1 -> setPinned(it1) }
                             EventBus.getDefault().post(ChannelPinEvent("", holder.data!!))
@@ -467,6 +471,22 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
         return true
     }
 
+    fun swapItems(startPos : Int, endPos : Int){
+        mItemManger.closeAllItems()
+
+        if (startPos < endPos) {
+            for (i in startPos until endPos) {
+                Collections.swap(channelsFilterList, i, i + 1)
+            }
+        } else {
+            for (i in startPos downTo endPos + 1) {
+                Collections.swap(channelsFilterList, i, i - 1)
+            }
+        }
+
+        notifyItemMoved(startPos, endPos)
+    }
+
     private fun updateOrders(){
         val bgRealm = Realm.getDefaultInstance()
         for (i in 0 until channelsFilterList.size) {
@@ -511,6 +531,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
     fun filterResults(text : String) {
         if (text.isEmpty()) {
             channelsFilterList = data
+            isSearching = false
         } else {
             val resultList : MutableList<ChannelRealm> = ArrayList()
             for (row in data) {
@@ -519,6 +540,7 @@ class ChannelRealmAdapter  @Inject constructor(var data: MutableList<ChannelReal
                 }
             }
             channelsFilterList = resultList
+            isSearching = true
         }
         setDataList(channelsFilterList)
     }
