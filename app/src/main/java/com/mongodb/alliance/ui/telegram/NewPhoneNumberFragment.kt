@@ -16,9 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputLayout
 import com.mongodb.alliance.databinding.NewFragmentPhoneNumberBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.events.PhoneChangedEvent
-import com.mongodb.alliance.events.StateChangedEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import com.mukesh.countrypicker.Country
@@ -126,6 +124,8 @@ class NewPhoneNumberFragment() : BottomSheetDialogFragment(), OnCountryPickerLis
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
         removeRetained<StateChangedEvent>()
+        EventBus.getDefault().removeStickyEvent(NumberStickyEvent())
+        EventBus.getDefault().post(RefreshEvent())
     }
 
 }

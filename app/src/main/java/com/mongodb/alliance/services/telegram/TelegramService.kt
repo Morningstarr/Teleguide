@@ -7,8 +7,7 @@ import cafe.adriel.broker.getRetained
 import cafe.adriel.broker.publish
 import cafe.adriel.broker.removeRetained
 import com.mongodb.alliance.ChannelProj
-import com.mongodb.alliance.events.StateChangedEvent
-import com.mongodb.alliance.events.TelegramConnectedEvent
+import com.mongodb.alliance.events.*
 import dev.whyoleg.ktd.Telegram
 import dev.whyoleg.ktd.TelegramClient
 import dev.whyoleg.ktd.TelegramClientConfiguration
@@ -23,6 +22,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import org.greenrobot.eventbus.EventBus
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -135,15 +135,21 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                             ) {
                                 clientState = ClientState.waitNumber
                                 publish(StateChangedEvent(clientState), retain = true)
+                                EventBus.getDefault().postSticky(ReadyStickyEvent())
+                                EventBus.getDefault().removeStickyEvent(CodeStickyEvent())
+                                EventBus.getDefault().removeStickyEvent(PasswordStickyEvent())
+                                EventBus.getDefault().removeStickyEvent(NumberStickyEvent())
+                                EventBus.getDefault().postSticky(NumberStickyEvent())
                             }
                         }
                         is TdApi.AuthorizationStateWaitCode -> {
                             Timber.d("Waiting for code");
                             val state = returnClientState()
-                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready && state != ClientState.waitPassword) /*||
-                                getRetained<StateChangedEvent>()?.clientState == ClientState.waitNumber*/) {
+                            if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready && state != ClientState.waitPassword)) {
                                 clientState = ClientState.waitCode
                                 publish(StateChangedEvent(clientState), retain = true)
+                                EventBus.getDefault().removeStickyEvent(CodeStickyEvent())
+                                EventBus.getDefault().postSticky(CodeStickyEvent())
                             }
                         }
                         is TdApi.AuthorizationStateWaitPassword -> {
@@ -153,6 +159,8 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                             if ((getRetained<StateChangedEvent>() == null && state != ClientState.ready)/* ||
                                 getRetained<StateChangedEvent>()?.clientState == ClientState.waitCode*/) {
                                 publish(StateChangedEvent(clientState), retain = true)
+                                EventBus.getDefault().removeStickyEvent(PasswordStickyEvent())
+                                EventBus.getDefault().postSticky(PasswordStickyEvent())
                             }
                         }
                         is TdApi.AuthorizationStateReady -> {
@@ -161,7 +169,17 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
                                 Timber.d("State ready");
                                 clientState = ClientState.ready
                                 publish(TelegramConnectedEvent(clientState), retain = true)
+                                EventBus.getDefault().removeStickyEvent(ReadyStickyEvent())
+                                EventBus.getDefault().removeStickyEvent(CodeStickyEvent())
+                                EventBus.getDefault().removeStickyEvent(PasswordStickyEvent())
+                                EventBus.getDefault().removeStickyEvent(NumberStickyEvent())
+                                EventBus.getDefault().postSticky(ReadyStickyEvent())
                             }
+                        }
+                        is TdApi.AuthorizationStateClosed -> {
+                            val state = returnClientState()
+                        }
+                        is TdApi.AuthorizationStateLoggingOut -> {
                         }
                     }
                 }
@@ -229,7 +247,14 @@ class TelegramService : Service, GlobalBroker.Publisher, GlobalBroker.Subscriber
 
     suspend fun logOut(){
         try{
-            client.exec(TdApi.LogOut())
+            var result = client.exec(TdApi.LogOut())// {
+            timber.log.Timber.e(result.toString())
+                /*override fun onResult(){
+
+                }*/
+            //}
+
+            //TdApi.UpdateAuthorizationState(TdApi.AuthorizationStateWaitPhoneNumber())
         }
         catch (e: Exception){
             Timber.e(e)

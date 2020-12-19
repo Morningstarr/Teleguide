@@ -44,10 +44,7 @@ import com.mongodb.alliance.adapters.UserDataAdapter
 import com.mongodb.alliance.channelApp
 import com.mongodb.alliance.databinding.ActivityProfileBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.events.ChangeUserDataEvent
-import com.mongodb.alliance.events.NullObjectAccessEvent
-import com.mongodb.alliance.events.StateChangedEvent
-import com.mongodb.alliance.events.TelegramConnectedEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.UserData
 import com.mongodb.alliance.model.UserDataType
 import com.mongodb.alliance.model.UserRealm
@@ -60,6 +57,7 @@ import com.mongodb.alliance.ui.telegram.NewPhoneNumberFragment
 import com.mongodb.alliance.ui.telegram.PasswordFragment
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
+import dev.whyoleg.ktd.api.TdApi
 import io.realm.Realm
 import io.realm.com_mongodb_alliance_model_UserRealmRealmProxy
 import io.realm.kotlin.where
@@ -108,9 +106,190 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
     private var user: User? = null
 
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onEvent(event: NumberStickyEvent) {
+        try {
+            bottomSheetFragment =
+                NewPhoneNumberFragment()
+            (bottomSheetFragment as NewPhoneNumberFragment).show(
+                this.supportFragmentManager,
+                (bottomSheetFragment as NewPhoneNumberFragment).tag
+            )
+        }
+        catch(e:IllegalStateException){}
+    }
+
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onEvent(event: CodeStickyEvent) {
+        bottomSheetFragment =
+            CodeFragment()
+        (bottomSheetFragment as CodeFragment).show(
+            this.supportFragmentManager,
+            (bottomSheetFragment as CodeFragment).tag
+        )
+    }
+
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onEvent(event: PasswordStickyEvent) {
+        bottomSheetFragment =
+            PasswordFragment()
+        (bottomSheetFragment as PasswordFragment).show(
+            this.supportFragmentManager,
+            (bottomSheetFragment as PasswordFragment).tag
+        )
+    }
+
+    @ExperimentalCoroutinesApi
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onEvent(event: ReadyStickyEvent) {
+        setUpRecyclerView()
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: NullObjectAccessEvent) {
         Toast.makeText(baseContext, event.message, Toast.LENGTH_SHORT).show()
+    }
+
+    @ExperimentalCoroutinesApi
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: ChangeUserDataEvent){
+        when(event.parameter) {
+            1 -> {
+                val builder =
+                    AlertDialog.Builder(this)
+
+                builder.setMessage("Вы уверены, что хотите изменить номер телефона? Это приведет к отключению текущего Telegram аккаунта и потере доступа к чатам!")
+
+                builder.setPositiveButton(
+                    "Да"
+                ) { _, _ ->
+
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            (tService as TelegramService).logOut()
+                        }
+                        withContext(Dispatchers.Main) {
+                            setUpRecyclerView()
+                        }
+                        withContext(Dispatchers.IO) {
+                            initializeTg()
+                        }
+                    }
+
+                }
+                builder.setNegativeButton(
+                    "Нет"
+                ) { dialog, _ -> // Do nothing
+                    dialog.dismiss()
+                }
+
+                val alert = builder.create()
+                alert.show()
+            }
+            2 -> {
+                var acc: TdApi.User? = null
+                runBlocking {
+                    acc = (tService as TelegramService).isUser()
+                }
+                if (acc != null) {
+                    val builder =
+                        AlertDialog.Builder(this)
+
+                    builder.setMessage("Вы уверены, что хотите сменить телеграм аккаунт? Доступ к добавленным чатам данного аккаунта будет заблокирован. Данное действие нельзя отменить!")
+                    builder.setPositiveButton(
+                        "Да"
+                    ) { _, _ ->
+                        lifecycleScope.launch {
+                            withContext(Dispatchers.IO) {
+                                (tService as TelegramService).logOut()
+                            }
+                            withContext(Dispatchers.Main) {
+                                setUpRecyclerView()
+                            }
+                            withContext(Dispatchers.IO) {
+                                initializeTg()
+                            }
+                        }
+                    }
+                    builder.setNegativeButton(
+                        "Нет"
+                    ) { dialog, _ -> // Do nothing
+                        dialog.dismiss()
+                    }
+
+                    val alert = builder.create()
+                    alert.show()
+                } else {
+                    lifecycleScope.launch {
+                        val task = async {
+                            withContext(Dispatchers.IO) {
+                                (tService as TelegramService).returnClientState()
+                            }
+                        }
+                        when (val st = task.await()) {
+                            ClientState.waitParameters -> {
+                                (tService as TelegramService).setUpClient()
+                                initializeTg()
+                            }
+                            ClientState.ready -> {
+                                setUpRecyclerView()
+                            }
+                            ClientState.waitNumber, ClientState.waitPassword, ClientState.waitCode -> {
+                                initializeTg()
+                            }
+                            ClientState.loggingOut -> {
+                                initializeTg()
+                            }
+                            else -> {
+                                Toast.makeText(baseContext, st.displayName, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                    }
+                }
+            }
+            3 -> {
+                val builder =
+                    AlertDialog.Builder(this)
+
+                builder.setMessage("Вы уверены, что хотите сменить пароль от данного аккаунта?")
+
+                builder.setPositiveButton(
+                    "Да"
+                ) { _, _ -> // Do nothing but close the dialog
+                    realm = Realm.getDefaultInstance()
+                    val appUserRealm = realm.where<UserRealm>()
+                        .equalTo("user_id", channelApp.currentUser()?.id)
+                        .findFirst() as UserRealm
+                    val userEmail =
+                        (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
+                    channelApp.emailPassword.sendResetPasswordEmailAsync(userEmail) {
+                        if (it.isSuccess) {
+                            Toast.makeText(
+                                this,
+                                "Ссылка на сброс пароля успешно отправлена на адрес $userEmail",
+                                Toast.LENGTH_LONG
+                            ).show().also { finish() }
+                        } else {
+                            Toast.makeText(
+                                this,
+                                "Не удалось отправить ссылку на сброс пароля на адрес $userEmail",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+
+                builder.setNegativeButton(
+                    "Нет"
+                ) { dialog, _ -> // Do nothing
+                    dialog.dismiss()
+                }
+
+                val alert = builder.create()
+                alert.show()
+            }
+        }
     }
 
     @SuppressLint("WrongConstant")
@@ -125,144 +304,12 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         try{
             MediaManager.init(this)
         }
-        catch(e:Exception){
+        catch (e: Exception){
             if(!e.message?.contains("already initialized")!!){
                 finish()
             }
             Timber.e(e)
         }
-        subscribe<ChangeUserDataEvent>(lifecycleScope, emitRetained = true) { event ->
-            when(event.parameter) {
-                1 -> {
-                    val builder =
-                        AlertDialog.Builder(this)
-
-                    builder.setMessage("Вы уверены, что хотите изменить номер телефона? Это приведет к отключению текущего Telegram аккаунта и потере доступа к чатам!")
-
-                    builder.setPositiveButton(
-                        "Да"
-                    ) { _, _ ->
-                        lifecycleScope.launch {
-                            withContext(Dispatchers.IO) {
-                                (tService as TelegramService).logOut()
-                            }
-                            withContext(Dispatchers.Main) {
-                                setUpRecyclerView()
-                            }
-                            withContext(Dispatchers.IO) {
-                                (tService as TelegramService).setUpClient()
-                                (tService as TelegramService).initService()
-                            }
-                        }
-
-                    }
-                    builder.setNegativeButton(
-                        "Нет"
-                    ) { dialog, _ -> // Do nothing
-                        dialog.dismiss()
-                    }
-
-                    val alert = builder.create()
-                    alert.show()
-                }
-                2 -> {
-                    if((tService as TelegramService).isUser() != null) {
-                        val builder =
-                            AlertDialog.Builder(this)
-
-                        builder.setMessage("Вы уверены, что хотите сменить телеграм аккаунт? Доступ к добавленным чатам данного аккаунта будет заблокирован. Данное действие нельзя отменить!")
-                        builder.setPositiveButton(
-                            "Да"
-                        ) { _, _ ->
-                            lifecycleScope.launch {
-                                withContext(Dispatchers.IO) {
-                                    (tService as TelegramService).logOut()
-                                }
-                                withContext(Dispatchers.Main) {
-                                    setUpRecyclerView()
-                                }
-                                withContext(Dispatchers.IO) {
-                                    (tService as TelegramService).setUpClient()
-                                    (tService as TelegramService).initService()
-                                }
-                            }
-                        }
-                        builder.setNegativeButton(
-                            "Нет"
-                        ) { dialog, _ -> // Do nothing
-                            dialog.dismiss()
-                        }
-
-                        val alert = builder.create()
-                        alert.show()
-                    }
-                    else{
-                        lifecycleScope.launch {
-                            val task = async {
-                                withContext(Dispatchers.IO) {
-                                    (tService as TelegramService).returnClientState()
-                                }
-                            }
-                            when (task.await()) {
-                                ClientState.ready -> {
-                                    Toast.makeText(baseContext, "state ready", Toast.LENGTH_SHORT).show()
-                                }
-                                ClientState.waitNumber, ClientState.waitPassword, ClientState.waitCode -> {
-                                    (tService as TelegramService).initService()
-                                }
-                                else -> {
-                                    Toast.makeText(baseContext, "unknown state", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    }
-                }
-                3 -> {
-                    val builder =
-                        AlertDialog.Builder(this)
-
-                    builder.setMessage("Вы уверены, что хотите сменить пароль от данного аккаунта?")
-
-                    builder.setPositiveButton(
-                        "Да"
-                    ) { _, _ -> // Do nothing but close the dialog
-                        realm = Realm.getDefaultInstance()
-                        val appUserRealm = realm.where<UserRealm>()
-                            .equalTo("user_id", channelApp.currentUser()?.id)
-                            .findFirst() as UserRealm
-                        val userEmail =
-                            (appUserRealm as com_mongodb_alliance_model_UserRealmRealmProxy).`realmGet$name`()
-                        channelApp.emailPassword.sendResetPasswordEmailAsync(userEmail) {
-                            if (it.isSuccess) {
-                                Toast.makeText(
-                                    this,
-                                    "Ссылка на сброс пароля успешно отправлена на адрес $userEmail",
-                                    Toast.LENGTH_LONG
-                                ).show().also { finish() }
-                            } else {
-                                Toast.makeText(
-                                    this,
-                                    "Не удалось отправить ссылку на сброс пароля на адрес $userEmail",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    }
-
-                    builder.setNegativeButton(
-                        "Нет"
-                    ) { dialog, _ -> // Do nothing
-                        dialog.dismiss()
-                    }
-
-                    val alert = builder.create()
-                    alert.show()
-                }
-            }
-        }
-
-        otherEventsSubscription()
-        telegramConnectedSubscription()
 
         permissions.add(CAMERA)
         permissions.add(WRITE_EXTERNAL_STORAGE)
@@ -290,7 +337,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
             chooseImageFragment = builder.build()
 
-            chooseImageFragment.setStyle(DialogFragment.STYLE_NORMAL,
+            chooseImageFragment.setStyle(
+                DialogFragment.STYLE_NORMAL,
                 R.style.ImagePickerTheme
             )
 
@@ -315,7 +363,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         customActionBarView.findViewById<ImageButton>(R.id.actionBar_button_menu).setOnClickListener {
             rootLayout = binding.coordinatorProfile
             val anchor = binding.anchorProfile
-            val wrapper = ContextThemeWrapper(this,
+            val wrapper = ContextThemeWrapper(
+                this,
                 R.style.MyPopupMenu
             )
             val popup = PopupMenu(wrapper, anchor, Gravity.END)
@@ -360,7 +409,8 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
                         chooseImageFragment = builder.build()
 
-                        chooseImageFragment.setStyle(DialogFragment.STYLE_NORMAL,
+                        chooseImageFragment.setStyle(
+                            DialogFragment.STYLE_NORMAL,
                             R.style.ImagePickerTheme
                         )
 
@@ -369,8 +419,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                                 if (permissionsToRequest?.size!! > 0) {
                                     permissionsToRequest?.toArray(Array(permissionsToRequest!!.size) { i -> permissionsToRequest!![i] })
                                         ?.let { requestPermissions(it, ALL_PERMISSIONS_RESULT) }
-                                }
-                                else{
+                                } else {
                                     chooseImageFragment.show(supportFragmentManager, "single")
                                 }
                             }
@@ -409,6 +458,19 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    @ExperimentalCoroutinesApi
+    private fun initializeTg(){
+        try {
+            lifecycleScope.launch {
+                (tService as TelegramService).initService()
+            }
+        }
+        catch (e: Exception){
+            Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     @ExperimentalCoroutinesApi
     override fun onStart() {
         super.onStart()
@@ -416,8 +478,15 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         val data: Uri? = intent?.data
 
         if(data != null){
-            var token = data.toString().subSequence(data.toString().lastIndexOf("/") + 7, data.toString().lastIndexOf("&")).toString()
-            var tokenId = data.toString().subSequence(data.toString().lastIndexOf("&") + 1, data.toString().length).toString()
+            var token = data.toString().subSequence(
+                data.toString().lastIndexOf("/") + 7, data.toString().lastIndexOf(
+                    "&"
+                )
+            ).toString()
+            var tokenId = data.toString().subSequence(
+                data.toString().lastIndexOf("&") + 1,
+                data.toString().length
+            ).toString()
             token = token.drop(6)
             tokenId = tokenId.drop(8)
             bottomSheetFragment =
@@ -435,8 +504,23 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             Timber.e(e)
         }
         if (user == null) {
-            startActivity(Intent(this, LoginActivity::class.java))
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
         } else {
+            runBlocking {
+                (tService as TelegramService).setUpClient()
+                val currState = withContext(Dispatchers.IO) {
+                    (tService as TelegramService).returnClientState()
+                }
+
+                if(currState == ClientState.waitParameters) {
+                    withContext(Dispatchers.IO) {
+                        (tService as TelegramService).setUpClient()
+                    }
+                }
+            }
+
             realm = Realm.getDefaultInstance()
 
             val config = SyncConfiguration.Builder(user, user?.id)
@@ -473,7 +557,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 placeholder.visibility = View.VISIBLE
             }
         }
-        catch(e:Exception){
+        catch (e: Exception){
             placeholder.visibility = View.VISIBLE
         }
 
@@ -494,18 +578,25 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst() as UserRealm
             username = appUserRealm.name
         }
-        catch(e:Exception){
+        catch (e: Exception){
             username = "default"
         }
-        userDataArray.add(UserData(username,"Ваш электронный адрес", UserDataType.email))
+        userDataArray.add(UserData(username, "Ваш электронный адрес", UserDataType.email))
         userDataArray.add(checkNumber())
         userDataArray.add(checkTelegram())
-        userDataArray.add(UserData("123123123", "Нажмите, чтобы изменить пароль", UserDataType.password))
+        userDataArray.add(
+            UserData(
+                "123123123",
+                "Нажмите, чтобы изменить пароль",
+                UserDataType.password
+            )
+        )
 
         adapter = UserDataAdapter(userDataArray)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
+        adapter.notifyDataSetChanged()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -525,19 +616,24 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                 )
             )
                 .unsigned("klbmit6h")
-                .policy(UploadPolicy.Builder()
-                    .maxRetries(3).build())
+                .policy(
+                    UploadPolicy.Builder()
+                        .maxRetries(3).build()
+                )
                 .callback(object : UploadCallback {
                     override fun onStart(requestId: String) {
                         // your code here
                     }
+
                     override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {
 
                     }
+
                     override fun onSuccess(requestId: String, resultData: Map<*, *>) {
-                        val appUserRealm = realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst()
+                        val appUserRealm =
+                            realm.where<UserRealm>().equalTo("user_id", user?.id).findFirst()
                         val imageUrl = appUserRealm?.image
-                        if(imageUrl != null){
+                        if (imageUrl != null) {
                             Picasso.get().invalidate(imageUrl)
                             deleteImage(false, imageUrl)
                         }
@@ -550,17 +646,19 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
 
                         placeholder.visibility = View.GONE
                     }
+
                     override fun onError(requestId: String, error: ErrorInfo) {
                         Toast.makeText(baseContext, error.description, Toast.LENGTH_SHORT).show()
                         placeholder.visibility = View.VISIBLE
                     }
+
                     override fun onReschedule(requestId: String, error: ErrorInfo) {
                         // your code here
                     }
                 })
                 .startNow(this)
         }
-        catch(e:Exception){
+        catch (e: Exception){
             Timber.e(e)
         }
 
@@ -590,7 +688,11 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
     }
 
     @TargetApi(Build.VERSION_CODES.M)
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String?>,
+        grantResults: IntArray
+    ) {
         when (requestCode) {
             ALL_PERMISSIONS_RESULT -> {
                 for (perms in permissionsToRequest!!) {
@@ -613,8 +715,7 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                             return
                         }
                     }
-                }
-                else{
+                } else {
                     chooseImageFragment.show(supportFragmentManager, "single")
                 }
             }
@@ -642,10 +743,18 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
         }
 
         if(username == ""){
-            return UserData("Your account has no username", "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount)
+            return UserData(
+                "Your account has no username",
+                "Нажмите, чтобы изменить телеграм аккаунт",
+                UserDataType.telegramAccount
+            )
         }
         if(username != " "){
-            return UserData(username, "Нажмите, чтобы изменить телеграм аккаунт", UserDataType.telegramAccount)
+            return UserData(
+                username,
+                "Нажмите, чтобы изменить телеграм аккаунт",
+                UserDataType.telegramAccount
+            )
         }
         else {
             runBlocking {
@@ -693,10 +802,19 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             if(number[0] != '+') {
                 number = "+$number"
             }
-            return UserData(number, "Нажмите, чтобы изменить номер телефона", UserDataType.phoneNumber)
+            return UserData(
+                number,
+                "Нажмите, чтобы изменить номер телефона",
+                UserDataType.phoneNumber
+            )
         }
         else{
-            return UserData("", "Добавьте телеграм аккаунт для отображения номера телефона", UserDataType.phoneNumber, true)
+            return UserData(
+                "",
+                "Добавьте телеграм аккаунт для отображения номера телефона",
+                UserDataType.phoneNumber,
+                true
+            )
         }
 
     }
@@ -706,13 +824,20 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
             var publicId = ""
             var imageUrl = url
             realm = Realm.getDefaultInstance()
-            val appUserRealm = realm.where<UserRealm>().equalTo("user_id", channelApp.currentUser()?.id).findFirst()
+            val appUserRealm = realm.where<UserRealm>().equalTo(
+                "user_id",
+                channelApp.currentUser()?.id
+            ).findFirst()
             if(appUserRealm != null) {
                 if(imageUrl == null) {
                     imageUrl = appUserRealm.image
                 }
                 if(imageUrl != null) {
-                    publicId = imageUrl.subSequence(imageUrl.lastIndexOf("/") + 1, imageUrl.lastIndexOf(".")).toString()
+                    publicId = imageUrl.subSequence(
+                        imageUrl.lastIndexOf("/") + 1, imageUrl.lastIndexOf(
+                            "."
+                        )
+                    ).toString()
                 }
                 else{
                     Toast.makeText(baseContext, "Ошибка! Нечего удалять.", Toast.LENGTH_SHORT).show()
@@ -755,60 +880,24 @@ class ProfileActivity : AppCompatActivity(), GlobalBroker.Subscriber,
                     }
                 }
                 else{
-                    Toast.makeText(baseContext, "Произошла ошибка при попытке удаления изображения! Пожалуйста, попробуйте снова.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        baseContext,
+                        "Произошла ошибка при попытке удаления изображения! Пожалуйста, попробуйте снова.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
         }
-        catch(e:Exception){
+        catch (e: Exception){
             Toast.makeText(baseContext, e.message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    @ExperimentalCoroutinesApi
-    private fun telegramConnectedSubscription() {
-        subscribe<TelegramConnectedEvent>(lifecycleScope, emitRetained = true) {
-            setUpRecyclerView()
         }
     }
 
     override fun onStop() {
         super.onStop()
+        EventBus.getDefault().removeAllStickyEvents()
         unsubscribe()
     }
 
-    private fun otherEventsSubscription() {
-        subscribe<StateChangedEvent>(lifecycleScope, emitRetained = true) { event ->
-            Timber.d("State changed")
-            when (event.clientState) {
-                ClientState.waitNumber -> {
-                    bottomSheetFragment =
-                        NewPhoneNumberFragment()
-                    (bottomSheetFragment as NewPhoneNumberFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as NewPhoneNumberFragment).tag
-                    )
-                }
-                ClientState.waitCode -> {
-                    bottomSheetFragment =
-                        CodeFragment()
-                    (bottomSheetFragment as CodeFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as CodeFragment).tag
-                    )
-                }
-                ClientState.waitPassword -> {
-                    bottomSheetFragment =
-                        PasswordFragment()
-                    (bottomSheetFragment as PasswordFragment).show(
-                        this.supportFragmentManager,
-                        (bottomSheetFragment as PasswordFragment).tag
-                    )
-                }
-                else -> {
-
-                }
-            }
-        }
-    }
 }
