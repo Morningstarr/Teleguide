@@ -1,5 +1,6 @@
 package com.mongodb.alliance.adapters
 
+import android.graphics.Color
 import android.telephony.PhoneNumberFormattingTextWatcher
 import android.text.Editable
 import android.text.TextWatcher
@@ -18,12 +19,15 @@ import com.mongodb.alliance.R
 import com.mongodb.alliance.events.*
 import com.mongodb.alliance.model.UserData
 import com.mongodb.alliance.model.UserDataType
+import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
 
 internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Publisher,
     RecyclerView.Adapter<UserDataAdapter.UserDataViewHolder?>() {
+
+    private var isRowsBlocked : Boolean = false
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: ChangePhoneHintEvent) {
@@ -69,45 +73,6 @@ internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Pub
         }
 
         if(obj?.dataType == UserDataType.phoneNumber){
-            /*holder.record.addTextChangedListener(object : PhoneNumberFormattingTextWatcher("+380") {
-                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-
-                override fun afterTextChanged(editable: Editable) {
-                    val text = holder.record.text.toString()
-                    val textLength = holder.record.text.length
-
-                    if (text.endsWith("-") || text.endsWith(" ")) {
-                        return
-                    }
-
-                    if (textLength == 1) {
-                        if (!text.contains("(")) {
-                            setText(StringBuilder(text).insert(text.length - 1, "(").toString())
-                        }
-                    } else if (textLength == 5) {
-                        if (!text.contains(")")) {
-                            setText(StringBuilder(text).insert(text.length - 1, ")").toString())
-                        }
-                    } else if (textLength == 6) {
-                        setText(StringBuilder(text).insert(text.length - 1, " ").toString())
-                    } else if (textLength == 10) {
-                        if (!text.contains("-")) {
-                            setText(StringBuilder(text).insert(text.length - 1, "-").toString())
-                        }
-                    } else if (textLength == 15) {
-                        if (text.contains("-")) {
-                            setText(StringBuilder(text).insert(text.length - 1, " ext").toString())
-                        }
-                    }
-                }
-
-                private fun setText(text: String){
-                    holder.record.removeTextChangedListener(this)
-                    holder.record.editableText.replace(0, holder.record.text.length, text)
-                    holder.record.addTextChangedListener(this)
-                }
-            })*/
             if(obj.dataValue == "") {
                 holder.record.visibility = View.GONE
                 val params =
@@ -120,30 +85,26 @@ internal class UserDataAdapter(var data: ArrayList<UserData>) : GlobalBroker.Pub
         holder.itemView.setOnClickListener {
             when(holder.data?.dataType){
                 UserDataType.password -> {
-                    publish(ChangeUserDataEvent(3))
+                    EventBus.getDefault().post(ChangeUserDataEvent(3))
                 }
                 UserDataType.phoneNumber -> {
                     if(holder.data?.disabled != null && !(holder.data?.disabled as Boolean)) {
                         if (obj != null) {
-                            publish(
-                                ChangeUserDataEvent(1, obj.dataValue)
-                            )
+                            EventBus.getDefault().post(ChangeUserDataEvent(1, obj.dataValue))
                         }
                     }
                 }
                 UserDataType.telegramAccount -> {
                     if (obj != null) {
-                        publish(
-                            ChangeUserDataEvent(2, obj.dataValue)
-                        )
+                        EventBus.getDefault().post(ChangeUserDataEvent(2, obj.dataValue))
                     }
                 }
             }
         }
     }
 
-
     internal inner class UserDataViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        var main: LinearLayout = view.findViewById(R.id.mainLayoutId)
         var record: TextView = view.findViewById(R.id.user_data_record)
         var hint: TextView = view.findViewById(R.id.user_data_hint)
         var data: UserData? = null

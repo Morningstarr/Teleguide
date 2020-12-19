@@ -12,12 +12,16 @@ import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.databinding.NewFragmentCodeBinding
 import com.mongodb.alliance.di.TelegramServ
+import com.mongodb.alliance.events.CodeStickyEvent
+import com.mongodb.alliance.events.NumberStickyEvent
 import com.mongodb.alliance.events.StateChangedEvent
+import com.mongodb.alliance.events.UnsubEvent
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -87,6 +91,7 @@ class CodeFragment() : BottomSheetDialogFragment(), GlobalBroker.Subscriber {
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
         removeRetained<StateChangedEvent>()
+        EventBus.getDefault().removeStickyEvent(CodeStickyEvent())
     }
 
 }

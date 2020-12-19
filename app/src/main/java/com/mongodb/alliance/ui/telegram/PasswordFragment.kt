@@ -13,12 +13,13 @@ import cafe.adriel.broker.removeRetained
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mongodb.alliance.databinding.NewFragmentPasswordBinding
 import com.mongodb.alliance.di.TelegramServ
-import com.mongodb.alliance.events.StateChangedEvent
+import com.mongodb.alliance.events.*
 import com.mongodb.alliance.services.telegram.Service
 import com.mongodb.alliance.services.telegram.TelegramService
 import dagger.hilt.android.AndroidEntryPoint
 import dev.whyoleg.ktd.api.TelegramObject
 import kotlinx.coroutines.*
+import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 
@@ -89,6 +90,7 @@ class PasswordFragment : BottomSheetDialogFragment(), GlobalBroker.Subscriber, G
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
         removeRetained<StateChangedEvent>()
+        EventBus.getDefault().removeStickyEvent(PasswordStickyEvent())
     }
 
 }

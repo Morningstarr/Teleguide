@@ -812,15 +812,19 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                             (tService as TelegramService).fillChats()
                         }
                         tsk.await()
-                        adapter.setCurrState(ClientState.ready)
-                        adapter.notifyDataSetChanged()
-                        pinnedAdapter.setCurrState(ClientState.ready)
-                        pinnedAdapter.notifyDataSetChanged()
-                        Toast.makeText(
-                            baseContext,
-                            "Подключение успешно завершено",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        try {
+                            adapter.setCurrState(ClientState.ready)
+                            adapter.notifyDataSetChanged()
+                            pinnedAdapter.setCurrState(ClientState.ready)
+                            pinnedAdapter.notifyDataSetChanged()
+                            Toast.makeText(
+                                baseContext,
+                                "Подключение успешно завершено",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }catch(e:Exception){
+
+                        }
                     }
 
                 }
@@ -888,15 +892,20 @@ class FolderActivity : AppCompatActivity(), GlobalBroker.Subscriber, CoroutineSc
                             (tService as TelegramService).fillChats()
                         }
                         tsk.await()
-                        adapter.setCurrState(ClientState.ready)
-                        adapter.notifyDataSetChanged()
-                        pinnedAdapter.setCurrState(ClientState.ready)
-                        pinnedAdapter.notifyDataSetChanged()
-                        Toast.makeText(
-                            baseContext,
-                            "Подключение успешно завершено",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        try {
+                            adapter.setCurrState(ClientState.ready)
+                            adapter.notifyDataSetChanged()
+                            pinnedAdapter.setCurrState(ClientState.ready)
+                            pinnedAdapter.notifyDataSetChanged()
+                            Toast.makeText(
+                                baseContext,
+                                "Подключение успешно завершено",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        catch(e:UninitializedPropertyAccessException){
+
+                        }
                     }
 
                 }
